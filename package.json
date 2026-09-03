@@ -1,0 +1,8 @@
+{
+  "name": "skiffa",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Skiffa — made for the grey side of the sea. Losse frontend (exact ontwerp) op het centrale CMS.",
+  "license": "UNLICENSED"
+}

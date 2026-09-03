@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skiffa — made for the grey side of the sea</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Homemade+Apple&display=swap" rel="stylesheet">
+<style>
+:root{
+  --zwart:#000;--wit:#fff;--papier:#F6F3ED;--roze:#FFEEED;--zeeblok:#E9EEF0;--grijs:#BFB3B2;
+  --mono:"DM Mono","NBAkademieProMono400",ui-monospace,Menlo,monospace;
+  --script:"Homemade Apple",cursive;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--zwart);color:var(--wit);font-family:var(--mono);font-weight:400;font-size:11px;letter-spacing:.08em;line-height:1.7;overflow:hidden;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter-spacing:inherit}
+:focus-visible{outline:1px solid currentColor;outline-offset:3px}
+
+/* ---------- Logo ---------- */
+.logo-svg{display:block;height:100%;width:auto;fill:currentColor}
+#header .c1 .logo{display:block;height:26px;color:#fff}
+#header .c1 small{display:block;font-size:8px;letter-spacing:.42em;margin-top:8px;padding-left:.1em}
+#preloader .merk{width:min(320px,60vw);color:#fff;clip-path:inset(0 100% 0 0);animation:onthul 1.4s .3s cubic-bezier(.65,0,.35,1) forwards}
+@keyframes onthul{to{clip-path:inset(0 0 0 0)}}
+#over .merk{width:150px;color:#000;margin-top:6px}
+
+/* ---------- Preloader ---------- */
+#preloader{position:fixed;inset:0;z-index:100;background:var(--zwart);display:grid;place-items:center;transition:opacity .8s ease}
+#preloader.weg{opacity:0;pointer-events:none}
+#preloader svg{width:180px;overflow:visible}
+#preloader .golf{stroke:#fff;stroke-width:1.2;fill:none;stroke-dasharray:400;stroke-dashoffset:400;animation:teken 1.6s .2s ease-out forwards}
+@keyframes teken{to{stroke-dashoffset:0}}
+#preloader .naam{position:absolute;font-family:var(--script);font-size:34px;letter-spacing:0;color:#fff;opacity:0;transform:translateY(6px);animation:opkomen .9s 1.3s ease forwards}
+#preloader .sub{position:absolute;margin-top:110px;font-size:9px;letter-spacing:.4em;opacity:0;animation:opkomen .9s 1.7s ease forwards}
+@keyframes opkomen{to{opacity:1;transform:none}}
+
+/* ---------- Scène (foto's, wisselen met de tijd) ---------- */
+#scene{position:fixed;inset:0;z-index:0;overflow:hidden;background:#000}
+.periode{position:absolute;inset:0;opacity:0;transition:opacity 1.8s ease,filter 1.2s ease}
+.periode.actief{opacity:1}
+.periode img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scale(1.04);animation:adem 24s ease-in-out infinite alternate}
+@keyframes adem{from{transform:scale(1.04) translate(0,0)}to{transform:scale(1.09) translate(-1%,-.6%)}}
+.periode::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.35) 0%,rgba(0,0,0,0) 30%,rgba(0,0,0,0) 70%,rgba(0,0,0,.45) 100%)}
+.korrel{position:absolute;inset:0;pointer-events:none;opacity:.09;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E")}
+#scene.grijs .periode{filter:grayscale(1) brightness(.55)}
+.credit{position:fixed;right:22px;bottom:140px;z-index:6;font-size:8px;letter-spacing:.14em;opacity:.45;pointer-events:none;writing-mode:vertical-rl;transform:rotate(180deg)}
+
+/* ---------- Laag met UI ---------- */
+#ui{position:fixed;inset:0;z-index:5;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none}
+#ui>*{pointer-events:auto}
+
+/* Header */
+#header{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:16px 22px;height:96px}
+
+
+#header .c2{font-size:11px;letter-spacing:.14em;font-weight:500}
+#header .c3{display:flex;justify-content:flex-end;gap:8px;align-items:center}
+.knop{display:inline-flex;align-items:center;justify-content:center;height:24px;padding:0 14px;border:1px solid currentColor;border-radius:999px;font-size:10px;letter-spacing:.1em;transition:background .3s,color .3s;position:relative;overflow:hidden}
+.knop::before{content:"";position:absolute;inset:0;background:currentColor;transform:translateY(102%);transition:transform .35s cubic-bezier(.2,.8,.2,1);z-index:-1}
+.knop:hover{color:var(--zwart)}
+.knop:hover::before{transform:none}
+.knop.vol{background:var(--wit);color:var(--zwart);border-color:var(--wit)}
+.knop.vol:hover{background:transparent;color:var(--wit)}
+.knop.ico{width:24px;padding:0}
+.shop{position:relative}
+.shop .lijst{position:absolute;right:0;top:30px;display:flex;flex-direction:column;gap:6px;opacity:0;transform:translateY(-6px);pointer-events:none;transition:all .35s}
+.shop:hover .lijst,.shop:focus-within .lijst{opacity:1;transform:none;pointer-events:auto}
+.shop .lijst .knop{justify-content:flex-start;min-width:150px}
+.shop::after{content:"";position:absolute;left:0;right:0;top:100%;height:12px}
+
+/* Hotspots */
+.hotspot{position:absolute;transform:translate(-50%,-50%);width:var(--s);height:var(--s);pointer-events:auto}
+.hotspot .rand{position:absolute;inset:0;border-radius:50%;border:1px dashed rgba(255,255,255,.9);animation:draai 14s linear infinite;box-shadow:0 0 0 1px rgba(0,0,0,.15) inset}
+@keyframes draai{to{transform:rotate(360deg)}}
+.hotspot .rand{border-radius:50%}
+.hotspot .plus{position:absolute;left:100%;top:-6px;width:22px;height:22px;border-radius:50%;background:var(--wit);color:var(--zwart);display:grid;place-items:center;font-size:14px;line-height:1;font-weight:500;transition:transform .2s;box-shadow:0 2px 10px rgba(0,0,0,.25)}
+.hotspot .plus:hover{transform:scale(1.15)}
+.hotspot .naam{position:absolute;left:50%;top:calc(100% + 6px);transform:translateX(-50%);font-size:9px;letter-spacing:.2em;white-space:nowrap;opacity:0;transition:opacity .3s}
+.hotspot:hover .naam{opacity:1}
+.avond .hotspot .rand{border-color:rgba(255,255,255,.7)}
+
+/* Strandbericht (live via Open-Meteo) */
+.bericht{position:absolute;left:50%;transform:translateX(-50%);bottom:84px;font-size:9px;letter-spacing:.16em;white-space:nowrap;opacity:0;transition:opacity 1s}
+.bericht.aan{opacity:.85}
+.bericht i{font-style:normal;opacity:.5;margin:0 8px}
+.getij{position:absolute;bottom:50px;transform:translateX(-50%);font-size:8px;letter-spacing:.2em;opacity:.8;white-space:nowrap;pointer-events:none}
+.getij::after{content:"";position:absolute;left:50%;top:100%;width:1px;height:8px;background:currentColor;opacity:.6}
+#tijdlijn .seg::after{transition:transform .45s cubic-bezier(.2,.8,.2,1),opacity .45s}
+
+/* Footer: klok en tijdlijn */
+#footer{padding:0 22px 14px;height:130px;display:flex;flex-direction:column;justify-content:flex-end;gap:10px;position:relative}
+.tijd{display:flex;align-items:center;gap:6px;font-size:10px;letter-spacing:.14em;position:absolute;left:50%;transform:translateX(-50%);bottom:64px;white-space:nowrap}
+.cijfers{display:inline-flex;font-variant-numeric:tabular-nums}
+.cijfer{position:relative;width:.7em;height:1.5em;overflow:hidden;display:inline-block}
+.cijfer span{position:absolute;left:0;width:100%;text-align:center;line-height:1.5em}
+.cijfer .volgend{top:100%}
+.nu{position:absolute;bottom:50px;transform:translateX(-50%);font-size:8px;letter-spacing:.24em;border:1px solid currentColor;border-radius:999px;padding:1px 8px;transition:left .5s cubic-bezier(.2,.8,.2,1);pointer-events:none}
+.nu::after{content:"";position:absolute;left:50%;top:100%;width:1px;height:10px;background:currentColor}
+#tijdlijn{display:flex;align-items:flex-end;height:36px;gap:0;cursor:crosshair}
+#tijdlijn .seg{flex:1;height:100%;position:relative}
+#tijdlijn .seg::after{content:"";position:absolute;left:50%;bottom:0;width:1px;height:100%;background:currentColor;opacity:.25;transform:translateY(70%);transform-origin:bottom center;transition:transform .45s cubic-bezier(.2,.8,.2,1),opacity .45s}
+#tijdlijn .seg.breek::after{opacity:1}
+#tijdlijn .seg.actief::after{transform:translateY(0);opacity:1}
+.uren{display:flex;justify-content:space-between;font-size:8px;letter-spacing:.2em;opacity:.7;margin-top:-4px}
+
+/* ---------- Modal (product) ---------- */
+#modal{position:fixed;inset:0;z-index:40;display:grid;place-items:center;background:rgba(0,0,0,.35);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .4s}
+#modal.open{opacity:1;pointer-events:auto}
+#modal .kader{width:min(920px,92vw);height:min(560px,86vh);background:var(--papier);color:var(--zwart);display:grid;grid-template-columns:1.1fr 1fr;transform:translateY(24px) scale(.98);transition:transform .5s cubic-bezier(.2,.8,.2,1);overflow:hidden}
+#modal.open .kader{transform:none}
+#modal .sluit{position:absolute;top:18px;right:22px;width:26px;height:26px;border-radius:50%;background:var(--zwart);color:#fff;display:grid;place-items:center;font-size:16px;line-height:1;transform:rotate(45deg)}
+.carrousel{position:relative;background:var(--zeeblok);overflow:hidden}
+.carrousel .voortgang{position:absolute;top:14px;left:14px;right:14px;display:flex;gap:4px;z-index:2}
+.carrousel .voortgang i{flex:1;height:1px;background:rgba(0,0,0,.2);position:relative;overflow:hidden}
+.carrousel .voortgang i::after{content:"";position:absolute;inset:0;background:#000;transform:scaleX(0);transform-origin:left}
+.carrousel .voortgang i.bezig::after{animation:vul 3.2s linear forwards}
+.carrousel .voortgang i.klaar::after{transform:none}
+@keyframes vul{to{transform:none}}
+.carrousel .baan{display:flex;height:100%;transition:transform .7s cubic-bezier(.2,.8,.2,1)}
+.carrousel .dia{flex:0 0 100%;display:grid;place-items:center;position:relative}
+.carrousel .dia img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.carrousel .dia.kleur .swatch{text-align:center;letter-spacing:.2em;font-size:12px}
+.carrousel .dia.kleur .swatch em{display:block;font-style:normal;font-size:9px;opacity:.7;margin-top:8px}
+.carrousel .dia small{position:absolute;bottom:14px;left:16px;font-size:8px;letter-spacing:.2em;text-transform:uppercase;opacity:.8;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.5)}
+.modaltekst{padding:56px 40px 32px;display:flex;flex-direction:column;gap:18px;font-size:11px;line-height:1.8;overflow:auto}
+.modaltekst h3{font-family:var(--mono);font-weight:500;font-size:13px;letter-spacing:.14em}
+.modaltekst .sub{opacity:.6;margin-top:-14px}
+.modaltekst ul{list-style:none}
+.modaltekst li::before{content:"• "}
+.maten{display:flex;gap:6px}
+.maten button{width:34px;height:26px;border:1px solid #000;border-radius:999px;font-size:10px}
+.maten button[aria-pressed="true"]{background:#000;color:#fff}
+.maten button:disabled{opacity:.3;text-decoration:line-through}
+.bestel{margin-top:auto;align-self:flex-start;background:#000;color:#fff;border-radius:999px;height:30px;padding:0 20px;display:inline-flex;align-items:center;gap:14px;font-size:10px;letter-spacing:.12em;transition:background .3s}
+.bestel:hover{background:#333}
+.bestel.klaar{background:#5c6d77}
+
+/* ---------- Over (overlay) ---------- */
+#over{position:fixed;inset:0;z-index:20;background:var(--papier);color:var(--zwart);overflow:auto;transform:translateY(100%);transition:transform .9s cubic-bezier(.76,0,.24,1)}
+#over.open{transform:none}
+#over .textuur{position:absolute;inset:0;pointer-events:none;opacity:.07;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='120' viewBox='0 0 240 120'%3E%3Cpath d='M0 30c30-20 60-20 90 0s60 20 90 0 60-20 90 0M0 60c30-20 60-20 90 0s60 20 90 0 60-20 90 0M0 90c30-20 60-20 90 0s60 20 90 0 60-20 90 0' fill='none' stroke='%23000' stroke-width='1'/%3E%3C/svg%3E")}
+#over .binnen{position:relative;display:grid;grid-template-columns:1fr 1fr 1fr;gap:40px;padding:120px 22px 40px 22px}
+#over .kol{opacity:0;transform:translateY(20px);transition:all .8s .5s cubic-bezier(.2,.8,.2,1)}
+#over.open .kol{opacity:1;transform:none}
+#over .kol:nth-child(2){transition-delay:.65s}#over .kol:nth-child(3){transition-delay:.8s}
+#over .titel{font-weight:500;font-size:12px;line-height:1.8;text-align:justify}
+#over p{font-size:11px;line-height:1.9;text-align:justify;margin-bottom:18px}
+#over b{font-weight:500}
+.drie{display:flex;gap:18px;margin:26px 0 40px}
+.drie div{text-align:center;font-size:9px;letter-spacing:.2em}
+.drie svg{width:18px;height:18px;display:block;margin:0 auto 6px;fill:none;stroke:#000;stroke-width:1.3}
+#over .handtekening{font-family:var(--script);font-size:26px;letter-spacing:0;display:inline-block;transform:rotate(-3deg);position:relative}
+#over .handtekening::after{content:"";position:absolute;left:0;right:0;bottom:-2px;height:1px;background:#000;transform:scaleX(0);transform-origin:left;transition:transform 1.4s 1.2s ease}
+#over.open .handtekening::after{transform:none}
+#over .maker{font-size:9px;letter-spacing:.2em;margin-top:10px}
+#over .blok{position:relative;margin:30px 22px 22px;background:var(--zeeblok);padding:60px 40px;display:grid;grid-template-columns:repeat(6,1fr);gap:24px;align-items:end}
+#over .blok .shirt{text-align:center;font-size:9px;letter-spacing:.2em}
+#over .blok .shirt i{display:block;aspect-ratio:4/5;margin:0 auto 12px;box-shadow:0 12px 24px rgba(0,0,0,.08);transition:transform .3s}
+#over .blok .shirt:hover i{transform:translateY(-4px)}
+#over .blok .shirt b{display:block;font-weight:500}
+#over .sluit{position:fixed;top:36px;right:22px;z-index:2}
+
+/* ---------- Contact (overlay, zelfde opzet als 'over') ---------- */
+#contact{position:fixed;inset:0;z-index:21;background:var(--papier);color:var(--zwart);overflow:auto;transform:translateY(100%);transition:transform .9s cubic-bezier(.76,0,.24,1)}
+#contact.open{transform:none}
+#contact .textuur{position:absolute;inset:0;pointer-events:none;opacity:.07;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='120' viewBox='0 0 240 120'%3E%3Cpath d='M0 30c30-20 60-20 90 0s60 20 90 0 60-20 90 0M0 60c30-20 60-20 90 0s60 20 90 0 60-20 90 0M0 90c30-20 60-20 90 0s60 20 90 0 60-20 90 0' fill='none' stroke='%23000' stroke-width='1'/%3E%3C/svg%3E")}
+#contact .sluit{position:fixed;top:36px;right:22px;z-index:2}
+#contact .binnen{position:relative;display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:40px;padding:120px 22px 60px}
+#contact .kol{opacity:0;transform:translateY(20px);transition:all .8s .5s cubic-bezier(.2,.8,.2,1)}
+#contact.open .kol{opacity:1;transform:none}
+#contact .kol:nth-child(2){transition-delay:.65s}#contact .kol:nth-child(3){transition-delay:.8s}
+#contact .titel{font-weight:500;font-size:12px;line-height:1.8;margin-bottom:26px}
+#contact p{font-size:11px;line-height:1.9;margin-bottom:18px}
+#contact b{font-weight:500}
+#contact .label{font-size:8px;letter-spacing:.24em;opacity:.55;margin:22px 0 6px}
+#contact .label:first-child{margin-top:0}
+.form{display:flex;flex-direction:column;gap:10px}
+.form .keuze{display:flex;gap:22px;font-size:10px;letter-spacing:.14em;margin-bottom:6px}
+.form .keuze label{display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+.form input[type=radio]{appearance:none;width:8px;height:8px;border:1px solid #000;border-radius:50%;margin:0}
+.form input[type=radio]:checked{background:#000}
+.form .veld{width:100%;border:1px solid #000;border-radius:999px;padding:10px 16px;font-size:11px;letter-spacing:.08em;background:transparent}
+.form textarea.veld{border-radius:18px;min-height:120px;resize:vertical;font-family:var(--mono)}
+.form .veld::placeholder{opacity:.45;text-transform:uppercase;font-size:9px;letter-spacing:.2em}
+.form .verzend{align-self:flex-start;background:#000;color:#fff;border-radius:999px;height:30px;padding:0 20px;display:inline-flex;align-items:center;gap:12px;font-size:10px;letter-spacing:.12em;margin-top:8px;transition:background .3s}
+.form .verzend:hover{background:#333}
+.form .dank{font-size:10px;letter-spacing:.14em;display:none}
+.form.klaar .dank{display:block}.form.klaar .verzend,.form.klaar .veld,.form.klaar .keuze{display:none}
+#contact .vraag{border-top:1px solid rgba(0,0,0,.15);padding:12px 0}
+#contact .vraag b{display:block;margin-bottom:2px}
+#contact .vraag p{margin:0;font-size:10px;opacity:.8}
+#contact .kaart{margin-top:24px;aspect-ratio:4/3;background:var(--zeeblok);position:relative;overflow:hidden}
+#contact .kaart img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.05)}
+#contact .kaart span{position:absolute;left:12px;bottom:10px;font-size:8px;letter-spacing:.2em;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.6)}
+
+/* ---------- Mobiel ---------- */
+@media (max-width:820px){
+  body{overflow:auto}
+  #header{grid-template-columns:1fr auto;height:auto;padding:14px}
+  #header .c2{display:none}
+  #header .c3 .knop:not(.vol){display:none}
+  .hotspot .naam{opacity:1}
+  #footer{height:auto}
+  .tijd{position:static;transform:none;justify-content:center;margin-bottom:8px}
+  .nu{display:none}
+  #modal .kader{grid-template-columns:1fr;height:92vh;width:94vw}
+  .carrousel{height:44%}
+  #over .binnen,#contact .binnen{grid-template-columns:1fr;padding-top:90px}
+  #over .blok{grid-template-columns:repeat(3,1fr)}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  #preloader{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="preloader" aria-hidden="true"><div class="merk"><svg class="logo-svg" xmlns="http://www.w3.org/2000/svg" viewBox="80.74 342.38 386.43 111.93" fill="currentColor"><path d="M 287.144531 401.140625 L 260.554688 401.140625 C 259.105469 401.140625 257.929688 399.964844 257.929688 398.515625 C 257.929688 397.066406 259.105469 395.890625 260.554688 395.890625 L 287.144531 395.890625 C 288.59375 395.890625 289.769531 397.066406 289.769531 398.515625 C 289.769531 399.964844 288.59375 401.140625 287.144531 401.140625 "/><path d="M 121.851562 452.308594 L 85.375 452.308594 C 83.921875 452.308594 82.742188 451.152344 82.742188 449.726562 C 82.742188 448.300781 83.921875 447.148438 85.375 447.148438 L 121.851562 447.148438 C 136.496094 447.148438 148.40625 435.617188 148.40625 421.441406 C 148.40625 411.550781 142.789062 403.847656 131.707031 398.539062 C 123.0625 394.398438 114.226562 393.34375 114.136719 393.335938 C 114.085938 393.328125 114.035156 393.320312 113.988281 393.3125 C 91.289062 389.410156 83.625 383.113281 83.625 368.359375 C 83.625 355.324219 94.554688 344.722656 107.984375 344.722656 L 141.6875 344.722656 C 142.636719 344.722656 143.511719 345.222656 143.980469 346.035156 C 144.445312 346.847656 144.433594 347.839844 143.941406 348.636719 L 121.296875 385.425781 C 120.546875 386.648438 118.929688 387.039062 117.683594 386.304688 C 116.441406 385.566406 116.039062 383.980469 116.789062 382.761719 L 137.023438 349.886719 L 107.984375 349.886719 C 97.457031 349.886719 88.890625 358.171875 88.890625 368.359375 C 88.890625 377.363281 90.753906 384.0625 114.828125 388.21875 C 115.84375 388.339844 124.804688 389.519531 133.890625 393.839844 C 146.832031 399.996094 153.671875 409.542969 153.671875 421.441406 C 153.671875 438.460938 139.398438 452.308594 121.851562 452.308594 "/><path d="M 172.984375 452.308594 C 171.53125 452.308594 170.351562 451.152344 170.351562 449.726562 L 170.351562 347.304688 C 170.351562 345.878906 171.53125 344.722656 172.984375 344.722656 C 174.4375 344.722656 175.617188 345.878906 175.617188 347.304688 L 175.617188 449.726562 C 175.617188 451.152344 174.4375 452.308594 172.984375 452.308594 "/><path d="M 172.980469 421.324219 C 172.484375 421.324219 171.984375 421.1875 171.539062 420.898438 C 170.324219 420.117188 169.984375 418.515625 170.785156 417.324219 L 214.40625 352.203125 C 215.203125 351.011719 216.832031 350.679688 218.050781 351.464844 C 219.265625 352.246094 219.601562 353.84375 218.804688 355.035156 L 175.183594 420.160156 C 174.679688 420.914062 173.839844 421.324219 172.980469 421.324219 "/><path d="M 224.183594 452.308594 C 223.429688 452.308594 222.679688 451.992188 222.15625 451.375 L 182 403.902344 C 181.074219 402.804688 181.230469 401.179688 182.347656 400.269531 C 183.464844 399.359375 185.125 399.511719 186.054688 400.605469 L 226.210938 448.082031 C 227.140625 449.175781 226.984375 450.804688 225.863281 451.714844 C 225.371094 452.113281 224.777344 452.308594 224.183594 452.308594 "/><path d="M 246.488281 452.308594 C 245.035156 452.308594 243.855469 451.152344 243.855469 449.726562 L 243.855469 347.304688 C 243.855469 345.878906 245.035156 344.722656 246.488281 344.722656 C 247.941406 344.722656 249.121094 345.878906 249.121094 347.304688 L 249.121094 449.726562 C 249.121094 451.152344 247.941406 452.308594 246.488281 452.308594 "/><path d="M 257.453125 392.699219 L 235.523438 392.699219 C 234.070312 392.699219 232.890625 391.542969 232.890625 390.117188 C 232.890625 388.691406 234.070312 387.535156 235.523438 387.535156 L 257.453125 387.535156 C 258.90625 387.535156 260.085938 388.691406 260.085938 390.117188 C 260.085938 391.542969 258.90625 392.699219 257.453125 392.699219 "/><path d="M 276.378906 452.308594 C 274.925781 452.308594 273.746094 451.152344 273.746094 449.726562 L 273.746094 347.304688 C 273.746094 345.878906 274.925781 344.722656 276.378906 344.722656 L 342.042969 344.722656 C 343.5 344.722656 344.675781 345.878906 344.675781 347.304688 C 344.675781 348.730469 343.5 349.886719 342.042969 349.886719 L 279.011719 349.886719 L 279.011719 449.726562 C 279.011719 451.152344 277.832031 452.308594 276.378906 452.308594 "/><path d="M 284.320312 397.878906 L 309.839844 397.878906 L 301.003906 385.691406 Z M 314.945312 403.039062 L 276.378906 403.039062 C 275.246094 403.039062 274.238281 402.328125 273.878906 401.269531 C 273.523438 400.214844 273.894531 399.050781 274.808594 398.386719 L 297.949219 381.484375 L 274.234375 348.800781 C 273.390625 347.640625 273.667969 346.027344 274.851562 345.199219 C 276.039062 344.375 277.683594 344.648438 278.523438 345.808594 L 317.089844 398.960938 C 317.660156 399.75 317.738281 400.78125 317.285156 401.640625 C 316.832031 402.5 315.929688 403.039062 314.945312 403.039062 "/><path d="M 353.851562 452.308594 C 352.398438 452.308594 351.21875 451.152344 351.21875 449.726562 L 351.21875 347.304688 C 351.21875 345.878906 352.398438 344.722656 353.851562 344.722656 L 419.519531 344.722656 C 420.972656 344.722656 422.152344 345.878906 422.152344 347.304688 C 422.152344 348.730469 420.972656 349.886719 419.519531 349.886719 L 356.484375 349.886719 L 356.484375 449.726562 C 356.484375 451.152344 355.304688 452.308594 353.851562 452.308594 "/><path d="M 361.792969 397.878906 L 387.316406 397.878906 L 378.472656 385.691406 Z M 392.417969 403.039062 L 353.851562 403.039062 C 352.71875 403.039062 351.710938 402.328125 351.355469 401.269531 C 350.996094 400.214844 351.371094 399.050781 352.28125 398.386719 L 375.421875 381.484375 L 351.707031 348.800781 C 350.867188 347.640625 351.140625 346.027344 352.324219 345.199219 C 353.511719 344.375 355.15625 344.648438 355.996094 345.808594 L 381.191406 380.53125 C 381.203125 380.546875 381.210938 380.558594 381.21875 380.570312 L 394.5625 398.960938 C 395.136719 399.75 395.210938 400.78125 394.757812 401.640625 C 394.304688 402.5 393.402344 403.039062 392.417969 403.039062 "/><path d="M 395.671875 452.308594 C 395.390625 452.308594 395.101562 452.261719 394.820312 452.167969 C 393.445312 451.707031 392.710938 450.238281 393.183594 448.890625 L 429 346.46875 C 429.367188 345.414062 430.378906 344.695312 431.523438 344.722656 C 432.660156 344.738281 433.660156 345.464844 434 346.53125 L 464.832031 442.621094 C 465.167969 443.667969 464.792969 444.808594 463.894531 445.464844 C 462.996094 446.121094 461.773438 446.144531 460.84375 445.53125 L 416.648438 416.132812 C 415.445312 415.335938 415.128906 413.730469 415.945312 412.550781 C 416.761719 411.371094 418.398438 411.0625 419.601562 411.863281 L 457.542969 437.097656 L 431.382812 355.570312 L 398.160156 450.566406 C 397.789062 451.636719 396.765625 452.308594 395.671875 452.308594 "/></svg></div><div class="sub">SCHEVENINGEN</div></div>
+</div>
+
+<!-- Scène: drie foto's, gekozen op de tijd in Scheveningen -->
+<div id="scene">
+  <div class="periode" data-p="ochtend"><img src="https://live.staticflickr.com/7017/6388403661_a805b15e60_k.jpg" alt="Grijze ochtend aan de Noordzee, wandelaars langs de vloedlijn" data-w="2048" data-h="1365"></div>
+  <div class="periode" data-p="middag"><img src="https://live.staticflickr.com/3288/2329427226_5b01f0f3aa_k.jpg" alt="Vrouw loopt tegen de wind in over het strand, harde branding" data-w="2048" data-h="1371"></div>
+  <div class="periode" data-p="avond"><img src="https://live.staticflickr.com/65535/48689392562_ca8aa9d6b6_k.jpg" alt="Naderende storm boven de Noordzee, avond" data-w="2048" data-h="1365"></div>
+  <div class="korrel"></div>
+</div>
+<div class="credit" id="credit"></div>
+
+<div id="ui">
+  <div id="header">
+    <div class="c1"><a href="#" class="logo" aria-label="Skiffa"><svg class="logo-svg" xmlns="http://www.w3.org/2000/svg" viewBox="80.74 342.38 386.43 111.93" fill="currentColor"><path d="M 287.144531 401.140625 L 260.554688 401.140625 C 259.105469 401.140625 257.929688 399.964844 257.929688 398.515625 C 257.929688 397.066406 259.105469 395.890625 260.554688 395.890625 L 287.144531 395.890625 C 288.59375 395.890625 289.769531 397.066406 289.769531 398.515625 C 289.769531 399.964844 288.59375 401.140625 287.144531 401.140625 "/><path d="M 121.851562 452.308594 L 85.375 452.308594 C 83.921875 452.308594 82.742188 451.152344 82.742188 449.726562 C 82.742188 448.300781 83.921875 447.148438 85.375 447.148438 L 121.851562 447.148438 C 136.496094 447.148438 148.40625 435.617188 148.40625 421.441406 C 148.40625 411.550781 142.789062 403.847656 131.707031 398.539062 C 123.0625 394.398438 114.226562 393.34375 114.136719 393.335938 C 114.085938 393.328125 114.035156 393.320312 113.988281 393.3125 C 91.289062 389.410156 83.625 383.113281 83.625 368.359375 C 83.625 355.324219 94.554688 344.722656 107.984375 344.722656 L 141.6875 344.722656 C 142.636719 344.722656 143.511719 345.222656 143.980469 346.035156 C 144.445312 346.847656 144.433594 347.839844 143.941406 348.636719 L 121.296875 385.425781 C 120.546875 386.648438 118.929688 387.039062 117.683594 386.304688 C 116.441406 385.566406 116.039062 383.980469 116.789062 382.761719 L 137.023438 349.886719 L 107.984375 349.886719 C 97.457031 349.886719 88.890625 358.171875 88.890625 368.359375 C 88.890625 377.363281 90.753906 384.0625 114.828125 388.21875 C 115.84375 388.339844 124.804688 389.519531 133.890625 393.839844 C 146.832031 399.996094 153.671875 409.542969 153.671875 421.441406 C 153.671875 438.460938 139.398438 452.308594 121.851562 452.308594 "/><path d="M 172.984375 452.308594 C 171.53125 452.308594 170.351562 451.152344 170.351562 449.726562 L 170.351562 347.304688 C 170.351562 345.878906 171.53125 344.722656 172.984375 344.722656 C 174.4375 344.722656 175.617188 345.878906 175.617188 347.304688 L 175.617188 449.726562 C 175.617188 451.152344 174.4375 452.308594 172.984375 452.308594 "/><path d="M 172.980469 421.324219 C 172.484375 421.324219 171.984375 421.1875 171.539062 420.898438 C 170.324219 420.117188 169.984375 418.515625 170.785156 417.324219 L 214.40625 352.203125 C 215.203125 351.011719 216.832031 350.679688 218.050781 351.464844 C 219.265625 352.246094 219.601562 353.84375 218.804688 355.035156 L 175.183594 420.160156 C 174.679688 420.914062 173.839844 421.324219 172.980469 421.324219 "/><path d="M 224.183594 452.308594 C 223.429688 452.308594 222.679688 451.992188 222.15625 451.375 L 182 403.902344 C 181.074219 402.804688 181.230469 401.179688 182.347656 400.269531 C 183.464844 399.359375 185.125 399.511719 186.054688 400.605469 L 226.210938 448.082031 C 227.140625 449.175781 226.984375 450.804688 225.863281 451.714844 C 225.371094 452.113281 224.777344 452.308594 224.183594 452.308594 "/><path d="M 246.488281 452.308594 C 245.035156 452.308594 243.855469 451.152344 243.855469 449.726562 L 243.855469 347.304688 C 243.855469 345.878906 245.035156 344.722656 246.488281 344.722656 C 247.941406 344.722656 249.121094 345.878906 249.121094 347.304688 L 249.121094 449.726562 C 249.121094 451.152344 247.941406 452.308594 246.488281 452.308594 "/><path d="M 257.453125 392.699219 L 235.523438 392.699219 C 234.070312 392.699219 232.890625 391.542969 232.890625 390.117188 C 232.890625 388.691406 234.070312 387.535156 235.523438 387.535156 L 257.453125 387.535156 C 258.90625 387.535156 260.085938 388.691406 260.085938 390.117188 C 260.085938 391.542969 258.90625 392.699219 257.453125 392.699219 "/><path d="M 276.378906 452.308594 C 274.925781 452.308594 273.746094 451.152344 273.746094 449.726562 L 273.746094 347.304688 C 273.746094 345.878906 274.925781 344.722656 276.378906 344.722656 L 342.042969 344.722656 C 343.5 344.722656 344.675781 345.878906 344.675781 347.304688 C 344.675781 348.730469 343.5 349.886719 342.042969 349.886719 L 279.011719 349.886719 L 279.011719 449.726562 C 279.011719 451.152344 277.832031 452.308594 276.378906 452.308594 "/><path d="M 284.320312 397.878906 L 309.839844 397.878906 L 301.003906 385.691406 Z M 314.945312 403.039062 L 276.378906 403.039062 C 275.246094 403.039062 274.238281 402.328125 273.878906 401.269531 C 273.523438 400.214844 273.894531 399.050781 274.808594 398.386719 L 297.949219 381.484375 L 274.234375 348.800781 C 273.390625 347.640625 273.667969 346.027344 274.851562 345.199219 C 276.039062 344.375 277.683594 344.648438 278.523438 345.808594 L 317.089844 398.960938 C 317.660156 399.75 317.738281 400.78125 317.285156 401.640625 C 316.832031 402.5 315.929688 403.039062 314.945312 403.039062 "/><path d="M 353.851562 452.308594 C 352.398438 452.308594 351.21875 451.152344 351.21875 449.726562 L 351.21875 347.304688 C 351.21875 345.878906 352.398438 344.722656 353.851562 344.722656 L 419.519531 344.722656 C 420.972656 344.722656 422.152344 345.878906 422.152344 347.304688 C 422.152344 348.730469 420.972656 349.886719 419.519531 349.886719 L 356.484375 349.886719 L 356.484375 449.726562 C 356.484375 451.152344 355.304688 452.308594 353.851562 452.308594 "/><path d="M 361.792969 397.878906 L 387.316406 397.878906 L 378.472656 385.691406 Z M 392.417969 403.039062 L 353.851562 403.039062 C 352.71875 403.039062 351.710938 402.328125 351.355469 401.269531 C 350.996094 400.214844 351.371094 399.050781 352.28125 398.386719 L 375.421875 381.484375 L 351.707031 348.800781 C 350.867188 347.640625 351.140625 346.027344 352.324219 345.199219 C 353.511719 344.375 355.15625 344.648438 355.996094 345.808594 L 381.191406 380.53125 C 381.203125 380.546875 381.210938 380.558594 381.21875 380.570312 L 394.5625 398.960938 C 395.136719 399.75 395.210938 400.78125 394.757812 401.640625 C 394.304688 402.5 393.402344 403.039062 392.417969 403.039062 "/><path d="M 395.671875 452.308594 C 395.390625 452.308594 395.101562 452.261719 394.820312 452.167969 C 393.445312 451.707031 392.710938 450.238281 393.183594 448.890625 L 429 346.46875 C 429.367188 345.414062 430.378906 344.695312 431.523438 344.722656 C 432.660156 344.738281 433.660156 345.464844 434 346.53125 L 464.832031 442.621094 C 465.167969 443.667969 464.792969 444.808594 463.894531 445.464844 C 462.996094 446.121094 461.773438 446.144531 460.84375 445.53125 L 416.648438 416.132812 C 415.445312 415.335938 415.128906 413.730469 415.945312 412.550781 C 416.761719 411.371094 418.398438 411.0625 419.601562 411.863281 L 457.542969 437.097656 L 431.382812 355.570312 L 398.160156 450.566406 C 397.789062 451.636719 396.765625 452.308594 395.671875 452.308594 "/></svg></a><small>SCHEVENINGEN</small></div>
+    <div class="c2" id="tagline">made for the grey side of the sea</div>
+    <div class="c3">
+      <button class="knop" id="overKnop">over</button>
+      <button class="knop" id="contactKnop">contact</button>
+      <a class="knop ico" href="#" aria-label="Instagram"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/></svg></a>
+      <div class="shop"><button class="knop vol">shop t-shirts</button>
+        <div class="lijst" id="shopLijst"></div>
+      </div>
+    </div>
+  </div>
+  <div id="hotspots"></div>
+  <div id="footer">
+    <div class="bericht" id="bericht"></div>
+    <div class="tijd"><span>Skiffa, NL —</span><span class="cijfers" id="klok"></span></div>
+    <div id="getijen"></div>
+    <div class="nu" id="nu">nu</div>
+    <div id="tijdlijn" aria-label="Tijdlijn, beweeg over de balk om de tijd te veranderen"></div>
+    <div class="uren"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div>
+  </div>
+</div>
+
+<!-- Product-modal -->
+<div id="modal" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="kader">
+    <button class="sluit" id="modalSluit" aria-label="Sluiten">+</button>
+    <div class="carrousel"><div class="voortgang"><i></i><i></i><i></i></div><div class="baan" id="baan"></div></div>
+    <div class="modaltekst" id="modaltekst"></div>
+  </div>
+</div>
+
+<!-- Over -->
+<div id="over" aria-hidden="true">
+  <div class="textuur"></div>
+  <button class="knop sluit" id="overSluit">sluiten</button>
+  <div class="binnen">
+    <div class="kol">
+      <p class="titel">Skiffa is straattaal voor Scheveningen. Zo noemen de mensen die er wonen hun eigen badplaats — en zo heet het shirt dat je aantrekt als de lucht dichtzit en je toch gaat.</p>
+      <div class="drie">
+        <div><svg viewBox="0 0 24 24"><path d="M3 8h11a3 3 0 1 0-3-3M3 13h15a3 3 0 1 1-3 3M3 18h8"/></svg>wind</div>
+        <div><svg viewBox="0 0 24 24"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg>water</div>
+        <div><svg viewBox="0 0 24 24"><path d="M2 18c4-2 6-2 10 0s6 2 10 0M4 13c3-1.5 5-1.5 8 0s5 1.5 8 0"/></svg>zand</div>
+      </div>
+      <div class="merk"><svg class="logo-svg" xmlns="http://www.w3.org/2000/svg" viewBox="80.74 342.38 386.43 111.93" fill="currentColor"><path d="M 287.144531 401.140625 L 260.554688 401.140625 C 259.105469 401.140625 257.929688 399.964844 257.929688 398.515625 C 257.929688 397.066406 259.105469 395.890625 260.554688 395.890625 L 287.144531 395.890625 C 288.59375 395.890625 289.769531 397.066406 289.769531 398.515625 C 289.769531 399.964844 288.59375 401.140625 287.144531 401.140625 "/><path d="M 121.851562 452.308594 L 85.375 452.308594 C 83.921875 452.308594 82.742188 451.152344 82.742188 449.726562 C 82.742188 448.300781 83.921875 447.148438 85.375 447.148438 L 121.851562 447.148438 C 136.496094 447.148438 148.40625 435.617188 148.40625 421.441406 C 148.40625 411.550781 142.789062 403.847656 131.707031 398.539062 C 123.0625 394.398438 114.226562 393.34375 114.136719 393.335938 C 114.085938 393.328125 114.035156 393.320312 113.988281 393.3125 C 91.289062 389.410156 83.625 383.113281 83.625 368.359375 C 83.625 355.324219 94.554688 344.722656 107.984375 344.722656 L 141.6875 344.722656 C 142.636719 344.722656 143.511719 345.222656 143.980469 346.035156 C 144.445312 346.847656 144.433594 347.839844 143.941406 348.636719 L 121.296875 385.425781 C 120.546875 386.648438 118.929688 387.039062 117.683594 386.304688 C 116.441406 385.566406 116.039062 383.980469 116.789062 382.761719 L 137.023438 349.886719 L 107.984375 349.886719 C 97.457031 349.886719 88.890625 358.171875 88.890625 368.359375 C 88.890625 377.363281 90.753906 384.0625 114.828125 388.21875 C 115.84375 388.339844 124.804688 389.519531 133.890625 393.839844 C 146.832031 399.996094 153.671875 409.542969 153.671875 421.441406 C 153.671875 438.460938 139.398438 452.308594 121.851562 452.308594 "/><path d="M 172.984375 452.308594 C 171.53125 452.308594 170.351562 451.152344 170.351562 449.726562 L 170.351562 347.304688 C 170.351562 345.878906 171.53125 344.722656 172.984375 344.722656 C 174.4375 344.722656 175.617188 345.878906 175.617188 347.304688 L 175.617188 449.726562 C 175.617188 451.152344 174.4375 452.308594 172.984375 452.308594 "/><path d="M 172.980469 421.324219 C 172.484375 421.324219 171.984375 421.1875 171.539062 420.898438 C 170.324219 420.117188 169.984375 418.515625 170.785156 417.324219 L 214.40625 352.203125 C 215.203125 351.011719 216.832031 350.679688 218.050781 351.464844 C 219.265625 352.246094 219.601562 353.84375 218.804688 355.035156 L 175.183594 420.160156 C 174.679688 420.914062 173.839844 421.324219 172.980469 421.324219 "/><path d="M 224.183594 452.308594 C 223.429688 452.308594 222.679688 451.992188 222.15625 451.375 L 182 403.902344 C 181.074219 402.804688 181.230469 401.179688 182.347656 400.269531 C 183.464844 399.359375 185.125 399.511719 186.054688 400.605469 L 226.210938 448.082031 C 227.140625 449.175781 226.984375 450.804688 225.863281 451.714844 C 225.371094 452.113281 224.777344 452.308594 224.183594 452.308594 "/><path d="M 246.488281 452.308594 C 245.035156 452.308594 243.855469 451.152344 243.855469 449.726562 L 243.855469 347.304688 C 243.855469 345.878906 245.035156 344.722656 246.488281 344.722656 C 247.941406 344.722656 249.121094 345.878906 249.121094 347.304688 L 249.121094 449.726562 C 249.121094 451.152344 247.941406 452.308594 246.488281 452.308594 "/><path d="M 257.453125 392.699219 L 235.523438 392.699219 C 234.070312 392.699219 232.890625 391.542969 232.890625 390.117188 C 232.890625 388.691406 234.070312 387.535156 235.523438 387.535156 L 257.453125 387.535156 C 258.90625 387.535156 260.085938 388.691406 260.085938 390.117188 C 260.085938 391.542969 258.90625 392.699219 257.453125 392.699219 "/><path d="M 276.378906 452.308594 C 274.925781 452.308594 273.746094 451.152344 273.746094 449.726562 L 273.746094 347.304688 C 273.746094 345.878906 274.925781 344.722656 276.378906 344.722656 L 342.042969 344.722656 C 343.5 344.722656 344.675781 345.878906 344.675781 347.304688 C 344.675781 348.730469 343.5 349.886719 342.042969 349.886719 L 279.011719 349.886719 L 279.011719 449.726562 C 279.011719 451.152344 277.832031 452.308594 276.378906 452.308594 "/><path d="M 284.320312 397.878906 L 309.839844 397.878906 L 301.003906 385.691406 Z M 314.945312 403.039062 L 276.378906 403.039062 C 275.246094 403.039062 274.238281 402.328125 273.878906 401.269531 C 273.523438 400.214844 273.894531 399.050781 274.808594 398.386719 L 297.949219 381.484375 L 274.234375 348.800781 C 273.390625 347.640625 273.667969 346.027344 274.851562 345.199219 C 276.039062 344.375 277.683594 344.648438 278.523438 345.808594 L 317.089844 398.960938 C 317.660156 399.75 317.738281 400.78125 317.285156 401.640625 C 316.832031 402.5 315.929688 403.039062 314.945312 403.039062 "/><path d="M 353.851562 452.308594 C 352.398438 452.308594 351.21875 451.152344 351.21875 449.726562 L 351.21875 347.304688 C 351.21875 345.878906 352.398438 344.722656 353.851562 344.722656 L 419.519531 344.722656 C 420.972656 344.722656 422.152344 345.878906 422.152344 347.304688 C 422.152344 348.730469 420.972656 349.886719 419.519531 349.886719 L 356.484375 349.886719 L 356.484375 449.726562 C 356.484375 451.152344 355.304688 452.308594 353.851562 452.308594 "/><path d="M 361.792969 397.878906 L 387.316406 397.878906 L 378.472656 385.691406 Z M 392.417969 403.039062 L 353.851562 403.039062 C 352.71875 403.039062 351.710938 402.328125 351.355469 401.269531 C 350.996094 400.214844 351.371094 399.050781 352.28125 398.386719 L 375.421875 381.484375 L 351.707031 348.800781 C 350.867188 347.640625 351.140625 346.027344 352.324219 345.199219 C 353.511719 344.375 355.15625 344.648438 355.996094 345.808594 L 381.191406 380.53125 C 381.203125 380.546875 381.210938 380.558594 381.21875 380.570312 L 394.5625 398.960938 C 395.136719 399.75 395.210938 400.78125 394.757812 401.640625 C 394.304688 402.5 393.402344 403.039062 392.417969 403.039062 "/><path d="M 395.671875 452.308594 C 395.390625 452.308594 395.101562 452.261719 394.820312 452.167969 C 393.445312 451.707031 392.710938 450.238281 393.183594 448.890625 L 429 346.46875 C 429.367188 345.414062 430.378906 344.695312 431.523438 344.722656 C 432.660156 344.738281 433.660156 345.464844 434 346.53125 L 464.832031 442.621094 C 465.167969 443.667969 464.792969 444.808594 463.894531 445.464844 C 462.996094 446.121094 461.773438 446.144531 460.84375 445.53125 L 416.648438 416.132812 C 415.445312 415.335938 415.128906 413.730469 415.945312 412.550781 C 416.761719 411.371094 418.398438 411.0625 419.601562 411.863281 L 457.542969 437.097656 L 431.382812 355.570312 L 398.160156 450.566406 C 397.789062 451.636719 396.765625 452.308594 395.671875 452.308594 "/></svg></div>
+      <div class="maker">Scheveningen, Den Haag</div>
+    </div>
+    <div class="kol">
+      <p>Skiffa is een klein merk uit Scheveningen. Zes t-shirts, en meer niet. Geen souvenir voor toeristen, maar het shirt van de mensen die hier wonen, werken en het hele jaar naar het strand gaan — ook als het grijs is, waait en regent. <b>Van Skiffa, voor Skiffa.</b></p>
+      <p>Elk shirt is een plek of een moment aan zee: <b>Pier</b>, <b>Schuim</b>, <b>Bries</b>, <b>Duin</b>, <b>Tij</b> en <b>Boei</b>. Geen collectie, geen seizoenen. Eén prijs, vier maten, kleine oplages.</p>
+    </div>
+    <div class="kol">
+      <p>We maken ze van <b>220 grams biologisch katoen</b>, genaaid in Portugal en bedrukt in Den Haag. De opdruk is klein en zit op de borst, niet als logo maar als herkenning. Wat over is wordt niet weggegooid maar het jaar erna opnieuw verkocht.</p>
+      <p>De scène op deze site volgt de tijd in Scheveningen; de foto wisselt bij zonsopkomst en zonsondergang. De balk onderaan is het getij van vandaag, met hoog- en laagwater. Daarboven staat het strandbericht: wind, temperatuur, zeewater en of het een grijze dag is. Beweeg over de balk om zelf door de dag te gaan.</p>
+    </div>
+  </div>
+  <div class="blok" id="overBlok"></div>
+  <p style="padding:0 22px 30px;font-size:8px;letter-spacing:.14em;opacity:.55">Foto's op deze mock-up: Gastev, FaceMePLS, Paul van de Velde, NORDIC/COLD en Bernd Thaller via Flickr, CC BY 2.0. Voor de echte site komt eigen fotografie op hetzelfde stuk strand.</p>
+</div>
+
+<!-- Contact -->
+<div id="contact" aria-hidden="true">
+  <div class="textuur"></div>
+  <button class="knop sluit" id="contactSluit">sluiten</button>
+  <div class="binnen">
+    <div class="kol">
+      <p class="titel">Twijfel je tussen twee kleuren, wil je een shirt ruilen, of gewoon iets kwijt over de zee? Stuur het hierheen.</p>
+      <div class="label">adres</div>
+      <p><b>Skiffa</b><br>Keizerstraat 100<br>2586 AZ Scheveningen<br>Den Haag, Nederland</p>
+      <div class="label">bereikbaar</div>
+      <p>ma – vr 09:00 – 17:00<br>za bij goed weer niet, bij slecht weer wel</p>
+      <div class="label">rechtstreeks</div>
+      <p>hallo@skiffa.nl<br>+31 (0)70 000 00 00</p>
+      <div class="kaart"><img src="https://live.staticflickr.com/3828/10779213293_a7fa1c5080_o.jpg" alt="Strand van Scheveningen bij harde wind"><span>KEIZERSTRAAT, 200 M VAN HET STRAND</span></div>
+    </div>
+    <div class="kol">
+      <form class="form" id="contactForm" onsubmit="return false">
+        <div class="label">hoe mogen we reageren?</div>
+        <div class="keuze"><label><input type="radio" name="hoe" value="mail" checked> e-mail</label><label><input type="radio" name="hoe" value="bel"> bellen</label></div>
+        <input class="veld" name="naam" placeholder="Je naam" required>
+        <input class="veld" name="mail" type="email" placeholder="Je e-mail of telefoonnummer" required>
+        <div class="keuze" style="margin-top:8px"><label><input type="radio" name="waarover" value="bestelling" checked> bestelling</label><label><input type="radio" name="waarover" value="ruilen"> ruilen of retour</label><label><input type="radio" name="waarover" value="anders"> iets anders</label></div>
+        <textarea class="veld" name="bericht" placeholder="Je bericht"></textarea>
+        <button class="verzend" type="submit">verstuur <span>→</span></button>
+        <p class="dank">Dank je. We reageren binnen één werkdag, of sneller als het stormt.</p>
+      </form>
+    </div>
+    <div class="kol">
+      <div class="label">veelgestelde vragen</div>
+      <div class="vraag"><b>Welke maat moet ik nemen?</b><p>Onze shirts vallen normaal. Twijfel je? Neem de kleinste; het katoen rekt de eerste weken iets uit.</p></div>
+      <div class="vraag"><b>Hoe snel wordt er verzonden?</b><p>Voor 15:00 besteld is de volgende werkdag in huis. Verzenden binnen Nederland is gratis vanaf twee shirts.</p></div>
+      <div class="vraag"><b>Kan ik ruilen?</b><p>Ja, binnen 30 dagen, ongedragen en ongewassen. Meld het via dit formulier, dan sturen we een retourlabel.</p></div>
+      <div class="vraag"><b>Verkopen jullie ook in een winkel?</b><p>Nog niet. Wel op zaterdag op het strand als het waait; volg Instagram voor waar we staan.</p></div>
+      <div class="vraag"><b>Waarom maar zes shirts?</b><p>Omdat zes genoeg is. Elk shirt is een plek aan zee, en er komt er alleen een bij als er een plek bij komt.</p></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>
+const rm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const SHIRT='M60 20 L90 8 Q100 22 110 8 L140 20 L180 44 L166 76 L146 66 L146 210 L54 210 L54 66 L34 76 L20 44 Z';
+let shirts=[
+  {id:'pier',naam:'Pier',kleur:'#2B3238',licht:'#EEF0EE',x:.16,y:.80,s:'M',sub:'leigrijs · 220 g',zin:'Voor het einde van de pier, waar de wind het hardst staat en niemand meer praat.',punten:['biologisch katoen, 220 gram','genaaid in Portugal, bedrukt in Den Haag','kleine opdruk op de borst','één prijs: € 45']},
+  {id:'schuim',naam:'Schuim',kleur:'#EEF0EE',licht:'#2B3238',x:.30,y:.86,s:'S',sub:'gebroken wit · 220 g',zin:'Het wit van de branding op een grijze dag. Het enige licht dat je krijgt.',punten:['biologisch katoen, 220 gram','genaaid in Portugal, bedrukt in Den Haag','kleine opdruk op de borst','één prijs: € 45']},
+  {id:'bries',naam:'Bries',kleur:'#4F6F68',licht:'#EEF0EE',x:.43,y:.79,s:'L',sub:'zeegroen · 220 g',zin:'Windkracht 4. Net genoeg om de kou te voelen, niet genoeg om naar huis te gaan.',punten:['biologisch katoen, 220 gram','genaaid in Portugal, bedrukt in Den Haag','kleine opdruk op de borst','één prijs: € 45']},
+  {id:'duin',naam:'Duin',kleur:'#C9BFAE',licht:'#2B3238',x:.56,y:.87,s:'M',sub:'zand · 220 g',zin:'De kant waar je uit de wind zit. Helm in je rug, zee in je oren.',punten:['biologisch katoen, 220 gram','genaaid in Portugal, bedrukt in Den Haag','kleine opdruk op de borst','één prijs: € 45']},
+  {id:'tij',naam:'Tij',kleur:'#1F3A4A',licht:'#EEF0EE',x:.69,y:.81,s:'S',sub:'zeeblauw · 220 g',zin:'Twee keer per dag komt het water terug. Je hoeft er niets voor te doen.',punten:['biologisch katoen, 220 gram','genaaid in Portugal, bedrukt in Den Haag','kleine opdruk op de borst','één prijs: € 45']},
+  {id:'boei',naam:'Boei',kleur:'#E8571E',licht:'#EEF0EE',x:.83,y:.85,s:'L',sub:'oranje · 220 g',zin:'Het enige dat opvalt op zee. Eén per schip, één per kast.',punten:['biologisch katoen, 220 gram','genaaid in Portugal, bedrukt in Den Haag','kleine opdruk op de borst','één prijs: € 45']},
+];
+
+/* Hotspots: verankerd aan mensen in de foto (fractie van beeldbreedte/-hoogte, zoals maikasui doet met videoX/videoY) */
+const ankers={
+  ochtend:[{shirt:'pier',x:.17,y:.69},{shirt:'tij',x:.73,y:.70}],
+  middag:[{shirt:'boei',x:.445,y:.46}],
+  avond:[{shirt:'schuim',x:.855,y:.62}]
+};
+const credits={ochtend:'foto: Gastev (CC BY 2.0)',middag:'foto: FaceMePLS (CC BY 2.0)',avond:'foto: Paul van de Velde (CC BY 2.0)'};
+const hs=document.getElementById('hotspots');
+function beeldRect(p){const img=document.querySelector(`.periode[data-p="${p}"] img`);const W=innerWidth,H=innerHeight,iw=+img.dataset.w,ih=+img.dataset.h;const s=Math.max(W/iw,H/ih)*1.04;const w=iw*s,h=ih*s;return{x:(W-w)/2,y:(H-h)/2,w,h};}
+function plaatsHotspots(p){
+  hs.innerHTML='';const r=beeldRect(p);
+  (ankers[p]||[]).forEach((a,i)=>{const s=shirts.find(x=>x.id===a.shirt);if(!s)return;
+    const h=document.createElement('div');h.className='hotspot';h.style.setProperty('--s','64px');
+    h.style.left=(r.x+a.x*r.w)+'px';h.style.top=(r.y+a.y*r.h)+'px';
+    h.innerHTML=`<div class="rand"></div><button class="plus" aria-label="${s.naam} bekijken">+</button><div class="naam">${s.naam.toLowerCase()}</div>`;
+    h.querySelector('.plus').addEventListener('click',()=>openModal(s));hs.appendChild(h);
+    if(!rm)gsap.fromTo(h,{scale:.6,opacity:0},{scale:1,opacity:1,duration:.9,delay:.4+i*.15,ease:'elastic.out(1,.75)'});});
+  document.getElementById('credit').textContent=credits[p]||'';
+}
+
+/* Preloader */
+const pre=document.getElementById('preloader');
+setTimeout(()=>{pre.classList.add('weg');setTimeout(()=>pre.remove(),900);},rm?0:2700);
+if(!rm){gsap.from('#header > *',{y:-14,opacity:0,duration:.8,stagger:.08,delay:2.4,ease:'power2.out'});gsap.from('#footer',{y:20,opacity:0,duration:.9,delay:2.5,ease:'power2.out'});}
+
+/* Tijd, periode, klok */
+const scene=document.getElementById('scene'),periodes=[...document.querySelectorAll('.periode')];
+let zon={op:6.5,onder:20.5};/* uren, fallback; wordt overschreven door Open-Meteo */
+function periodeVan(uur,min){const t=uur+(min||0)/60;return t>=zon.op&&t<12?'ochtend':t>=12&&t<zon.onder?'middag':'avond';}
+function zetPeriode(p){if(document.body.dataset.periode===p)return;periodes.forEach(el=>el.classList.toggle('actief',el.dataset.p===p));document.body.dataset.periode=p;plaatsHotspots(p);}
+function nuScheveningen(){const d=new Date(new Date().toLocaleString('en-US',{timeZone:'Europe/Amsterdam'}));return d;}
+const klok=document.getElementById('klok');klok.innerHTML=[0,1,':',2,3].map(k=>k===':'?'<span style="width:.6em;text-align:center">:</span>':`<span class="cijfer" data-i="${k}"><span class="huidig">0</span><span class="volgend">0</span></span>`).join('');
+const cijfers=[...klok.querySelectorAll('.cijfer')];const huidig=[0,0,0,0];
+function toonTijd(u,m){const w=[Math.floor(u/10),u%10,Math.floor(m/10),m%10];
+  w.forEach((v,i)=>{if(v===huidig[i])return;const c=cijfers[i],a=c.querySelector('.huidig'),b=c.querySelector('.volgend');b.textContent=v;
+    if(rm){a.textContent=v;gsap.set([a,b],{clearProps:'all'});}
+    else gsap.timeline({delay:i*.08}).to(a,{yPercent:-100,duration:.45,ease:'expo.out'}).to(b,{yPercent:-100,duration:.45,ease:'expo.out'},0).add(()=>{a.textContent=v;gsap.set([a,b],{clearProps:'y,yPercent'});});
+    huidig[i]=v;});}
+
+/* Tijdlijn: 96 segmenten van 15 min */
+const tl=document.getElementById('tijdlijn'),nuLabel=document.getElementById('nu');const N=96;const segs=[];
+for(let i=0;i<N;i++){const s=document.createElement('div');s.className='seg'+([24,48,72].includes(i)?' breek':'');tl.appendChild(s);segs.push(s);}
+let handmatig=false,terugTimer=null,segNu=0;
+function segVanNu(){const d=nuScheveningen();return d.getHours()*4+Math.floor(d.getMinutes()/15);}
+function zetNu(){segNu=segVanNu();const d=nuScheveningen();toonTijd(d.getHours(),d.getMinutes());zetPeriode(periodeVan(d.getHours(),d.getMinutes()));toonBericht(segNu);
+  const r=tl.getBoundingClientRect();nuLabel.style.left=(r.left+(segNu+.5)*r.width/N)+'px';golf(segNu,false);}
+function golf(idx,hover){
+  segs.forEach((s,i)=>{const d=Math.abs(i-idx);const t=hover?Math.max(0,1-d/7):(i===idx?1:0);
+    s.classList.toggle('actief',i===idx);
+    if(rm){s.style.setProperty('--t',t);}else gsap.to(s,{'--t':t,duration:.45,ease:'power2.out',overwrite:true});});
+}
+tl.addEventListener('mousemove',e=>{const r=tl.getBoundingClientRect();const idx=Math.min(N-1,Math.max(0,Math.floor((e.clientX-r.left)/r.width*N)));handmatig=true;clearTimeout(terugTimer);
+  const u=Math.floor(idx/4),m=(idx%4)*15;toonTijd(u,m);zetPeriode(periodeVan(u,m));golf(idx,true);toonBericht(idx);});
+tl.addEventListener('mouseleave',()=>{terugTimer=setTimeout(()=>{handmatig=false;zetNu();},4000);});
+/* ---------- Noordzee-data (Open-Meteo, gratis, zonder sleutel) ---------- */
+const LAT=52.11,LON=4.27;const bericht=document.getElementById('bericht'),getijen=document.getElementById('getijen');
+let weer=null,getij=null;/* getij: 96 waarden (per kwartier), genormaliseerd 0..1 */
+const bft=v=>[0.3,1.6,3.4,5.5,8,10.8,13.9,17.2,20.8,24.5,28.5,32.7].findIndex(g=>v<g)===-1?12:[0.3,1.6,3.4,5.5,8,10.8,13.9,17.2,20.8,24.5,28.5,32.7].findIndex(g=>v<g);
+const kompas=d=>['N','NO','O','ZO','Z','ZW','W','NW'][Math.round(d/45)%8];
+function toonBericht(idx){
+  if(!weer||!weer.hourly||!weer.hourly.wind_direction_10m)return;const u=Math.floor(idx/4);
+  const w=weer.hourly,i=Math.min(23,u);
+  const wind=`${kompas(w.wind_direction_10m[i])} ${bft(w.wind_speed_10m[i])}`;
+  const grijs=w.cloud_cover[i]>=70?'grijs':w.cloud_cover[i]>=35?'half bewolkt':'helder';
+  const zee=weer.zee!=null?`<i>·</i>zee ${Math.round(weer.zee)}°C`:'';
+  const golf=weer.golf!=null?`<i>·</i>golven ${weer.golf.toFixed(1)} m`:'';
+  bericht.innerHTML=`${wind}<i>·</i>${Math.round(w.temperature_2m[i])}°C${zee}${golf}<i>·</i>${grijs}`;bericht.classList.add('aan');
+}
+function zetGetij(waarden){/* 24 uurwaarden -> 96 kwartierwaarden, lineair */
+  const q=[];for(let i=0;i<96;i++){const h=i/4,a=Math.floor(h),b=Math.min(23,a+1),f=h-a;q.push(waarden[a]+(waarden[b]-waarden[a])*f);}
+  const mn=Math.min(...q),mx=Math.max(...q);getij=q.map(v=>(v-mn)/(mx-mn||1));
+  segs.forEach((sg,i)=>sg.style.setProperty('--b',getij[i].toFixed(3)));
+  /* hoog- en laagwater: extremen op een gladgestreken uurreeks, minstens 4 uur uit elkaar */
+  const g=waarden.map((v,i)=>i===0||i===23?v:(waarden[i-1]+v+waarden[i+1])/3);
+  let ex=[];for(let i=1;i<23;i++){if(g[i]>g[i-1]&&g[i]>=g[i+1])ex.push(['HW',i,g[i]]);if(g[i]<g[i-1]&&g[i]<=g[i+1])ex.push(['LW',i,g[i]]);}
+  ex=ex.filter((e,k)=>{const vorige=ex[k-1];return !vorige||e[1]-vorige[1]>=4||Math.abs(e[2]-vorige[2])>0.4;});
+  const r=tl.getBoundingClientRect();
+  getijen.innerHTML=ex.map(([t,i])=>`<div class="getij" style="left:${r.left+(i*4+.5)*r.width/96}px">${t} ${String(i).padStart(2,'0')}:00</div>`).join('');
+}
+async function laadData(){
+  try{
+    const [a,b]=await Promise.all([
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,wind_speed_10m,wind_direction_10m,cloud_cover&daily=sunrise,sunset&wind_speed_unit=ms&timezone=Europe%2FAmsterdam&forecast_days=1`).then(r=>r.json()),
+      fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${LAT}&longitude=${LON}&hourly=sea_level_height_msl,wave_height,sea_surface_temperature&timezone=Europe%2FAmsterdam&forecast_days=1`).then(r=>r.json()).catch(()=>null)
+    ]);
+    if(!a||!a.hourly||!a.daily)throw new Error('geen weerdata');
+    weer={hourly:a.hourly};
+    const so=a.daily.sunrise[0].slice(11),su=a.daily.sunset[0].slice(11);
+    zon={op:+so.slice(0,2)+(+so.slice(3,5))/60,onder:+su.slice(0,2)+(+su.slice(3,5))/60};
+    if(b&&b.hourly){const h=nuScheveningen().getHours();weer.zee=b.hourly.sea_surface_temperature?.[h]??null;weer.golf=b.hourly.wave_height?.[h]??null;
+      if(b.hourly.sea_level_height_msl&&b.hourly.sea_level_height_msl.every(v=>v!=null))zetGetij(b.hourly.sea_level_height_msl);}
+    zetNu();
+  }catch(e){console.warn('Noordzee-data niet beschikbaar',e);}
+}
+zetNu();setInterval(()=>{if(!handmatig)zetNu();},30000);laadData();setInterval(laadData,15*60*1000);addEventListener('resize',()=>{if(!handmatig)zetNu();plaatsHotspots(document.body.dataset.periode);});
+
+
+/* Modal */
+const modal=document.getElementById('modal'),baan=document.getElementById('baan'),mt=document.getElementById('modaltekst'),vg=[...document.querySelectorAll('.voortgang i')];
+let diaTimer=null,dia=0;
+function openModal(s){
+  const sfeer=[['https://live.staticflickr.com/3828/10779213293_a7fa1c5080_o.jpg','zandstorm op het strand'],['https://live.staticflickr.com/4564/25120830278_4b8ef6e332_k.jpg','branding bij windkracht 8']];
+  baan.innerHTML=`<div class="dia kleur" style="background:${s.kleur};color:${s.licht}"><div class="swatch"><span>${s.naam.toLowerCase()}</span><em>${s.sub}</em></div><small style="color:${s.licht}">productfoto volgt — kleur op ware waarde</small></div>`+
+    sfeer.map(([u,l])=>`<div class="dia"><img src="${u}" alt="${l}"><small>${l}</small></div>`).join('');
+  mt.innerHTML=`<h3>${s.naam.toLowerCase()} — t-shirt</h3><p class="sub">${s.sub}</p><p>${s.zin}</p><ul>${s.punten.map(p=>`<li>${p}</li>`).join('')}</ul>
+    <div class="maten" role="group" aria-label="Maat"><button aria-pressed="true">S</button><button>M</button><button>L</button><button ${s.id==='schuim'?'disabled':''}>XL</button></div>
+    <button class="bestel">in de winkelwagen <span>€ 45</span></button>`;
+  mt.querySelector('.maten').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;mt.querySelectorAll('.maten button').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true');});
+  const be=mt.querySelector('.bestel');be.addEventListener('click',()=>{be.classList.add('klaar');be.firstChild.textContent='toegevoegd ';setTimeout(()=>{be.classList.remove('klaar');be.firstChild.textContent='in de winkelwagen ';},1600);});
+  dia=0;toonDia();modal.classList.add('open');modal.setAttribute('aria-hidden','false');scene.classList.add('grijs');
+}
+function toonDia(){baan.style.transform=`translateX(${-dia*100}%)`;vg.forEach((i,k)=>{i.className=k<dia?'klaar':k===dia?'bezig':'';});clearTimeout(diaTimer);diaTimer=setTimeout(()=>{dia=(dia+1)%3;toonDia();},3200);}
+function sluitModal(){modal.classList.remove('open');modal.setAttribute('aria-hidden','true');scene.classList.remove('grijs');clearTimeout(diaTimer);}
+document.getElementById('modalSluit').addEventListener('click',sluitModal);
+modal.addEventListener('click',e=>{if(e.target===modal)sluitModal();});
+document.querySelector('.carrousel').addEventListener('click',e=>{if(e.target.closest('.voortgang'))return;dia=(dia+1)%3;toonDia();});
+
+const shopLijst=document.getElementById('shopLijst');
+function tekenShop(){shopLijst.innerHTML=shirts.map(s=>`<button class="knop vol" data-id="${s.id}"><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${s.kleur};margin-right:8px;border:1px solid rgba(0,0,0,.15)"></i>${s.naam.toLowerCase()} — € 45</button>`).join('');}
+tekenShop();
+shopLijst.addEventListener('click',e=>{const b=e.target.closest('[data-id]');if(b)openModal(shirts.find(s=>s.id===b.dataset.id));});
+
+/* Over */
+const over=document.getElementById('over'),ob=document.getElementById('overBlok');
+function tekenOverBlok(){ob.innerHTML=shirts.map(s=>`<button class="shirt" data-id="${s.id}"><i style="background:${s.kleur}"></i><b>${s.naam.toLowerCase()}</b>€ 45</button>`).join('');}
+tekenOverBlok();
+ob.addEventListener('click',e=>{const b=e.target.closest('[data-id]');if(!b)return;openModal(shirts.find(s=>s.id===b.dataset.id));});
+function openOver(){over.classList.add('open');over.setAttribute('aria-hidden','false');scene.classList.add('grijs');}
+function sluitOver(){over.classList.remove('open');over.setAttribute('aria-hidden','true');scene.classList.remove('grijs');}
+document.getElementById('overKnop').addEventListener('click',openOver);
+document.getElementById('overSluit').addEventListener('click',sluitOver);
+/* Contact */
+const contact=document.getElementById('contact'),cf=document.getElementById('contactForm');
+function openContact(){sluitOver();contact.classList.add('open');contact.setAttribute('aria-hidden','false');scene.classList.add('grijs');setTimeout(()=>cf.querySelector('[name=naam]').focus(),900);}
+function sluitContact(){contact.classList.remove('open');contact.setAttribute('aria-hidden','true');if(!over.classList.contains('open'))scene.classList.remove('grijs');}
+document.getElementById('contactKnop').addEventListener('click',openContact);
+document.getElementById('contactSluit').addEventListener('click',sluitContact);
+cf.addEventListener('submit',()=>{if(!cf.reportValidity())return;cf.classList.add('klaar');});
+addEventListener('keydown',e=>{if(e.key==='Escape'){sluitModal();sluitOver();sluitContact();}});
+
+/* ---------- CMS-hydratie (headless; env-gated op de server, valt stil terug op de content in de code) ----------
+   De site draait volledig zonder CMS. Staat er op de server een CMS_URL + CMS_TOKEN (zie /api/content),
+   dan haalt deze bootstrap de gepubliceerde content op en vervangt de tagline en de shirts.
+   Zonder token geeft /api/content {ok:false} en blijft alles exact zoals in de code. */
+function normaliseerShirt(s){return{
+  id:String(s.id),naam:s.naam,kleur:s.kleur,licht:s.licht,
+  x:+s.x,y:+s.y,s:s.s,sub:s.sub,zin:s.zin,
+  punten:Array.isArray(s.punten)?s.punten:[]
+};}
+(async()=>{
+  try{
+    const r=await fetch('/api/content',{cache:'no-store'});
+    if(!r.ok)return;
+    const d=await r.json();
+    if(!d||!d.ok)return;
+    if(d.tagline){const t=document.getElementById('tagline');if(t)t.textContent=d.tagline;}
+    if(Array.isArray(d.shirts)&&d.shirts.length){
+      shirts=d.shirts.map(normaliseerShirt);
+      tekenShop();tekenOverBlok();
+      plaatsHotspots(document.body.dataset.periode||'ochtend');
+    }
+  }catch(_){/* stil terugvallen op de content in de code */}
+})();
+</script>
+<style>
+/* segment-hoogte via --t (0..1) */
+#tijdlijn .seg::after{transform:translateY(calc(74% - var(--b,0) * 60% - var(--t,0) * 40%));opacity:calc(.22 + var(--b,0) * .35 + var(--t,0) * .6)}
+#tijdlijn .seg.breek::after{opacity:1}
+</style>
+</body>
+</html>
