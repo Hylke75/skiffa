@@ -4,10 +4,13 @@
 // Kanalen (empirisch bepaald met scripts/probe.mjs — sync bewaart geen site.config/design_tokens,
 // maar wél block-content verbatim):
 //   - tagline -> header-blok `subheading`   (frontend leest 1e header-subheading)
-//   - shirts  -> blok met `content.shirts`   (frontend leest 1e blok met content.shirts)
+//   - posters -> blok met `content.posters`  (frontend koppelt de teksten op id; prijzen blijven in de code)
 //
 // Draai:  CMS_URL=… CMS_TOKEN=cms_… node scripts/cms-seed.mjs
-import { tagline, shirts } from './lees-content.mjs';
+import { tagline, posters } from './lees-content.mjs';
+
+// Alleen de teksten; beelden, formaten en prijzen blijven in de code.
+const posterTekst = posters.map(({ id, naam, sub, zin, kleur, punten }) => ({ id, naam, sub, zin, kleur, punten }));
 
 const BASIS = process.env.CMS_URL || 'https://linkandlead.nl';
 const TOKEN = process.env.CMS_TOKEN;
@@ -17,8 +20,8 @@ const body = {
   paginas: [
     {
       slug: '/',
-      titel: 'Skiffa — made for the grey side of the sea',
-      beschrijving: 'Skiffa is straattaal voor Scheveningen. Zes t-shirts voor de grijze kant van de zee.',
+      titel: 'Skiffa — posters van de Scheveningse surfcultuur',
+      beschrijving: 'Skiffa is straattaal voor Scheveningen. Posters over de surfcultuur van ons strand.',
       blokken: [
         {
           type: 'header',
@@ -29,16 +32,16 @@ const body = {
           },
         },
         {
-          // Draagt de volledige shirt-data voor de frontend (content.shirts) én een leesbare
+          // Draagt de postertekst voor de frontend (content.posters) én een leesbare
           // items-lijst zodat het blok in /admin ook betekenisvol is.
           type: 'kaarten',
           content: {
-            eyebrow: 'de collectie',
-            titel: 'Zes shirts, en meer niet',
-            intro: 'Elk shirt is een plek of een moment aan zee. Eén prijs, vier maten, kleine oplages.',
+            eyebrow: 'de posters',
+            titel: 'Surfcultuur aan de Noordzee',
+            intro: 'Elke poster is een hoofdstuk uit de surfgeschiedenis van Scheveningen. Drie formaten, kleine oplages.',
             kolommen: 3,
-            items: shirts.map((s) => ({ titel: s.naam, tekst: s.zin })),
-            shirts,
+            items: posters.map((s) => ({ titel: s.naam, tekst: s.zin })),
+            posters: posterTekst,
           },
         },
       ],
@@ -64,9 +67,9 @@ console.log('== SYNC ==', push.status, (await push.text()).slice(0, 300));
 const get = await fetch(`${BASIS}/api/cms/content?slug=/`, { headers: { authorization: `Bearer ${TOKEN}` } });
 const data = await get.json();
 const home = (data.paginas || []).find((p) => p.slug === '/');
-const shirtBlok = home?.blokken?.find((b) => Array.isArray(b.content?.shirts));
+const posterBlok = home?.blokken?.find((b) => Array.isArray(b.content?.posters));
 const header = home?.blokken?.find((b) => b.type === 'header');
 console.log('\n== controle ==');
 console.log('home gevonden:', !!home);
 console.log('tagline (header.subheading):', header?.content?.subheading);
-console.log('shirts in CMS:', shirtBlok?.content?.shirts?.length);
+console.log('posters in CMS:', posterBlok?.content?.posters?.length);

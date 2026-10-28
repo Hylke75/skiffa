@@ -3,7 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Skiffa — made for the grey side of the sea</title>
+<title>Skiffa — posters van de Scheveningse surfcultuur</title>
+<meta name="description" content="Skiffa maakt posters over de surfcultuur van Scheveningen. Gedrukt in Den Haag, opgerold verstuurd in een koker.">
+<meta property="og:title" content="Skiffa — posters van de Scheveningse surfcultuur">
+<meta property="og:description" content="Surfcultuur, Windsurf en Golf: posters van de grijze kant van de zee.">
+<meta property="og:image" content="/posters/surfcultuur-klein.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Homemade+Apple&display=swap" rel="stylesheet">
 <style>
@@ -122,18 +126,21 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 .carrousel .baan{display:flex;height:100%;transition:transform .7s cubic-bezier(.2,.8,.2,1)}
 .carrousel .dia{flex:0 0 100%;display:grid;place-items:center;position:relative}
 .carrousel .dia img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.carrousel .dia.kleur .swatch{text-align:center;letter-spacing:.2em;font-size:12px}
-.carrousel .dia.kleur .swatch em{display:block;font-style:normal;font-size:9px;opacity:.7;margin-top:8px}
+.carrousel .dia.poster{background:var(--papier)}
+.carrousel .dia.poster img{inset:0;margin:auto;width:auto;height:84%;max-width:84%;object-fit:contain;box-shadow:0 18px 40px rgba(0,0,0,.2)}
+.carrousel .dia.poster small{color:#000;text-shadow:none;opacity:.55}
 .carrousel .dia small{position:absolute;bottom:14px;left:16px;font-size:8px;letter-spacing:.2em;text-transform:uppercase;opacity:.8;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.5)}
 .modaltekst{padding:56px 40px 32px;display:flex;flex-direction:column;gap:18px;font-size:11px;line-height:1.8;overflow:auto}
 .modaltekst h3{font-family:var(--mono);font-weight:500;font-size:13px;letter-spacing:.14em}
 .modaltekst .sub{opacity:.6;margin-top:-14px}
 .modaltekst ul{list-style:none}
 .modaltekst li::before{content:"• "}
-.maten{display:flex;gap:6px}
-.maten button{width:34px;height:26px;border:1px solid #000;border-radius:999px;font-size:10px}
-.maten button[aria-pressed="true"]{background:#000;color:#fff}
-.maten button:disabled{opacity:.3;text-decoration:line-through}
+.formaten{display:flex;gap:6px;flex-wrap:wrap}
+.formaten button{height:26px;padding:0 12px;border:1px solid #000;border-radius:999px;font-size:10px}
+.formaten button[aria-pressed="true"]{background:#000;color:#fff}
+.modaltekst .label{font-size:8px;letter-spacing:.24em;opacity:.55;margin-bottom:-10px}
+.modaltekst .naarmandje{font-size:9px;letter-spacing:.14em;border-bottom:1px solid currentColor;align-self:flex-start;opacity:0;pointer-events:none;transition:opacity .3s}
+.modaltekst .naarmandje.aan{opacity:1;pointer-events:auto}
 .bestel{margin-top:auto;align-self:flex-start;background:#000;color:#fff;border-radius:999px;height:30px;padding:0 20px;display:inline-flex;align-items:center;gap:14px;font-size:10px;letter-spacing:.12em;transition:background .3s}
 .bestel:hover{background:#333}
 .bestel.klaar{background:#5c6d77}
@@ -156,11 +163,11 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 #over .handtekening::after{content:"";position:absolute;left:0;right:0;bottom:-2px;height:1px;background:#000;transform:scaleX(0);transform-origin:left;transition:transform 1.4s 1.2s ease}
 #over.open .handtekening::after{transform:none}
 #over .maker{font-size:9px;letter-spacing:.2em;margin-top:10px}
-#over .blok{position:relative;margin:30px 22px 22px;background:var(--zeeblok);padding:60px 40px;display:grid;grid-template-columns:repeat(6,1fr);gap:24px;align-items:end}
-#over .blok .shirt{text-align:center;font-size:9px;letter-spacing:.2em}
-#over .blok .shirt i{display:block;aspect-ratio:4/5;margin:0 auto 12px;box-shadow:0 12px 24px rgba(0,0,0,.08);transition:transform .3s}
-#over .blok .shirt:hover i{transform:translateY(-4px)}
-#over .blok .shirt b{display:block;font-weight:500}
+#over .blok{position:relative;margin:30px 22px 22px;background:var(--zeeblok);padding:60px 40px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:40px;align-items:end}
+#over .blok .poster{text-align:center;font-size:9px;letter-spacing:.2em}
+#over .blok .poster img{display:block;width:100%;max-width:240px;aspect-ratio:2/3;object-fit:cover;margin:0 auto 14px;box-shadow:0 14px 28px rgba(0,0,0,.14);transition:transform .3s}
+#over .blok .poster:hover img{transform:translateY(-4px)}
+#over .blok .poster b{display:block;font-weight:500}
 #over .sluit{position:fixed;top:36px;right:22px;z-index:2}
 
 /* ---------- Contact (overlay, zelfde opzet als 'over') ---------- */
@@ -182,7 +189,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 .form .keuze label{display:inline-flex;align-items:center;gap:8px;cursor:pointer}
 .form input[type=radio]{appearance:none;width:8px;height:8px;border:1px solid #000;border-radius:50%;margin:0}
 .form input[type=radio]:checked{background:#000}
-.form .veld{width:100%;border:1px solid #000;border-radius:999px;padding:10px 16px;font-size:11px;letter-spacing:.08em;background:transparent}
+.form .veld{font-family:var(--mono);color:inherit;width:100%;border:1px solid #000;border-radius:999px;padding:10px 16px;font-size:11px;letter-spacing:.08em;background:transparent}
 .form textarea.veld{border-radius:18px;min-height:120px;resize:vertical;font-family:var(--mono)}
 .form .veld::placeholder{opacity:.45;text-transform:uppercase;font-size:9px;letter-spacing:.2em}
 .form .verzend{align-self:flex-start;background:#000;color:#fff;border-radius:999px;height:30px;padding:0 20px;display:inline-flex;align-items:center;gap:12px;font-size:10px;letter-spacing:.12em;margin-top:8px;transition:background .3s}
@@ -196,12 +203,44 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 #contact .kaart img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.05)}
 #contact .kaart span{position:absolute;left:12px;bottom:10px;font-size:8px;letter-spacing:.2em;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.6)}
 
+/* ---------- Mandje (paneel rechts) ---------- */
+#mandjeKnop .tel{margin-left:6px;font-variant-numeric:tabular-nums}
+#mandje{position:fixed;inset:0;z-index:45;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .4s}
+#mandje.open{opacity:1;pointer-events:auto}
+#mandje .paneel{position:absolute;top:0;right:0;bottom:0;width:min(460px,100vw);background:var(--papier);color:var(--zwart);padding:30px 28px;overflow:auto;transform:translateX(100%);transition:transform .6s cubic-bezier(.76,0,.24,1);display:flex;flex-direction:column;gap:18px}
+#mandje.open .paneel{transform:none}
+#mandje .kop{display:flex;justify-content:space-between;align-items:center;font-size:12px;letter-spacing:.14em}
+#mandje .kop b{font-weight:500}
+#mandje .stap{display:none;flex-direction:column;gap:14px}
+#mandje[data-stap="lijst"] .stap[data-stap="lijst"],#mandje[data-stap="gegevens"] .stap[data-stap="gegevens"],#mandje[data-stap="klaar"] .stap[data-stap="klaar"]{display:flex}
+#mandje .regel{display:grid;grid-template-columns:56px 1fr auto;gap:14px;align-items:center;border-top:1px solid rgba(0,0,0,.15);padding-top:14px}
+#mandje .regel img{width:56px;aspect-ratio:2/3;object-fit:cover;box-shadow:0 6px 14px rgba(0,0,0,.12)}
+#mandje .regel b{display:block;font-weight:500}
+#mandje .regel small{display:block;font-size:9px;opacity:.6}
+#mandje .aantal{display:inline-flex;align-items:center;gap:8px;margin-top:6px;font-size:10px}
+#mandje .aantal button:not(.weg){width:20px;height:20px;border:1px solid #000;border-radius:50%;line-height:1}
+#mandje .weg{font-size:8px;letter-spacing:.2em;opacity:.55;margin-left:8px;border-bottom:1px solid currentColor}
+#mandje .leeg{opacity:.6;padding:20px 0}
+#mandje .totaal{border-top:1px solid #000;padding-top:12px;display:grid;grid-template-columns:1fr auto;row-gap:4px;font-size:10px}
+#mandje .totaal .som{font-weight:500;font-size:12px}
+#mandje .totaal small{grid-column:1/-1;font-size:9px;opacity:.6}
+#mandje .bestel{margin-top:4px}
+#mandje .bestel:disabled{opacity:.35;cursor:default}
+#mandje .label{font-size:8px;letter-spacing:.24em;opacity:.55;margin:10px 0 0}
+#mandje .twee{display:grid;grid-template-columns:1fr 1.4fr;gap:10px}
+#mandje select.veld{appearance:none;font-family:var(--mono)}
+#mandje .honing{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+#mandje .fout{font-size:10px;color:#a3261a;min-height:1em}
+#mandje .terug{align-self:flex-start;font-size:9px;letter-spacing:.14em;opacity:.6;border-bottom:1px solid currentColor}
+#mandje .titel{font-weight:500;font-size:12px;line-height:1.8}
+#mandje p{font-size:11px;line-height:1.9}
+
 /* ---------- Mobiel ---------- */
 @media (max-width:820px){
   body{overflow:auto}
   #header{grid-template-columns:1fr auto;height:auto;padding:14px}
   #header .c2{display:none}
-  #header .c3 .knop:not(.vol){display:none}
+  #header .c3 .knop:not(.vol):not(#mandjeKnop){display:none}
   .hotspot .naam{opacity:1}
   #footer{height:auto}
   .tijd{position:static;transform:none;justify-content:center;margin-bottom:8px}
@@ -209,7 +248,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
   #modal .kader{grid-template-columns:1fr;height:92vh;width:94vw}
   .carrousel{height:44%}
   #over .binnen,#contact .binnen{grid-template-columns:1fr;padding-top:90px}
-  #over .blok{grid-template-columns:repeat(3,1fr)}
+  #over .blok{grid-template-columns:repeat(3,1fr);gap:14px;padding:30px 16px}
 }
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important}
@@ -222,11 +261,11 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 <div id="preloader" aria-hidden="true"><div class="merk"><svg class="logo-svg" xmlns="http://www.w3.org/2000/svg" viewBox="80.74 342.38 386.43 111.93" fill="currentColor"><path d="M 287.144531 401.140625 L 260.554688 401.140625 C 259.105469 401.140625 257.929688 399.964844 257.929688 398.515625 C 257.929688 397.066406 259.105469 395.890625 260.554688 395.890625 L 287.144531 395.890625 C 288.59375 395.890625 289.769531 397.066406 289.769531 398.515625 C 289.769531 399.964844 288.59375 401.140625 287.144531 401.140625 "/><path d="M 121.851562 452.308594 L 85.375 452.308594 C 83.921875 452.308594 82.742188 451.152344 82.742188 449.726562 C 82.742188 448.300781 83.921875 447.148438 85.375 447.148438 L 121.851562 447.148438 C 136.496094 447.148438 148.40625 435.617188 148.40625 421.441406 C 148.40625 411.550781 142.789062 403.847656 131.707031 398.539062 C 123.0625 394.398438 114.226562 393.34375 114.136719 393.335938 C 114.085938 393.328125 114.035156 393.320312 113.988281 393.3125 C 91.289062 389.410156 83.625 383.113281 83.625 368.359375 C 83.625 355.324219 94.554688 344.722656 107.984375 344.722656 L 141.6875 344.722656 C 142.636719 344.722656 143.511719 345.222656 143.980469 346.035156 C 144.445312 346.847656 144.433594 347.839844 143.941406 348.636719 L 121.296875 385.425781 C 120.546875 386.648438 118.929688 387.039062 117.683594 386.304688 C 116.441406 385.566406 116.039062 383.980469 116.789062 382.761719 L 137.023438 349.886719 L 107.984375 349.886719 C 97.457031 349.886719 88.890625 358.171875 88.890625 368.359375 C 88.890625 377.363281 90.753906 384.0625 114.828125 388.21875 C 115.84375 388.339844 124.804688 389.519531 133.890625 393.839844 C 146.832031 399.996094 153.671875 409.542969 153.671875 421.441406 C 153.671875 438.460938 139.398438 452.308594 121.851562 452.308594 "/><path d="M 172.984375 452.308594 C 171.53125 452.308594 170.351562 451.152344 170.351562 449.726562 L 170.351562 347.304688 C 170.351562 345.878906 171.53125 344.722656 172.984375 344.722656 C 174.4375 344.722656 175.617188 345.878906 175.617188 347.304688 L 175.617188 449.726562 C 175.617188 451.152344 174.4375 452.308594 172.984375 452.308594 "/><path d="M 172.980469 421.324219 C 172.484375 421.324219 171.984375 421.1875 171.539062 420.898438 C 170.324219 420.117188 169.984375 418.515625 170.785156 417.324219 L 214.40625 352.203125 C 215.203125 351.011719 216.832031 350.679688 218.050781 351.464844 C 219.265625 352.246094 219.601562 353.84375 218.804688 355.035156 L 175.183594 420.160156 C 174.679688 420.914062 173.839844 421.324219 172.980469 421.324219 "/><path d="M 224.183594 452.308594 C 223.429688 452.308594 222.679688 451.992188 222.15625 451.375 L 182 403.902344 C 181.074219 402.804688 181.230469 401.179688 182.347656 400.269531 C 183.464844 399.359375 185.125 399.511719 186.054688 400.605469 L 226.210938 448.082031 C 227.140625 449.175781 226.984375 450.804688 225.863281 451.714844 C 225.371094 452.113281 224.777344 452.308594 224.183594 452.308594 "/><path d="M 246.488281 452.308594 C 245.035156 452.308594 243.855469 451.152344 243.855469 449.726562 L 243.855469 347.304688 C 243.855469 345.878906 245.035156 344.722656 246.488281 344.722656 C 247.941406 344.722656 249.121094 345.878906 249.121094 347.304688 L 249.121094 449.726562 C 249.121094 451.152344 247.941406 452.308594 246.488281 452.308594 "/><path d="M 257.453125 392.699219 L 235.523438 392.699219 C 234.070312 392.699219 232.890625 391.542969 232.890625 390.117188 C 232.890625 388.691406 234.070312 387.535156 235.523438 387.535156 L 257.453125 387.535156 C 258.90625 387.535156 260.085938 388.691406 260.085938 390.117188 C 260.085938 391.542969 258.90625 392.699219 257.453125 392.699219 "/><path d="M 276.378906 452.308594 C 274.925781 452.308594 273.746094 451.152344 273.746094 449.726562 L 273.746094 347.304688 C 273.746094 345.878906 274.925781 344.722656 276.378906 344.722656 L 342.042969 344.722656 C 343.5 344.722656 344.675781 345.878906 344.675781 347.304688 C 344.675781 348.730469 343.5 349.886719 342.042969 349.886719 L 279.011719 349.886719 L 279.011719 449.726562 C 279.011719 451.152344 277.832031 452.308594 276.378906 452.308594 "/><path d="M 284.320312 397.878906 L 309.839844 397.878906 L 301.003906 385.691406 Z M 314.945312 403.039062 L 276.378906 403.039062 C 275.246094 403.039062 274.238281 402.328125 273.878906 401.269531 C 273.523438 400.214844 273.894531 399.050781 274.808594 398.386719 L 297.949219 381.484375 L 274.234375 348.800781 C 273.390625 347.640625 273.667969 346.027344 274.851562 345.199219 C 276.039062 344.375 277.683594 344.648438 278.523438 345.808594 L 317.089844 398.960938 C 317.660156 399.75 317.738281 400.78125 317.285156 401.640625 C 316.832031 402.5 315.929688 403.039062 314.945312 403.039062 "/><path d="M 353.851562 452.308594 C 352.398438 452.308594 351.21875 451.152344 351.21875 449.726562 L 351.21875 347.304688 C 351.21875 345.878906 352.398438 344.722656 353.851562 344.722656 L 419.519531 344.722656 C 420.972656 344.722656 422.152344 345.878906 422.152344 347.304688 C 422.152344 348.730469 420.972656 349.886719 419.519531 349.886719 L 356.484375 349.886719 L 356.484375 449.726562 C 356.484375 451.152344 355.304688 452.308594 353.851562 452.308594 "/><path d="M 361.792969 397.878906 L 387.316406 397.878906 L 378.472656 385.691406 Z M 392.417969 403.039062 L 353.851562 403.039062 C 352.71875 403.039062 351.710938 402.328125 351.355469 401.269531 C 350.996094 400.214844 351.371094 399.050781 352.28125 398.386719 L 375.421875 381.484375 L 351.707031 348.800781 C 350.867188 347.640625 351.140625 346.027344 352.324219 345.199219 C 353.511719 344.375 355.15625 344.648438 355.996094 345.808594 L 381.191406 380.53125 C 381.203125 380.546875 381.210938 380.558594 381.21875 380.570312 L 394.5625 398.960938 C 395.136719 399.75 395.210938 400.78125 394.757812 401.640625 C 394.304688 402.5 393.402344 403.039062 392.417969 403.039062 "/><path d="M 395.671875 452.308594 C 395.390625 452.308594 395.101562 452.261719 394.820312 452.167969 C 393.445312 451.707031 392.710938 450.238281 393.183594 448.890625 L 429 346.46875 C 429.367188 345.414062 430.378906 344.695312 431.523438 344.722656 C 432.660156 344.738281 433.660156 345.464844 434 346.53125 L 464.832031 442.621094 C 465.167969 443.667969 464.792969 444.808594 463.894531 445.464844 C 462.996094 446.121094 461.773438 446.144531 460.84375 445.53125 L 416.648438 416.132812 C 415.445312 415.335938 415.128906 413.730469 415.945312 412.550781 C 416.761719 411.371094 418.398438 411.0625 419.601562 411.863281 L 457.542969 437.097656 L 431.382812 355.570312 L 398.160156 450.566406 C 397.789062 451.636719 396.765625 452.308594 395.671875 452.308594 "/></svg></div><div class="sub">SCHEVENINGEN</div></div>
 </div>
 
-<!-- Scène: drie foto's, gekozen op de tijd in Scheveningen -->
+<!-- Scène: drie uitsneden uit de posters, gekozen op de tijd in Scheveningen -->
 <div id="scene">
-  <div class="periode" data-p="ochtend"><img src="https://live.staticflickr.com/7017/6388403661_a805b15e60_k.jpg" alt="Grijze ochtend aan de Noordzee, wandelaars langs de vloedlijn" data-w="2048" data-h="1365"></div>
-  <div class="periode" data-p="middag"><img src="https://live.staticflickr.com/3288/2329427226_5b01f0f3aa_k.jpg" alt="Vrouw loopt tegen de wind in over het strand, harde branding" data-w="2048" data-h="1371"></div>
-  <div class="periode" data-p="avond"><img src="https://live.staticflickr.com/65535/48689392562_ca8aa9d6b6_k.jpg" alt="Naderende storm boven de Noordzee, avond" data-w="2048" data-h="1365"></div>
+  <div class="periode" data-p="ochtend"><img src="/sfeer/surfcultuur-scene.webp" alt="Surfers bij een oude BMW op het strand, de pier in de verte (uit de poster Surfcultuur)" data-w="1277" data-h="820"></div>
+  <div class="periode" data-p="middag"><img src="/sfeer/windsurf-scene.webp" alt="Windsurfers en publiek bij de vuurtoren van Scheveningen (uit de poster Windsurf)" data-w="1333" data-h="920"></div>
+  <div class="periode" data-p="avond"><img src="/sfeer/golf-scene.webp" alt="Surfer loopt bij zonsondergang de zee uit, met een grote golf (uit de poster Golf)" data-w="1333" data-h="1040"></div>
   <div class="korrel"></div>
 </div>
 <div class="credit" id="credit"></div>
@@ -239,7 +278,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
       <button class="knop" id="overKnop">over</button>
       <button class="knop" id="contactKnop">contact</button>
       <a class="knop ico" href="#" aria-label="Instagram"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/></svg></a>
-      <div class="shop"><button class="knop vol">shop t-shirts</button>
+      <button class="knop" id="mandjeKnop" aria-label="Mandje">mandje<span class="tel" id="mandjeTel">0</span></button>
+      <div class="shop"><button class="knop vol">shop posters</button>
         <div class="lijst" id="shopLijst"></div>
       </div>
     </div>
@@ -270,7 +310,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
   <button class="knop sluit" id="overSluit">sluiten</button>
   <div class="binnen">
     <div class="kol">
-      <p class="titel">Skiffa is straattaal voor Scheveningen. Zo noemen de mensen die er wonen hun eigen badplaats — en zo heet het shirt dat je aantrekt als de lucht dichtzit en je toch gaat.</p>
+      <p class="titel">Skiffa is straattaal voor Scheveningen. Zo noemen de mensen die er wonen hun eigen badplaats — en zo heten de posters die we maken over de zee die ze kennen, ook als de lucht dichtzit.</p>
       <div class="drie">
         <div><svg viewBox="0 0 24 24"><path d="M3 8h11a3 3 0 1 0-3-3M3 13h15a3 3 0 1 1-3 3M3 18h8"/></svg>wind</div>
         <div><svg viewBox="0 0 24 24"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg>water</div>
@@ -280,16 +320,16 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
       <div class="maker">Scheveningen, Den Haag</div>
     </div>
     <div class="kol">
-      <p>Skiffa is een klein merk uit Scheveningen. Zes t-shirts, en meer niet. Geen souvenir voor toeristen, maar het shirt van de mensen die hier wonen, werken en het hele jaar naar het strand gaan — ook als het grijs is, waait en regent. <b>Van Skiffa, voor Skiffa.</b></p>
-      <p>Elk shirt is een plek of een moment aan zee: <b>Pier</b>, <b>Schuim</b>, <b>Bries</b>, <b>Duin</b>, <b>Tij</b> en <b>Boei</b>. Geen collectie, geen seizoenen. Eén prijs, vier maten, kleine oplages.</p>
+      <p>Skiffa is een klein merk uit Scheveningen. Wij maken posters over de surfcultuur van ons eigen strand. Geen souvenir voor toeristen, maar iets voor aan de muur van de mensen die hier wonen, werken en het hele jaar het water in gaan — ook als het grijs is, waait en regent. <b>Van Skiffa, voor Skiffa.</b></p>
+      <p>Elke poster is een hoofdstuk: <b>Surfcultuur</b>, de eerste surfers bij de pier in de jaren zeventig. <b>Windsurf</b>, de zeilen bij de vuurtoren in de jaren tachtig. En <b>Golf</b>, de zee zoals je hem 's avonds onthoudt. Drie formaten, kleine oplages.</p>
     </div>
     <div class="kol">
-      <p>We maken ze van <b>220 grams biologisch katoen</b>, genaaid in Portugal en bedrukt in Den Haag. De opdruk is klein en zit op de borst, niet als logo maar als herkenning. Wat over is wordt niet weggegooid maar het jaar erna opnieuw verkocht.</p>
-      <p>De scène op deze site volgt de tijd in Scheveningen; de foto wisselt bij zonsopkomst en zonsondergang. De balk onderaan is het getij van vandaag, met hoog- en laagwater. Daarboven staat het strandbericht: wind, temperatuur, zeewater en of het een grijze dag is. Beweeg over de balk om zelf door de dag te gaan.</p>
+      <p>We drukken ze op <b>250 grams mat fine-art papier</b>, in Den Haag. Alle posters hebben de verhouding 2:3, zodat ze in een standaardlijst passen. Ze gaan opgerold de deur uit, in een stevige koker en zonder lijst: hoe hij aan de muur komt, kies je zelf.</p>
+      <p>De scène op deze site volgt de tijd in Scheveningen. 's Ochtends, 's middags en 's avonds zie je een uitsnede uit een van de posters; die wisselt bij zonsopkomst, om twaalf uur en bij zonsondergang. De balk onderaan is het getij van vandaag, met hoog- en laagwater. Daarboven staat het strandbericht: wind, temperatuur, zeewater en of het een grijze dag is. Beweeg over de balk om zelf door de dag te gaan.</p>
     </div>
   </div>
   <div class="blok" id="overBlok"></div>
-  <p style="padding:0 22px 8px;font-size:8px;letter-spacing:.14em;opacity:.55">Foto's op deze mock-up: Gastev, FaceMePLS, Paul van de Velde, NORDIC/COLD en Bernd Thaller via Flickr, CC BY 2.0. Voor de echte site komt eigen fotografie op hetzelfde stuk strand.</p>
+  <p style="padding:0 22px 8px;font-size:8px;letter-spacing:.14em;opacity:.55">Alle beelden op deze site zijn uitsneden uit de Skiffa-posters.</p>
   <p style="padding:0 22px 30px;font-size:8px;letter-spacing:.14em;opacity:.55">Website: <a href="https://www.linkandlead.nl" target="_blank" rel="noopener" style="border-bottom:1px solid currentColor">Link &amp; Lead</a></p>
 </div>
 
@@ -299,14 +339,14 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
   <button class="knop sluit" id="contactSluit">sluiten</button>
   <div class="binnen">
     <div class="kol">
-      <p class="titel">Twijfel je tussen twee kleuren, wil je een shirt ruilen, of gewoon iets kwijt over de zee? Stuur het hierheen.</p>
+      <p class="titel">Twijfel je over een formaat, is je koker gedeukt aangekomen, of wil je gewoon iets kwijt over de zee? Stuur het hierheen.</p>
       <div class="label">adres</div>
       <p><b>Skiffa</b><br>Keizerstraat 100<br>2586 AZ Scheveningen<br>Den Haag, Nederland</p>
       <div class="label">bereikbaar</div>
       <p>ma – vr 09:00 – 17:00<br>za bij goed weer niet, bij slecht weer wel</p>
       <div class="label">rechtstreeks</div>
       <p>hallo@skiffa.nl<br>+31 (0)70 000 00 00</p>
-      <div class="kaart"><img src="https://live.staticflickr.com/3828/10779213293_a7fa1c5080_o.jpg" alt="Strand van Scheveningen bij harde wind"><span>KEIZERSTRAAT, 200 M VAN HET STRAND</span></div>
+      <div class="kaart"><img src="/sfeer/contact-kaart.webp" alt="Surfers op het strand van Scheveningen, met de pier (uit de poster Surfcultuur)"><span>KEIZERSTRAAT, 200 M VAN HET STRAND</span></div>
     </div>
     <div class="kol">
       <form class="form" id="contactForm" onsubmit="return false">
@@ -322,11 +362,41 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
     </div>
     <div class="kol">
       <div class="label">veelgestelde vragen</div>
-      <div class="vraag"><b>Welke maat moet ik nemen?</b><p>Onze shirts vallen normaal. Twijfel je? Neem de kleinste; het katoen rekt de eerste weken iets uit.</p></div>
-      <div class="vraag"><b>Hoe snel wordt er verzonden?</b><p>Voor 15:00 besteld is de volgende werkdag in huis. Verzenden binnen Nederland is gratis vanaf twee shirts.</p></div>
-      <div class="vraag"><b>Kan ik ruilen?</b><p>Ja, binnen 30 dagen, ongedragen en ongewassen. Meld het via dit formulier, dan sturen we een retourlabel.</p></div>
-      <div class="vraag"><b>Verkopen jullie ook in een winkel?</b><p>Nog niet. Wel op zaterdag op het strand als het waait; volg Instagram voor waar we staan.</p></div>
-      <div class="vraag"><b>Waarom maar zes shirts?</b><p>Omdat zes genoeg is. Elk shirt is een plek aan zee, en er komt er alleen een bij als er een plek bij komt.</p></div>
+      <div class="vraag"><b>Welk formaat moet ik nemen?</b><p>30 × 45 cm voor boven je bureau, 50 × 75 cm voor een gewone wand, 70 × 105 cm als hij de kamer mag dragen. Alle formaten zijn 2:3 en passen in een standaardlijst.</p></div>
+      <div class="vraag"><b>Zit er een lijst bij?</b><p>Nee. De poster komt opgerold in een koker. Leg hem een nacht plat onder een paar boeken, dan ligt hij weer recht.</p></div>
+      <div class="vraag"><b>Hoe snel wordt er verzonden?</b><p>Voor 15:00 besteld gaat de volgende werkdag op de post. Verzenden kost € 6,95 (België € 9,95) en is gratis vanaf € 75.</p></div>
+      <div class="vraag"><b>Kan ik retourneren?</b><p>Ja, binnen 14 dagen, onbeschadigd en in de koker. Meld het via dit formulier, dan sturen we een retourlabel.</p></div>
+      <div class="vraag"><b>Komen er meer posters?</b><p>Ja, maar alleen als er een verhaal bij hoort. Volg Instagram voor de volgende.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- Mandje en afrekenen -->
+<div id="mandje" data-stap="lijst" role="dialog" aria-modal="true" aria-label="Mandje" aria-hidden="true">
+  <div class="paneel">
+    <div class="kop"><b>mandje</b><button class="knop" id="mandjeSluit">sluiten</button></div>
+    <div class="stap" data-stap="lijst">
+      <div id="mandjeLijst"></div>
+      <div class="totaal" id="mandjeTotaal"></div>
+      <button class="bestel" id="naarAfrekenen">afrekenen <span>→</span></button>
+    </div>
+    <form class="form stap" data-stap="gegevens" id="bestelForm">
+      <div class="label">waar mag hij heen?</div>
+      <input class="veld" name="naam" placeholder="Je naam" autocomplete="name" required>
+      <input class="veld" name="email" type="email" placeholder="Je e-mail" autocomplete="email" required>
+      <input class="veld" name="straat" placeholder="Straat en huisnummer" autocomplete="street-address" required>
+      <div class="twee"><input class="veld" name="postcode" placeholder="Postcode" autocomplete="postal-code" required><input class="veld" name="plaats" placeholder="Plaats" autocomplete="address-level2" required></div>
+      <select class="veld" name="land" autocomplete="country"><option value="NL">Nederland</option><option value="BE">België</option></select>
+      <textarea class="veld" name="opmerking" placeholder="Opmerking (mag leeg)" style="min-height:70px"></textarea>
+      <input class="honing" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <div class="totaal" id="bestelTotaal"></div>
+      <p class="fout" id="bestelFout" role="alert"></p>
+      <button class="verzend" type="submit">bestellen en betalen <span>→</span></button>
+      <button class="terug" type="button" id="terugNaarLijst">← terug naar je mandje</button>
+    </form>
+    <div class="stap" data-stap="klaar">
+      <p class="titel">Dank je. Je poster komt eraan.</p>
+      <p id="klaarTekst"></p>
     </div>
   </div>
 </div>
@@ -334,28 +404,47 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script>
 const rm=matchMedia('(prefers-reduced-motion: reduce)').matches;
-const SHIRT='M60 20 L90 8 Q100 22 110 8 L140 20 L180 44 L166 76 L146 66 L146 210 L54 210 L54 66 L34 76 L20 44 Z';
-let shirts=[
-  {id:'pier',naam:'Pier',kleur:'#2B3238',licht:'#EEF0EE',x:.16,y:.80,s:'M',sub:'leigrijs · 220 g',zin:'Voor het einde van de pier, waar de wind het hardst staat en niemand meer praat.',punten:['biologisch katoen, 220 gram','genaaid in Portugal, bedrukt in Den Haag','kleine opdruk op de borst','één prijs: € 45']},
-  {id:'schuim',naam:'Schuim',kleur:'#EEF0EE',licht:'#2B3238',x:.30,y:.86,s:'S',sub:'gebroken wit · 220 g',zin:'Het wit van de branding op een grijze dag. Het enige licht dat je krijgt.',punten:['biologisch katoen, 220 gram','genaaid in Portugal, bedrukt in Den Haag','kleine opdruk op de borst','één prijs: € 45']},
-  {id:'bries',naam:'Bries',kleur:'#4F6F68',licht:'#EEF0EE',x:.43,y:.79,s:'L',sub:'zeegroen · 220 g',zin:'Windkracht 4. Net genoeg om de kou te voelen, niet genoeg om naar huis te gaan.',punten:['biologisch katoen, 220 gram','genaaid in Portugal, bedrukt in Den Haag','kleine opdruk op de borst','één prijs: € 45']},
-  {id:'duin',naam:'Duin',kleur:'#C9BFAE',licht:'#2B3238',x:.56,y:.87,s:'M',sub:'zand · 220 g',zin:'De kant waar je uit de wind zit. Helm in je rug, zee in je oren.',punten:['biologisch katoen, 220 gram','genaaid in Portugal, bedrukt in Den Haag','kleine opdruk op de borst','één prijs: € 45']},
-  {id:'tij',naam:'Tij',kleur:'#1F3A4A',licht:'#EEF0EE',x:.69,y:.81,s:'S',sub:'zeeblauw · 220 g',zin:'Twee keer per dag komt het water terug. Je hoeft er niets voor te doen.',punten:['biologisch katoen, 220 gram','genaaid in Portugal, bedrukt in Den Haag','kleine opdruk op de borst','één prijs: € 45']},
-  {id:'boei',naam:'Boei',kleur:'#E8571E',licht:'#EEF0EE',x:.83,y:.85,s:'L',sub:'oranje · 220 g',zin:'Het enige dat opvalt op zee. Eén per schip, één per kast.',punten:['biologisch katoen, 220 gram','genaaid in Portugal, bedrukt in Den Haag','kleine opdruk op de borst','één prijs: € 45']},
+/* Catalogus. De prijzen staan ook in api/_catalogus.js (de server rekent altijd zelf);
+   controleer met: node scripts/check-catalogus.mjs */
+const formaten=[
+  {id:'30x45',label:'30 × 45 cm',prijs:29},
+  {id:'50x75',label:'50 × 75 cm',prijs:45},
+  {id:'70x105',label:'70 × 105 cm',prijs:69},
 ];
+const PUNTEN=['giclée op 250 grams mat fine-art papier','gedrukt in Den Haag','verhouding 2:3, past in een standaardlijst','opgerold verstuurd in een koker, zonder lijst'];
+/* actief:false = klaargezet, nog niet zichtbaar (beeld volgt). Zet op true zodra /posters/<id>.webp er staat
+   en voeg hem ook toe aan api/_catalogus.js. */
+let posters=[
+  {id:'surfcultuur',naam:'Surfcultuur',kleur:'#E0201B',actief:true,sub:'jaren zeventig · foto',zin:'Nazomer bij de pier. Een oude BMW op het strand, planken in het zand en niemand die haast heeft. Zo begon het surfen in Scheveningen.',punten:PUNTEN,
+   sfeer:[['/sfeer/surfcultuur-detail-1.webp','planken naast de auto'],['/sfeer/surfcultuur-detail-2.webp','de pier in de verte']]},
+  {id:'windsurf',naam:'Windsurf',kleur:'#1D63D8',actief:true,sub:'jaren tachtig · foto',zin:'Zeilen met nummers, neon op het zand en half Den Haag bij de vuurtoren. De zomer dat de wind het strand overnam.',punten:PUNTEN,
+   sfeer:[['/sfeer/windsurf-detail-1.webp','publiek bij de vuurtoren'],['/sfeer/windsurf-detail-2.webp','zeil klaar voor de start']]},
+  {id:'golf',naam:'Golf',kleur:'#F0287A',actief:true,sub:'zeefdrukstijl · illustratie',zin:'Avond, het havenhoofd in tegenlicht en één golf die blijft staan. Roze, oranje en blauw, zoals de zee er alleen in je hoofd uitziet.',punten:PUNTEN,
+   sfeer:[['/sfeer/golf-detail-1.webp','de golf'],['/sfeer/golf-detail-2.webp','terug naar de vloedlijn']]},
+  {id:'havenpier',naam:'Havenpier',kleur:'#0F4C6B',actief:false,sub:'north sea surf · foto',zin:'Windkracht zeven bij het havenhoofd. Iedereen blijft op de pier staan kijken, één iemand gaat erin.',punten:PUNTEN,sfeer:[]},
+  {id:'zon',naam:'Zon',kleur:'#E8571E',actief:false,sub:'linodrukstijl · illustratie',zin:'Een oranje zon, een blauwe muur van water en de vuurtoren klein in de verte. Wachten tot de zee rustig wordt.',punten:PUNTEN,sfeer:[]},
+  {id:'de-pier',naam:'De Pier',kleur:'#D7261E',actief:false,sub:'jaren zestig · foto',zin:'Strandkorven, de uitkijktoren vol vlaggen en een hele zomer op hetzelfde stuk zand. De pier zoals je ouders hem kennen.',punten:PUNTEN,sfeer:[]},
+  {id:'surf',naam:'Surf',kleur:'#1F4E79',actief:false,sub:'retro · illustratie',zin:'Oranje lucht, het reuzenrad aan het eind van de pier en een rij surfers die wacht op de volgende set.',punten:PUNTEN,sfeer:[]},
+  {id:'pier-en-strand',naam:'Pier en Strand',kleur:'#E4572E',actief:false,sub:'jaren dertig · illustratie',zin:'Parasols, rieten stoelen en de oude pier vol wandelaars. Scheveningen toen de badplaats nog in pak naar het strand ging.',punten:PUNTEN,sfeer:[]},
+];
+const beeld=id=>`/posters/${id}.webp`,klein=id=>`/posters/${id}-klein.webp`;
+const zichtbaar=()=>posters.filter(p=>p.actief!==false);
+const vind=id=>posters.find(p=>p.id===id);
+const euro=v=>'€ '+(Number.isInteger(v)?v:v.toFixed(2).replace('.',','));
+const vanaf=Math.min(...formaten.map(f=>f.prijs));
 
-/* Hotspots: verankerd aan mensen in de foto (fractie van beeldbreedte/-hoogte, zoals maikasui doet met videoX/videoY) */
+/* Hotspots: verankerd aan een plek in de uitsnede (fractie van beeldbreedte/-hoogte, zoals maikasui doet met videoX/videoY) */
 const ankers={
-  ochtend:[{shirt:'pier',x:.17,y:.69},{shirt:'tij',x:.73,y:.70}],
-  middag:[{shirt:'boei',x:.445,y:.46}],
-  avond:[{shirt:'schuim',x:.855,y:.62}]
+  ochtend:[{poster:'surfcultuur',x:.19,y:.40}],
+  middag:[{poster:'windsurf',x:.80,y:.58}],
+  avond:[{poster:'golf',x:.65,y:.47}]
 };
-const credits={ochtend:'foto: Gastev (CC BY 2.0)',middag:'foto: FaceMePLS (CC BY 2.0)',avond:'foto: Paul van de Velde (CC BY 2.0)'};
+const credits={ochtend:'uit de poster: surfcultuur',middag:'uit de poster: windsurf',avond:'uit de poster: golf'};
 const hs=document.getElementById('hotspots');
 function beeldRect(p){const img=document.querySelector(`.periode[data-p="${p}"] img`);const W=innerWidth,H=innerHeight,iw=+img.dataset.w,ih=+img.dataset.h;const s=Math.max(W/iw,H/ih)*1.04;const w=iw*s,h=ih*s;return{x:(W-w)/2,y:(H-h)/2,w,h};}
 function plaatsHotspots(p){
   hs.innerHTML='';const r=beeldRect(p);
-  (ankers[p]||[]).forEach((a,i)=>{const s=shirts.find(x=>x.id===a.shirt);if(!s)return;
+  (ankers[p]||[]).forEach((a,i)=>{const s=vind(a.poster);if(!s||s.actief===false)return;
     const h=document.createElement('div');h.className='hotspot';h.style.setProperty('--s','64px');
     h.style.left=(r.x+a.x*r.w)+'px';h.style.top=(r.y+a.y*r.h)+'px';
     h.innerHTML=`<div class="rand"></div><button class="plus" aria-label="${s.naam} bekijken">+</button><div class="naam">${s.naam.toLowerCase()}</div>`;
@@ -443,34 +532,40 @@ zetNu();setInterval(()=>{if(!handmatig)zetNu();},30000);laadData();setInterval(l
 
 /* Modal */
 const modal=document.getElementById('modal'),baan=document.getElementById('baan'),mt=document.getElementById('modaltekst'),vg=[...document.querySelectorAll('.voortgang i')];
-let diaTimer=null,dia=0;
+let diaTimer=null,dia=0,aantalDias=3;
 function openModal(s){
-  const sfeer=[['https://live.staticflickr.com/3828/10779213293_a7fa1c5080_o.jpg','zandstorm op het strand'],['https://live.staticflickr.com/4564/25120830278_4b8ef6e332_k.jpg','branding bij windkracht 8']];
-  baan.innerHTML=`<div class="dia kleur" style="background:${s.kleur};color:${s.licht}"><div class="swatch"><span>${s.naam.toLowerCase()}</span><em>${s.sub}</em></div><small style="color:${s.licht}">productfoto volgt — kleur op ware waarde</small></div>`+
-    sfeer.map(([u,l])=>`<div class="dia"><img src="${u}" alt="${l}"><small>${l}</small></div>`).join('');
-  mt.innerHTML=`<h3>${s.naam.toLowerCase()} — t-shirt</h3><p class="sub">${s.sub}</p><p>${s.zin}</p><ul>${s.punten.map(p=>`<li>${p}</li>`).join('')}</ul>
-    <div class="maten" role="group" aria-label="Maat"><button aria-pressed="true">S</button><button>M</button><button>L</button><button ${s.id==='schuim'?'disabled':''}>XL</button></div>
-    <button class="bestel">in de winkelwagen <span>€ 45</span></button>`;
-  mt.querySelector('.maten').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;mt.querySelectorAll('.maten button').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true');});
-  const be=mt.querySelector('.bestel');be.addEventListener('click',()=>{be.classList.add('klaar');be.firstChild.textContent='toegevoegd ';setTimeout(()=>{be.classList.remove('klaar');be.firstChild.textContent='in de winkelwagen ';},1600);});
+  let formaat=formaten[1].id;
+  const dias=[`<div class="dia poster"><img src="${beeld(s.id)}" alt="Poster ${s.naam}"><small>poster ${s.naam.toLowerCase()} — 2:3</small></div>`]
+    .concat(s.sfeer.map(([u,l])=>`<div class="dia"><img src="${u}" alt="${l}" loading="lazy"><small>${l}</small></div>`));
+  baan.innerHTML=dias.join('');vg.forEach((i,k)=>i.style.display=k<dias.length?'':'none');aantalDias=dias.length;
+  mt.innerHTML=`<h3>${s.naam.toLowerCase()} — poster</h3><p class="sub">${s.sub}</p><p>${s.zin}</p><ul>${s.punten.map(p=>`<li>${p}</li>`).join('')}</ul>
+    <div class="label">formaat</div>
+    <div class="formaten" role="group" aria-label="Formaat">${formaten.map(f=>`<button data-f="${f.id}" aria-pressed="${f.id===formaat}">${f.label}</button>`).join('')}</div>
+    <button class="bestel">in het mandje <span></span></button>
+    <button class="naarmandje">bekijk je mandje →</button>`;
+  const be=mt.querySelector('.bestel'),prijs=be.querySelector('span');
+  const zetPrijs=()=>{prijs.textContent=euro(formaten.find(f=>f.id===formaat).prijs);};zetPrijs();
+  mt.querySelector('.formaten').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;formaat=b.dataset.f;mt.querySelectorAll('.formaten button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));zetPrijs();});
+  be.addEventListener('click',()=>{voegToe(s.id,formaat);be.classList.add('klaar');be.firstChild.textContent='toegevoegd ';mt.querySelector('.naarmandje').classList.add('aan');setTimeout(()=>{be.classList.remove('klaar');be.firstChild.textContent='in het mandje ';},1600);});
+  mt.querySelector('.naarmandje').addEventListener('click',()=>{sluitModal();openMandje();});
   dia=0;toonDia();modal.classList.add('open');modal.setAttribute('aria-hidden','false');scene.classList.add('grijs');
 }
-function toonDia(){baan.style.transform=`translateX(${-dia*100}%)`;vg.forEach((i,k)=>{i.className=k<dia?'klaar':k===dia?'bezig':'';});clearTimeout(diaTimer);diaTimer=setTimeout(()=>{dia=(dia+1)%3;toonDia();},3200);}
+function toonDia(){baan.style.transform=`translateX(${-dia*100}%)`;vg.forEach((i,k)=>{i.className=k<dia?'klaar':k===dia?'bezig':'';});clearTimeout(diaTimer);diaTimer=setTimeout(()=>{dia=(dia+1)%aantalDias;toonDia();},3200);}
 function sluitModal(){modal.classList.remove('open');modal.setAttribute('aria-hidden','true');scene.classList.remove('grijs');clearTimeout(diaTimer);}
 document.getElementById('modalSluit').addEventListener('click',sluitModal);
 modal.addEventListener('click',e=>{if(e.target===modal)sluitModal();});
-document.querySelector('.carrousel').addEventListener('click',e=>{if(e.target.closest('.voortgang'))return;dia=(dia+1)%3;toonDia();});
+document.querySelector('.carrousel').addEventListener('click',e=>{if(e.target.closest('.voortgang'))return;dia=(dia+1)%aantalDias;toonDia();});
 
 const shopLijst=document.getElementById('shopLijst');
-function tekenShop(){shopLijst.innerHTML=shirts.map(s=>`<button class="knop vol" data-id="${s.id}"><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${s.kleur};margin-right:8px;border:1px solid rgba(0,0,0,.15)"></i>${s.naam.toLowerCase()} — € 45</button>`).join('');}
+function tekenShop(){shopLijst.innerHTML=zichtbaar().map(s=>`<button class="knop vol" data-id="${s.id}"><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${s.kleur};margin-right:8px;border:1px solid rgba(0,0,0,.15)"></i>${s.naam.toLowerCase()} — vanaf ${euro(vanaf)}</button>`).join('');}
 tekenShop();
-shopLijst.addEventListener('click',e=>{const b=e.target.closest('[data-id]');if(b)openModal(shirts.find(s=>s.id===b.dataset.id));});
+shopLijst.addEventListener('click',e=>{const b=e.target.closest('[data-id]');if(b)openModal(vind(b.dataset.id));});
 
 /* Over */
 const over=document.getElementById('over'),ob=document.getElementById('overBlok');
-function tekenOverBlok(){ob.innerHTML=shirts.map(s=>`<button class="shirt" data-id="${s.id}"><i style="background:${s.kleur}"></i><b>${s.naam.toLowerCase()}</b>€ 45</button>`).join('');}
+function tekenOverBlok(){ob.innerHTML=zichtbaar().map(s=>`<button class="poster" data-id="${s.id}"><img src="${klein(s.id)}" alt="Poster ${s.naam}" loading="lazy"><b>${s.naam.toLowerCase()}</b>vanaf ${euro(vanaf)}</button>`).join('');}
 tekenOverBlok();
-ob.addEventListener('click',e=>{const b=e.target.closest('[data-id]');if(!b)return;openModal(shirts.find(s=>s.id===b.dataset.id));});
+ob.addEventListener('click',e=>{const b=e.target.closest('[data-id]');if(!b)return;openModal(vind(b.dataset.id));});
 function openOver(){over.classList.add('open');over.setAttribute('aria-hidden','false');scene.classList.add('grijs');}
 function sluitOver(){over.classList.remove('open');over.setAttribute('aria-hidden','true');scene.classList.remove('grijs');}
 document.getElementById('overKnop').addEventListener('click',openOver);
@@ -482,17 +577,84 @@ function sluitContact(){contact.classList.remove('open');contact.setAttribute('a
 document.getElementById('contactKnop').addEventListener('click',openContact);
 document.getElementById('contactSluit').addEventListener('click',sluitContact);
 cf.addEventListener('submit',()=>{if(!cf.reportValidity())return;cf.classList.add('klaar');});
-addEventListener('keydown',e=>{if(e.key==='Escape'){sluitModal();sluitOver();sluitContact();}});
+addEventListener('keydown',e=>{if(e.key==='Escape'){sluitModal();sluitOver();sluitContact();sluitMandje();}});
+
+/* ---------- Mandje (bewaard in de browser) en afrekenen ---------- */
+const mandje=document.getElementById('mandje'),ml=document.getElementById('mandjeLijst'),mtot=document.getElementById('mandjeTotaal'),
+  bf=document.getElementById('bestelForm'),bfout=document.getElementById('bestelFout'),naarAf=document.getElementById('naarAfrekenen');
+const VERZENDING={NL:6.95,BE:9.95},GRATIS_VANAF=75,WINKEL_MAIL='hallo@skiffa.nl';
+let regels=[],bestelStart=0;
+try{regels=JSON.parse(localStorage.getItem('skiffa-mandje')||'[]').filter(r=>vind(r.id)&&formaten.some(f=>f.id===r.formaat));}catch(_){regels=[];}
+const bewaar=()=>{try{localStorage.setItem('skiffa-mandje',JSON.stringify(regels));}catch(_){}};
+const formaatVan=id=>formaten.find(f=>f.id===id);
+function bedragen(land){const sub=regels.reduce((t,r)=>t+formaatVan(r.formaat).prijs*r.aantal,0);const verz=!sub||sub>=GRATIS_VANAF?0:VERZENDING[land]||VERZENDING.NL;return{sub,verz,tot:sub+verz};}
+function totaalHtml(land){const b=bedragen(land);const nog=GRATIS_VANAF-b.sub;
+  return `<span>subtotaal</span><span>${euro(b.sub)}</span><span>verzending${land==='BE'?' (België)':''}</span><span>${b.verz?euro(b.verz):'gratis'}</span><span class="som">totaal</span><span class="som">${euro(b.tot)}</span>`+
+    (b.sub&&nog>0?`<small>nog ${euro(nog)} tot gratis verzending</small>`:'');}
+function tekenMandje(){
+  const n=regels.reduce((t,r)=>t+r.aantal,0);document.getElementById('mandjeTel').textContent=n;
+  ml.innerHTML=regels.length?regels.map((r,i)=>{const p=vind(r.id),f=formaatVan(r.formaat);
+    return `<div class="regel"><img src="${klein(p.id)}" alt=""><div><b>${p.naam.toLowerCase()}</b><small>${f.label}</small>
+      <div class="aantal"><button data-i="${i}" data-d="-1" aria-label="Eén minder">−</button>${r.aantal}<button data-i="${i}" data-d="1" aria-label="Eén meer">+</button><button class="weg" data-i="${i}" data-weg>verwijder</button></div></div>
+      <span>${euro(f.prijs*r.aantal)}</span></div>`;}).join(''):'<p class="leeg">Je mandje is nog leeg. Kies een poster via “shop posters”.</p>';
+  mtot.innerHTML=regels.length?totaalHtml('NL'):'';naarAf.disabled=!regels.length;
+  document.getElementById('bestelTotaal').innerHTML=totaalHtml(bf.land.value);
+}
+function voegToe(id,formaat){const r=regels.find(x=>x.id===id&&x.formaat===formaat);if(r)r.aantal=Math.min(10,r.aantal+1);else regels.push({id,formaat,aantal:1});bewaar();tekenMandje();}
+ml.addEventListener('click',e=>{const b=e.target.closest('button[data-i]');if(!b)return;const i=+b.dataset.i;
+  if(b.hasAttribute('data-weg'))regels.splice(i,1);else{regels[i].aantal=Math.min(10,regels[i].aantal+ +b.dataset.d);if(regels[i].aantal<1)regels.splice(i,1);}
+  bewaar();tekenMandje();});
+function zetStap(st){mandje.dataset.stap=st;if(st==='gegevens'){bestelStart=Date.now();bfout.textContent='';setTimeout(()=>bf.naam.focus(),300);}}
+function openMandje(st){sluitModal();zetStap(st||'lijst');tekenMandje();mandje.classList.add('open');mandje.setAttribute('aria-hidden','false');}
+function sluitMandje(){mandje.classList.remove('open');mandje.setAttribute('aria-hidden','true');if(mandje.dataset.stap==='klaar')zetStap('lijst');}
+document.getElementById('mandjeKnop').addEventListener('click',()=>openMandje());
+document.getElementById('mandjeSluit').addEventListener('click',sluitMandje);
+mandje.addEventListener('click',e=>{if(e.target===mandje)sluitMandje();});
+naarAf.addEventListener('click',()=>{if(regels.length)zetStap('gegevens');});
+document.getElementById('terugNaarLijst').addEventListener('click',()=>zetStap('lijst'));
+bf.land.addEventListener('change',tekenMandje);
+function toonKlaar(t){document.getElementById('klaarTekst').textContent=t;zetStap('klaar');}
+/* Terugval zonder betaal- of mailkoppeling op de server: de bestelling als e-mail klaarzetten. */
+function bestelMail(k){const b=bedragen(k.land);
+  const tekst=['Hallo Skiffa,','','Ik wil graag bestellen:',...regels.map(r=>`- ${r.aantal}× ${vind(r.id).naam}, ${formaatVan(r.formaat).label} (${euro(formaatVan(r.formaat).prijs*r.aantal)})`),
+    `Verzending: ${b.verz?euro(b.verz):'gratis'}`,`Totaal: ${euro(b.tot)}`,'',k.naam,k.straat,`${k.postcode} ${k.plaats}`,k.land==='BE'?'België':'Nederland',k.email].concat(k.opmerking?['','Opmerking: '+k.opmerking]:[]).join('\n');
+  return `mailto:${WINKEL_MAIL}?subject=${encodeURIComponent('Bestelling posters')}&body=${encodeURIComponent(tekst)}`;}
+bf.addEventListener('submit',async e=>{
+  e.preventDefault();if(!bf.reportValidity()||!regels.length)return;
+  const d=Object.fromEntries(new FormData(bf));const klant={naam:d.naam,email:d.email,straat:d.straat,postcode:d.postcode,plaats:d.plaats,land:d.land,opmerking:d.opmerking};
+  const knop=bf.querySelector('.verzend');knop.disabled=true;knop.firstChild.textContent='een moment… ';bfout.textContent='';
+  try{
+    const r=await fetch('/api/bestel',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({klant,regels,website:d.website,t:Date.now()-bestelStart})});
+    const j=await r.json().catch(()=>null);
+    if(j&&j.ok&&j.url){try{sessionStorage.setItem('skiffa-betaling',JSON.stringify({id:j.id,nr:j.nummer}));}catch(_){}location.href=j.url;return;}
+    if(j&&j.ok){regels=[];bewaar();tekenMandje();bf.reset();toonKlaar(`Bestelling ${j.nummer} is binnen. Je krijgt een bevestiging op ${klant.email}, en binnen één werkdag een betaalverzoek.`);return;}
+    if(j&&j.reden==='ongeldig'){bfout.textContent=j.melding||'Controleer je gegevens.';return;}
+  }catch(_){/* geen server (statisch gehost): val terug op mail */}
+  finally{knop.disabled=false;knop.firstChild.textContent='bestellen en betalen ';}
+  location.href=bestelMail(klant);
+  toonKlaar(`Je mailprogramma opent met je bestelling erin. Verstuur die mail naar ${WINKEL_MAIL}, dan sturen we je binnen één werkdag een betaalverzoek.`);
+});
+/* Terug van Mollie: vraag de status van de betaling op bij de server */
+(async()=>{const q=new URLSearchParams(location.search);if(q.get('bestelling')!=='terug')return;history.replaceState(null,'',location.pathname);
+  let bet=null;try{bet=JSON.parse(sessionStorage.getItem('skiffa-betaling')||'null');}catch(_){}
+  if(!bet||!bet.id)return;
+  let st='';try{const j=await(await fetch(`/api/bestel?id=${encodeURIComponent(bet.id)}`)).json();st=j&&j.ok?j.status:'';}catch(_){}
+  if(st==='paid'||st==='authorized'){try{sessionStorage.removeItem('skiffa-betaling');}catch(_){}regels=[];bewaar();openMandje();
+    toonKlaar(`Betaling gelukt, bestelling ${bet.nr}. Je krijgt een bevestiging per mail; je poster gaat opgerold in een koker op de post.`);}
+  else if(st==='open'||st==='pending'){openMandje();toonKlaar(`Je betaling voor bestelling ${bet.nr} wordt nog verwerkt. Zodra hij binnen is, krijg je een bevestiging per mail.`);}
+  else{openMandje('gegevens');bfout.textContent='De betaling is niet gelukt of afgebroken. Je mandje staat er nog; probeer het opnieuw.';}
+})();
+tekenMandje();
 
 /* ---------- CMS-hydratie (headless; env-gated op de server, valt stil terug op de content in de code) ----------
    De site draait volledig zonder CMS. Staat er op de server een CMS_URL + CMS_TOKEN (zie /api/content),
-   dan haalt deze bootstrap de gepubliceerde content op en vervangt de tagline en de shirts.
+   dan haalt deze bootstrap de gepubliceerde content op en vervangt de tagline en de postertitels en -teksten.
    Zonder token geeft /api/content {ok:false} en blijft alles exact zoals in de code. */
-function normaliseerShirt(s){return{
-  id:String(s.id),naam:s.naam,kleur:s.kleur,licht:s.licht,
-  x:+s.x,y:+s.y,s:s.s,sub:s.sub,zin:s.zin,
-  punten:Array.isArray(s.punten)?s.punten:[]
-};}
+/* Het CMS mag de teksten van bestaande posters aanpassen (gekoppeld op id). Nieuwe posters en prijzen
+   komen bewust niet uit het CMS: de server rekent met api/_catalogus.js. */
+function voegPosterSamen(c){const p=vind(String(c.id));if(!p)return;
+  for(const k of ['naam','sub','zin','kleur'])if(typeof c[k]==='string'&&c[k].trim())p[k]=c[k];
+  if(Array.isArray(c.punten)&&c.punten.length)p.punten=c.punten.map(String);}
 (async()=>{
   try{
     const r=await fetch('/api/content',{cache:'no-store'});
@@ -500,9 +662,9 @@ function normaliseerShirt(s){return{
     const d=await r.json();
     if(!d||!d.ok)return;
     if(d.tagline){const t=document.getElementById('tagline');if(t)t.textContent=d.tagline;}
-    if(Array.isArray(d.shirts)&&d.shirts.length){
-      shirts=d.shirts.map(normaliseerShirt);
-      tekenShop();tekenOverBlok();
+    if(Array.isArray(d.posters)&&d.posters.length){
+      d.posters.forEach(voegPosterSamen);
+      tekenShop();tekenOverBlok();tekenMandje();
       plaatsHotspots(document.body.dataset.periode||'ochtend');
     }
   }catch(_){/* stil terugvallen op de content in de code */}
