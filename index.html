@@ -119,6 +119,14 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 #modal.open{opacity:1;pointer-events:auto}
 #modal .kader{width:min(920px,92vw);height:min(560px,86vh);background:var(--papier);color:var(--zwart);display:grid;grid-template-columns:1.1fr 1fr;transform:translateY(24px) scale(.98);transition:transform .5s cubic-bezier(.2,.8,.2,1);overflow:hidden}
 #modal.open .kader{transform:none}
+.posternav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:-30px 34px 6px 0;padding-bottom:12px;border-bottom:1px solid rgba(0,0,0,.12);font-size:9px;letter-spacing:.16em}
+.posternav button{padding:4px 0;opacity:.75;transition:opacity .2s}
+.posternav button:hover{opacity:1}
+.posternav .alle{border-bottom:1px solid currentColor;padding:0}
+#modal .pijl{position:fixed;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:var(--papier);color:var(--zwart);display:grid;place-items:center;font-size:18px;box-shadow:0 6px 20px rgba(0,0,0,.25);transition:transform .2s;z-index:41}
+#modal .pijl:hover{transform:translateY(-50%) scale(1.08)}
+#modal .pijl.vorige{left:max(16px,calc(50% - 460px - 72px))}
+#modal .pijl.volgende{right:max(16px,calc(50% - 460px - 72px))}
 #modal .sluit{z-index:3;position:absolute;top:18px;right:22px;width:26px;height:26px;border-radius:50%;background:var(--zwart);color:#fff;display:grid;place-items:center;font-size:16px;line-height:1;transform:rotate(45deg)}
 .carrousel{position:relative;background:var(--zeeblok);overflow:hidden}
 .carrousel .voortgang{position:absolute;top:14px;left:14px;right:14px;display:flex;gap:4px;z-index:2}
@@ -260,6 +268,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
   #footer{height:auto}
   .tijd{position:static;transform:none;justify-content:center;margin-bottom:8px}
   .nu{display:none}
+  #modal .pijl{display:none}
+  .posternav{margin:-6px 0 6px}
   #modal .kader{grid-template-columns:1fr;grid-template-rows:46% 1fr;height:92vh;width:94vw}
   .modaltekst{padding:28px 22px 24px}
   #over .binnen,#contact .binnen{grid-template-columns:1fr;padding-top:90px}
@@ -318,6 +328,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
     <div class="carrousel"><div class="voortgang"><i></i><i></i><i></i></div><div class="baan" id="baan"></div></div>
     <div class="modaltekst" id="modaltekst"></div>
   </div>
+  <button class="pijl vorige" id="vorigePoster" aria-label="Vorige poster">←</button>
+  <button class="pijl volgende" id="volgendePoster" aria-label="Volgende poster">→</button>
 </div>
 
 <!-- Over -->
@@ -565,13 +577,20 @@ function zetOpen(el,open,focusEl){
 /* Modal */
 const modal=document.getElementById('modal'),baan=document.getElementById('baan'),mt=document.getElementById('modaltekst'),vg=[...document.querySelectorAll('.voortgang i')];
 let diaTimer=null,dia=0,aantalDias=3;
+/* Bladeren tussen posters in het productvenster */
+let huidigePoster=null;
+function bladerPoster(stap){const lijst=zichtbaar();if(!huidigePoster||!lijst.length)return;
+  const i=lijst.findIndex(p=>p.id===huidigePoster.id),uitNav=!!document.activeElement?.closest('.posternav');
+  openModal(lijst[(i+stap+lijst.length)%lijst.length]);if(uitNav)mt.querySelector(`[data-blader="${stap}"]`)?.focus();}
 function openModal(s){
+  huidigePoster=s;const lijst=zichtbaar(),nr=lijst.findIndex(p=>p.id===s.id)+1;
   let formaat=formaten[1].id;
   const dias=[`<div class="dia poster"><img src="${beeld(s.id)}" alt="Poster ${s.naam}"><small>poster ${s.naam.toLowerCase()} — 2:3</small></div>`,
     `<div class="dia lijst hout"><div class="lijstje"><img src="${klein(s.id)}" alt="Poster ${s.naam} in een houten lijst"></div><small>in een houten lijst — lijst niet meegeleverd</small></div>`,
     `<div class="dia lijst zwart"><div class="lijstje"><div class="pp"><img src="${klein(s.id)}" alt="Poster ${s.naam} in een zwarte lijst met passe-partout"></div></div><small>in een zwarte lijst met passe-partout — lijst niet meegeleverd</small></div>`];
   baan.innerHTML=dias.join('');vg.forEach((i,k)=>i.style.display=k<dias.length?'':'none');aantalDias=dias.length;
-  mt.innerHTML=`<h3 id="modalTitel">${s.naam.toLowerCase()} — poster</h3><p class="sub">${s.sub}</p><p>${s.zin}</p><ul>${s.punten.map(p=>`<li>${p}</li>`).join('')}</ul>
+  mt.innerHTML=`<nav class="posternav" aria-label="Andere posters"><button data-blader="-1">← vorige</button><span>${nr} / ${lijst.length} · <button class="alle">alle posters</button></span><button data-blader="1">volgende →</button></nav>
+    <h3 id="modalTitel">${s.naam.toLowerCase()} — poster</h3><p class="sub">${s.sub}</p><p>${s.zin}</p><ul>${s.punten.map(p=>`<li>${p}</li>`).join('')}</ul>
     <div class="label">formaat</div>
     <div class="formaten" role="group" aria-label="Formaat">${formaten.map(f=>`<button data-f="${f.id}" aria-pressed="${f.id===formaat}">${f.label}</button>`).join('')}</div>
     <button class="bestel">in het mandje <span></span></button>
@@ -582,11 +601,13 @@ function openModal(s){
   mt.querySelector('.formaten').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;formaat=b.dataset.f;mt.querySelectorAll('.formaten button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));zetPrijs();});
   be.addEventListener('click',()=>{voegToe(s.id,formaat);be.classList.add('klaar');be.firstChild.textContent='toegevoegd ';mt.querySelector('.naarmandje').classList.add('aan');setTimeout(()=>{be.classList.remove('klaar');be.firstChild.textContent='in het mandje ';},1600);});
   mt.querySelector('.naarmandje').addEventListener('click',()=>{sluitModal();openMandje();});
+  mt.querySelectorAll('[data-blader]').forEach(b=>b.addEventListener('click',()=>bladerPoster(+b.dataset.blader)));
+  mt.querySelector('.alle').addEventListener('click',()=>{sluitModal();openOver();setTimeout(()=>document.getElementById('overBlok').scrollIntoView({behavior:rm?'auto':'smooth'}),rm?0:700);});
   dia=0;toonDia();zetOpen(modal,true,document.getElementById('modalSluit'));scene.classList.add('grijs');
   history.replaceState(null,'','#'+s.id);
 }
 function toonDia(){baan.style.transform=`translateX(${-dia*100}%)`;vg.forEach((i,k)=>{i.className=k<dia?'klaar':k===dia?'bezig':'';});clearTimeout(diaTimer);diaTimer=setTimeout(()=>{dia=(dia+1)%aantalDias;toonDia();},3200);}
-function sluitModal(){if(!modal.classList.contains('open'))return;zetOpen(modal,false);scene.classList.remove('grijs');clearTimeout(diaTimer);if(location.hash)history.replaceState(null,'',location.pathname+location.search);}
+function sluitModal(){if(!modal.classList.contains('open'))return;huidigePoster=null;zetOpen(modal,false);scene.classList.remove('grijs');clearTimeout(diaTimer);if(location.hash)history.replaceState(null,'',location.pathname+location.search);}
 document.getElementById('modalSluit').addEventListener('click',sluitModal);
 modal.addEventListener('click',e=>{if(e.target===modal)sluitModal();});
 document.querySelector('.carrousel').addEventListener('click',e=>{if(e.target.closest('.voortgang'))return;dia=(dia+1)%aantalDias;toonDia();});
@@ -628,7 +649,10 @@ cf.addEventListener('submit',async e=>{
   location.href=`mailto:${WINKEL_MAIL}?subject=${encodeURIComponent('Vraag via skiffa.nl: '+d.waarover)}&body=${encodeURIComponent(tekst)}`;
   cf.classList.add('klaar');cf.querySelector('.dank').textContent=`Je mailprogramma opent met je bericht erin. Verstuur die mail naar ${WINKEL_MAIL}, dan reageren we binnen één werkdag.`;
 });
-addEventListener('keydown',e=>{if(e.key==='Escape'){sluitModal();sluitOver();sluitContact();sluitMandje();}});
+addEventListener('keydown',e=>{if(e.key==='Escape'){sluitModal();sluitOver();sluitContact();sluitMandje();}
+  if(modal.classList.contains('open')&&(e.key==='ArrowLeft'||e.key==='ArrowRight')&&!e.target.closest('input,textarea,select')){e.preventDefault();bladerPoster(e.key==='ArrowLeft'?-1:1);}});
+document.getElementById('vorigePoster').addEventListener('click',()=>bladerPoster(-1));
+document.getElementById('volgendePoster').addEventListener('click',()=>bladerPoster(1));
 
 /* ---------- Mandje (bewaard in de browser) en afrekenen ---------- */
 const mandje=document.getElementById('mandje'),ml=document.getElementById('mandjeLijst'),mtot=document.getElementById('mandjeTotaal'),
