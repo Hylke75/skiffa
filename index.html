@@ -350,7 +350,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
     </div>
     <div class="kol">
       <p>Skiffa is een klein merk uit Scheveningen. Wij maken posters over de surfcultuur van ons eigen strand. Geen souvenir voor toeristen, maar iets voor aan de muur van de mensen die hier wonen, werken en het hele jaar het water in gaan — ook als het grijs is, waait en regent. <b>Van Skiffa, voor Skiffa.</b></p>
-      <p>Elke poster is een hoofdstuk: <b>Surfcultuur</b>, de eerste surfers bij de pier in de jaren zeventig. <b>Windsurf</b>, de zeilen bij de vuurtoren in de jaren tachtig. <b>Golf</b>, de zee zoals je hem 's avonds onthoudt. En de pier door de jaren heen: <b>Pier en Strand</b>, <b>Boulevard</b>, <b>De Pier</b>, <b>Surf</b>, <b>Havenpier</b>, <b>Skiffa</b>, <b>Skyview</b>, <b>Havenhoofden</b>, <b>Noordzee Surf</b> en <b>Regatta</b>. Drie formaten, kleine oplages.</p>
+      <p>Elke poster is een hoofdstuk: <b>Surfcultuur</b>, de eerste surfers bij de pier in de jaren zeventig. <b>Windsurf</b>, de zeilen bij de vuurtoren in de jaren tachtig. <b>Golf</b>, de zee zoals je hem 's avonds onthoudt. En de pier door de jaren heen: <b>Pier en Strand</b>, <b>Boulevard</b>, <b>De Pier</b>, <b>Surf</b>, <b>Havenpier</b>, <b>Skiffa</b>, <b>Skyview</b>, <b>Havenhoofden</b>, <b>Noordzee Surf</b>, <b>Regatta</b> en <b>Zon</b>. Drie formaten, kleine oplages.</p>
     </div>
     <div class="kol">
       <p>We drukken ze op <b>250 grams mat fine-art papier</b>, in Den Haag. Alle posters hebben de verhouding 2:3, zodat ze in een standaardlijst passen. Ze gaan opgerold de deur uit, in een stevige koker en zonder lijst: hoe hij aan de muur komt, kies je zelf.</p>
@@ -460,7 +460,7 @@ let posters=[
   {id:'regatta',naam:'Regatta',kleur:'#2F6DB5',actief:true,sub:'jaren tachtig · blauwdruk',zin:'Zeilen op een rij bij de vuurtoren, een strand vol kijkers en een zomer die naar zonnebrand rook. Windsurfen zoals het in Scheveningen begon, in één kleur blauw.',punten:PUNTEN},
   {id:'vuurtoren',naam:'Vuurtoren',kleur:'#C8402A',actief:false,sub:'houtsnedestijl · illustratie',zin:'De rode vuurtoren van Scheveningen tegen een rode zon, met beneden de Noordzee in groen en wit.',punten:PUNTEN},
   {id:'reuzenrad',naam:'Reuzenrad',kleur:'#C99A2E',actief:false,sub:'paletmes · schilderij',zin:'Het reuzenrad aan het eind van de pier, in dikke verf tegen een gouden zon. Scheveningen zoals het nu is.',punten:PUNTEN},
-  {id:'zon',naam:'Zon',kleur:'#E8571E',actief:false,sub:'linodrukstijl · illustratie',zin:'Een oranje zon, een blauwe muur van water en de vuurtoren klein in de verte. Wachten tot de zee rustig wordt.',punten:PUNTEN},
+  {id:'zon',naam:'Zon',kleur:'#E8571E',actief:true,sub:'linodrukstijl · illustratie',zin:'Een oranje zon, een muur van blauw water en de vuurtoren klein in de verte. Een surfer loopt terug naar het strand; de zee mag even rusten.',punten:PUNTEN},
 ];
 const beeld=id=>`/posters/${id}.webp`,klein=id=>`/posters/${id}-klein.webp`;
 const zichtbaar=()=>posters.filter(p=>p.actief!==false);
