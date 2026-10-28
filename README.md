@@ -4,19 +4,39 @@ De losse frontend voor **Skiffa** (Scheveningen). Het is het **exacte aangelever
 (`skiffa-noordzee`) als statische site, met een **optionele, env-gated koppeling** naar het centrale
 CMS (`linkandlead.nl`) volgens `BOUW-EEN-SITE.md`.
 
-De site is een bewuste single-page-ervaring: een scène die met de tijd in Scheveningen meebeweegt,
-live Noordzee-data (wind, temperatuur, zeewater, golven en het getij via Open-Meteo), zes t-shirts als
-hotspots, en de overlays **over** en **contact**.
+De site is een bewuste single-page-ervaring en verkoopt **posters** over de Scheveningse surfcultuur:
+een scène die met de tijd in Scheveningen meebeweegt (uitsneden uit de posters), live Noordzee-data
+(wind, temperatuur, zeewater, golven en het getij via Open-Meteo), de posters als hotspots, een
+**mandje** met afrekenen, en de overlays **over** en **contact**.
+
+## Posters en bestellen
+
+- **Beelden**: `posters/<id>.webp` (productbeeld, 1333 × 2000) en `posters/<id>-klein.webp` (600 × 900).
+  `sfeer/` bevat uitsneden uit de posters: de drie scènes (ochtend/middag/avond), de detailbeelden in het
+  productvenster en het beeld bij contact.
+- **Catalogus**: `posters` en `formaten` in `index.html` (teksten, beelden), en `api/_catalogus.js`
+  (ids en prijzen; de server rekent altijd zelf). Check: `node scripts/check-catalogus.mjs`.
+- **Formaten**: 30 × 45 (€ 29), 50 × 75 (€ 45), 70 × 105 (€ 69). Verzending € 6,95 (BE € 9,95), gratis vanaf € 75.
+- **Nieuwe poster toevoegen**: `python3 scripts/maak-beelden.py <bestand> <id>`, dan in `index.html` bij die
+  poster `actief:true` en de `sfeer`-uitsneden invullen, en de id toevoegen aan `api/_catalogus.js`.
+  Havenpier, Zon, De Pier, Surf en Pier en Strand staan al klaar met `actief:false` (de beelden ontbreken nog).
+- **Mandje**: wordt in de browser bewaard (`localStorage`).
+- **Afrekenen** (`api/bestel.js`, env-gated):
+  1. `STRIPE_SECRET_KEY` → Stripe Checkout (iDEAL/kaart), daarna terug naar `/?bestelling=gelukt`.
+  2. anders `RESEND_API_KEY` (+ `RESEND_FROM`, `BESTEL_EMAIL`) → bestelling per mail naar de winkel en een
+     bevestiging naar de klant; de winkel stuurt een betaalverzoek.
+  3. niets ingesteld (of statisch gehost) → de site opent een mail aan hallo@skiffa.nl met de bestelling erin.
+  Spam: honeypot-veld en minimale invultijd.
 
 ## Hoe het in elkaar zit
 
 - **`index.html`** — het volledige ontwerp (HTML + CSS + JS, GSAP via CDN). Alle content
-  (de 6 shirts, de teksten, de FAQ) staat gewoon in de code. De site draait 100% zonder CMS.
+  (de posters, de teksten, de FAQ) staat gewoon in de code. De site draait 100% zonder CMS.
 - **`api/content.js`** — een Vercel-serverless-functie die *server-side* de CMS-lees-API ophaalt met
   het geheime token. Zo komt het token **nooit** in de browser. Zonder token antwoordt hij
   `{ok:false}` en verandert er niets.
 - Onderaan `index.html` staat een kleine **CMS-hydratie**: die haalt `/api/content` op en vervangt —
-  alléén als er content terugkomt — de **tagline** en de **shirts**. Komt er niets terug, dan blijft
+  alléén als er content terugkomt — de **tagline** en de **posterteksten**. Komt er niets terug, dan blijft
   alles exact zoals in het ontwerp.
 
 Kort: **geen token → exact het ontwerp. Wél een token → dezelfde site, maar met content uit het CMS.**
@@ -29,6 +49,9 @@ Zet deze pas als er een CMS-site + token voor Skiffa bestaat (`/admin/platform`)
 |-------------|----------------------------|
 | `CMS_URL`   | `https://linkandlead.nl`   |
 | `CMS_TOKEN` | `cms_...` (48 hex, geheim) |
+| `STRIPE_SECRET_KEY` | optioneel, voor betalen via Stripe Checkout |
+| `RESEND_API_KEY`, `RESEND_FROM`, `BESTEL_EMAIL` | optioneel, bestellingen per mail |
+| `SITE_URL` | optioneel, basis-URL voor terugkeer na betalen |
 
 Zet ze in Vercel onder **Production + Preview**. Nooit committen (`.env` staat in `.gitignore`).
 
@@ -37,18 +60,16 @@ Zet ze in Vercel onder **Production + Preview**. Nooit committen (`.env` staat i
 `api/content.js` leest conservatief, zodat een half ingevuld record de site niet breekt:
 
 - **tagline** ← `site.config.tagline`, anders de `subheading` van het eerste `header`-blok.
-- **shirts** ← `site.config.shirts` (een array), of een blok met `content.shirts`. Elk shirt moet
-  minimaal `id`, `naam` en `kleur` hebben; `licht`, `x`, `y`, `s`, `sub`, `zin`, `punten` zijn
-  optioneel met nette defaults.
+- **posterteksten** ← `site.config.posters` (een array), of een blok met `content.posters`. Gekoppeld op
+  `id` aan de bestaande posters; alleen `naam`, `sub`, `zin`, `kleur` en `punten` worden overgenomen.
+  Prijzen, formaten en nieuwe posters komen bewust niet uit het CMS.
 
-De shirt-vorm (`{id, naam, kleur, licht, x, y, s, sub, zin, punten}`) staat als bron van waarheid in
-`index.html`. Zodra het token er is, seed je die shirts via de sync-API (`POST /api/cms/sync`) of vul
-je ze in `site.config`, en verfijnen we deze mapping op de echte blokstructuur.
+Seed de teksten met `node scripts/cms-seed.mjs` (leest ze uit `index.html`).
 
 ## Lokaal draaien
 
 ```bash
-npx vercel dev      # draait index.html + /api/content lokaal
+npx vercel dev      # draait index.html + /api/content + /api/bestel lokaal
 # of gewoon een statische server; /api/content geeft dan {ok:false} en de code-content wordt gebruikt.
 ```
 

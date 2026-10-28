@@ -6,7 +6,7 @@
 //
 // Zodra er een token is: zet CMS_URL + CMS_TOKEN als Environment Variables in Vercel.
 // De frontend (zie de CMS-hydratie onderaan index.html) haalt dit endpoint dan op en
-// vervangt de tagline en de shirts.
+// vervangt de tagline en de postertitels en -teksten.
 
 const CMS_URL = process.env.CMS_URL;     // https://linkandlead.nl
 const CMS_TOKEN = process.env.CMS_TOKEN; // cms_...
@@ -24,34 +24,32 @@ function leesTagline(data) {
   return undefined;
 }
 
-// Haal de shirts uit de CMS-content. Twee bronnen worden ondersteund (de eerste die geldig is wint):
-//   1. site.config.shirts  — een array met de volledige shirt-objecten (handig om te seeden/pushen)
-//   2. een blok met content.shirts — zelfde vorm, op een pagina
-// Elk shirt moet minimaal id, naam en kleur hebben; de rest is optioneel en heeft nette defaults,
-// zodat een half ingevuld CMS-record de frontend niet breekt.
-function leesShirts(data) {
+// Haal de postertekst uit de CMS-content. Twee bronnen worden ondersteund (de eerste die geldig is wint):
+//   1. site.config.posters  — een array met poster-objecten
+//   2. een blok met content.posters — zelfde vorm, op een pagina
+// Elke poster moet minimaal een id hebben. Alleen teksten (naam, sub, zin, kleur, punten) worden
+// doorgegeven; de frontend koppelt ze op id aan de posters die al bestaan. Prijzen en formaten
+// komen nooit uit het CMS (de server rekent met api/_catalogus.js).
+function leesPosters(data) {
   const kandidaten = [];
   const cfg = data?.site?.config;
-  if (cfg && Array.isArray(cfg.shirts)) kandidaten.push(cfg.shirts);
+  if (cfg && Array.isArray(cfg.posters)) kandidaten.push(cfg.posters);
   for (const p of data?.paginas || []) {
     for (const b of p.blokken || []) {
-      if (Array.isArray(b.content?.shirts)) kandidaten.push(b.content.shirts);
+      if (Array.isArray(b.content?.posters)) kandidaten.push(b.content.posters);
     }
   }
+  const tekst = (v) => (typeof v === 'string' && v.trim() ? v : undefined);
   for (const lijst of kandidaten) {
     const geldig = lijst
-      .filter((s) => s && s.id && s.naam && s.kleur)
+      .filter((s) => s && s.id)
       .map((s) => ({
         id: String(s.id),
-        naam: String(s.naam),
-        kleur: String(s.kleur),
-        licht: s.licht ? String(s.licht) : '#EEF0EE',
-        x: Number(s.x) || 0.5,
-        y: Number(s.y) || 0.85,
-        s: s.s ? String(s.s) : 'M',
-        sub: s.sub ? String(s.sub) : '',
-        zin: s.zin ? String(s.zin) : '',
-        punten: Array.isArray(s.punten) ? s.punten.map(String) : [],
+        naam: tekst(s.naam),
+        sub: tekst(s.sub),
+        zin: tekst(s.zin),
+        kleur: tekst(s.kleur),
+        punten: Array.isArray(s.punten) ? s.punten.map(String) : undefined,
       }));
     if (geldig.length) return geldig;
   }
@@ -84,7 +82,7 @@ export default async function handler(req, res) {
       ok: true,
       naam: data.site?.naam,
       tagline: leesTagline(data),
-      shirts: leesShirts(data),
+      posters: leesPosters(data),
     });
   } catch (e) {
     // Nooit de site laten breken op een CMS-hik: val terug op code-content.
