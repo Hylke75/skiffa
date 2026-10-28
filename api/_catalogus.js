@@ -20,6 +20,8 @@ export const POSTERS = {
   'noordzee-surf': 'Noordzee Surf',
   regatta: 'Regatta',
   zon: 'Zon',
+  vuurtoren: 'Vuurtoren',
+  reuzenrad: 'Reuzenrad',
 };
 
 export const FORMATEN = {
