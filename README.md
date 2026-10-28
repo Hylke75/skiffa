@@ -13,7 +13,7 @@ een scène die met de tijd in Scheveningen meebeweegt (uitsneden uit de posters)
 
 - **Beelden**: `posters/<id>.webp` (productbeeld, 1333 × 2000) en `posters/<id>-klein.webp` (600 × 900).
   `sfeer/` bevat uitsneden uit de posters: de drie scènes (ochtend/middag/avond) en het beeld bij contact.
-  Het productvenster toont de poster, de poster op schaal aan de muur (groeit mee met het formaat) en in een lijst.
+  Het productvenster toont de poster, de poster in een houten lijst en in een zwarte lijst met passe-partout.
 - **Catalogus**: `posters` en `formaten` in `index.html` (teksten, beelden), en `api/_catalogus.js`
   (ids en prijzen; de server rekent altijd zelf). Check: `node scripts/check-catalogus.mjs`.
 - **Formaten**: 30 × 45 (€ 29), 50 × 75 (€ 45), 70 × 105 (€ 69). Verzending € 6,95 (BE € 9,95), gratis vanaf € 75.
