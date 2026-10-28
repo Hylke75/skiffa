@@ -19,7 +19,7 @@ een scène die met de tijd in Scheveningen meebeweegt (uitsneden uit de posters)
 - **Formaten**: 30 × 45 (€ 29), 50 × 75 (€ 45), 70 × 105 (€ 69). Verzending € 6,95 (BE € 9,95), gratis vanaf € 75.
 - **Nieuwe poster toevoegen**: `python3 scripts/maak-beelden.py <bestand> <id>`, dan in `index.html` bij die
   poster `actief:true` en de `sfeer`-uitsneden invullen, en de id toevoegen aan `api/_catalogus.js`.
-  Havenpier, Zon, De Pier, Surf en Pier en Strand staan al klaar met `actief:false` (de beelden ontbreken nog).
+  Zon en Reuzenrad staan al klaar met `actief:false` (de beelden ontbreken nog).
 - **Mandje**: wordt in de browser bewaard (`localStorage`).
 - **Afrekenen** (`api/bestel.js`, env-gated):
   1. `MOLLIE_API_KEY` → Mollie-betaling (iDEAL, Bancontact, kaart). Daarna terug naar `/?bestelling=terug`,

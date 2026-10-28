@@ -9,6 +9,11 @@ export const POSTERS = {
   surfcultuur: 'Surfcultuur',
   windsurf: 'Windsurf',
   golf: 'Golf',
+  havenpier: 'Havenpier',
+  'de-pier': 'De Pier',
+  surf: 'Surf',
+  boulevard: 'Boulevard',
+  'pier-en-strand': 'Pier en Strand',
 };
 
 export const FORMATEN = {

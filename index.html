@@ -6,7 +6,7 @@
 <title>Skiffa — posters van de Scheveningse surfcultuur</title>
 <meta name="description" content="Skiffa maakt posters over de surfcultuur van Scheveningen. Gedrukt in Den Haag, opgerold verstuurd in een koker.">
 <meta property="og:title" content="Skiffa — posters van de Scheveningse surfcultuur">
-<meta property="og:description" content="Surfcultuur, Windsurf en Golf: posters van de grijze kant van de zee.">
+<meta property="og:description" content="Posters van de pier, het strand en de surfcultuur van Scheveningen.">
 <meta property="og:image" content="/posters/surfcultuur-klein.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Homemade+Apple&display=swap" rel="stylesheet">
@@ -72,7 +72,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 .shop{position:relative}
 .shop .lijst{position:absolute;right:0;top:30px;display:flex;flex-direction:column;gap:6px;opacity:0;transform:translateY(-6px);pointer-events:none;transition:all .35s}
 .shop:hover .lijst,.shop:focus-within .lijst{opacity:1;transform:none;pointer-events:auto}
-.shop .lijst .knop{justify-content:flex-start;min-width:150px}
+.shop .lijst .knop{justify-content:flex-start;min-width:150px;white-space:nowrap}
 .shop::after{content:"";position:absolute;left:0;right:0;top:100%;height:12px}
 
 /* Hotspots */
@@ -163,7 +163,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 #over .handtekening::after{content:"";position:absolute;left:0;right:0;bottom:-2px;height:1px;background:#000;transform:scaleX(0);transform-origin:left;transition:transform 1.4s 1.2s ease}
 #over.open .handtekening::after{transform:none}
 #over .maker{font-size:9px;letter-spacing:.2em;margin-top:10px}
-#over .blok{position:relative;margin:30px 22px 22px;background:var(--zeeblok);padding:60px 40px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:40px;align-items:end}
+#over .blok{position:relative;margin:30px 22px 22px;background:var(--zeeblok);padding:60px 40px;display:grid;grid-template-columns:repeat(4,1fr);gap:40px;align-items:end}
 #over .blok .poster{text-align:center;font-size:9px;letter-spacing:.2em}
 #over .blok .poster img{display:block;width:100%;max-width:240px;aspect-ratio:2/3;object-fit:cover;margin:0 auto 14px;box-shadow:0 14px 28px rgba(0,0,0,.14);transition:transform .3s}
 #over .blok .poster:hover img{transform:translateY(-4px)}
@@ -248,7 +248,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
   #modal .kader{grid-template-columns:1fr;height:92vh;width:94vw}
   .carrousel{height:44%}
   #over .binnen,#contact .binnen{grid-template-columns:1fr;padding-top:90px}
-  #over .blok{grid-template-columns:repeat(3,1fr);gap:14px;padding:30px 16px}
+  #over .blok{grid-template-columns:repeat(2,1fr);gap:18px;padding:30px 16px}
 }
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important}
@@ -321,7 +321,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
     </div>
     <div class="kol">
       <p>Skiffa is een klein merk uit Scheveningen. Wij maken posters over de surfcultuur van ons eigen strand. Geen souvenir voor toeristen, maar iets voor aan de muur van de mensen die hier wonen, werken en het hele jaar het water in gaan — ook als het grijs is, waait en regent. <b>Van Skiffa, voor Skiffa.</b></p>
-      <p>Elke poster is een hoofdstuk: <b>Surfcultuur</b>, de eerste surfers bij de pier in de jaren zeventig. <b>Windsurf</b>, de zeilen bij de vuurtoren in de jaren tachtig. En <b>Golf</b>, de zee zoals je hem 's avonds onthoudt. Drie formaten, kleine oplages.</p>
+      <p>Elke poster is een hoofdstuk: <b>Surfcultuur</b>, de eerste surfers bij de pier in de jaren zeventig. <b>Windsurf</b>, de zeilen bij de vuurtoren in de jaren tachtig. <b>Golf</b>, de zee zoals je hem 's avonds onthoudt. En de pier door de jaren heen: <b>Pier en Strand</b>, <b>Boulevard</b>, <b>De Pier</b>, <b>Surf</b> en <b>Havenpier</b>. Drie formaten, kleine oplages.</p>
     </div>
     <div class="kol">
       <p>We drukken ze op <b>250 grams mat fine-art papier</b>, in Den Haag. Alle posters hebben de verhouding 2:3, zodat ze in een standaardlijst passen. Ze gaan opgerold de deur uit, in een stevige koker en zonder lijst: hoe hij aan de muur komt, kies je zelf.</p>
@@ -415,17 +415,24 @@ const PUNTEN=['giclée op 250 grams mat fine-art papier','gedrukt in Den Haag','
 /* actief:false = klaargezet, nog niet zichtbaar (beeld volgt). Zet op true zodra /posters/<id>.webp er staat
    en voeg hem ook toe aan api/_catalogus.js. */
 let posters=[
+  {id:'pier-en-strand',naam:'Pier en Strand',kleur:'#E4572E',actief:true,sub:'jaren dertig · illustratie',zin:'Parasols, rieten stoelen en de oude pier vol wandelaars. Scheveningen toen de badplaats nog in pak naar het strand ging.',punten:PUNTEN,
+   sfeer:[['/sfeer/pier-en-strand-detail-1.webp','de oude pier vol wandelaars'],['/sfeer/pier-en-strand-detail-2.webp','onder de parasols']]},
+  {id:'boulevard',naam:'Boulevard',kleur:'#1B2A6B',actief:true,sub:'jaren vijftig · illustratie',zin:'Een vlag die klappert in de wind, auto\'s met chroom op de boulevard en een strand zo vol dat je het zand niet meer ziet.',punten:PUNTEN,
+   sfeer:[['/sfeer/boulevard-detail-1.webp','de pier en de toren'],['/sfeer/boulevard-detail-2.webp','oversteken naar het strand']]},
+  {id:'de-pier',naam:'De Pier',kleur:'#D7261E',actief:true,sub:'jaren zestig · foto',zin:'Strandkorven, de uitkijktoren vol vlaggen en een hele zomer op hetzelfde stuk zand. De pier zoals je ouders hem kennen.',punten:PUNTEN,
+   sfeer:[['/sfeer/de-pier-detail-1.webp','de uitkijktoren vol vlaggen'],['/sfeer/de-pier-detail-2.webp','tussen de strandkorven']]},
   {id:'surfcultuur',naam:'Surfcultuur',kleur:'#E0201B',actief:true,sub:'jaren zeventig · foto',zin:'Nazomer bij de pier. Een oude BMW op het strand, planken in het zand en niemand die haast heeft. Zo begon het surfen in Scheveningen.',punten:PUNTEN,
    sfeer:[['/sfeer/surfcultuur-detail-1.webp','planken naast de auto'],['/sfeer/surfcultuur-detail-2.webp','de pier in de verte']]},
   {id:'windsurf',naam:'Windsurf',kleur:'#1D63D8',actief:true,sub:'jaren tachtig · foto',zin:'Zeilen met nummers, neon op het zand en half Den Haag bij de vuurtoren. De zomer dat de wind het strand overnam.',punten:PUNTEN,
    sfeer:[['/sfeer/windsurf-detail-1.webp','publiek bij de vuurtoren'],['/sfeer/windsurf-detail-2.webp','zeil klaar voor de start']]},
   {id:'golf',naam:'Golf',kleur:'#F0287A',actief:true,sub:'zeefdrukstijl · illustratie',zin:'Avond, het havenhoofd in tegenlicht en één golf die blijft staan. Roze, oranje en blauw, zoals de zee er alleen in je hoofd uitziet.',punten:PUNTEN,
    sfeer:[['/sfeer/golf-detail-1.webp','de golf'],['/sfeer/golf-detail-2.webp','terug naar de vloedlijn']]},
-  {id:'havenpier',naam:'Havenpier',kleur:'#0F4C6B',actief:false,sub:'north sea surf · foto',zin:'Windkracht zeven bij het havenhoofd. Iedereen blijft op de pier staan kijken, één iemand gaat erin.',punten:PUNTEN,sfeer:[]},
+  {id:'surf',naam:'Surf',kleur:'#1F4E79',actief:true,sub:'retro · illustratie',zin:'Oranje lucht, het reuzenrad aan het eind van de pier en een rij surfers die wacht op de volgende set.',punten:PUNTEN,
+   sfeer:[['/sfeer/surf-detail-1.webp','de pier met het reuzenrad'],['/sfeer/surf-detail-2.webp','op de schouder van de golf']]},
+  {id:'havenpier',naam:'Havenpier',kleur:'#0F4C6B',actief:true,sub:'north sea surf · foto',zin:'Windkracht zeven bij het havenhoofd. Iedereen blijft op de pier staan kijken, één iemand gaat erin.',punten:PUNTEN,
+   sfeer:[['/sfeer/havenpier-detail-1.webp','de vuurtoren op het havenhoofd'],['/sfeer/havenpier-detail-2.webp','in de buis']]},
+  {id:'reuzenrad',naam:'Reuzenrad',kleur:'#C99A2E',actief:false,sub:'paletmes · schilderij',zin:'Het reuzenrad aan het eind van de pier, in dikke verf tegen een gouden zon. Scheveningen zoals het nu is.',punten:PUNTEN,sfeer:[]},
   {id:'zon',naam:'Zon',kleur:'#E8571E',actief:false,sub:'linodrukstijl · illustratie',zin:'Een oranje zon, een blauwe muur van water en de vuurtoren klein in de verte. Wachten tot de zee rustig wordt.',punten:PUNTEN,sfeer:[]},
-  {id:'de-pier',naam:'De Pier',kleur:'#D7261E',actief:false,sub:'jaren zestig · foto',zin:'Strandkorven, de uitkijktoren vol vlaggen en een hele zomer op hetzelfde stuk zand. De pier zoals je ouders hem kennen.',punten:PUNTEN,sfeer:[]},
-  {id:'surf',naam:'Surf',kleur:'#1F4E79',actief:false,sub:'retro · illustratie',zin:'Oranje lucht, het reuzenrad aan het eind van de pier en een rij surfers die wacht op de volgende set.',punten:PUNTEN,sfeer:[]},
-  {id:'pier-en-strand',naam:'Pier en Strand',kleur:'#E4572E',actief:false,sub:'jaren dertig · illustratie',zin:'Parasols, rieten stoelen en de oude pier vol wandelaars. Scheveningen toen de badplaats nog in pak naar het strand ging.',punten:PUNTEN,sfeer:[]},
 ];
 const beeld=id=>`/posters/${id}.webp`,klein=id=>`/posters/${id}-klein.webp`;
 const zichtbaar=()=>posters.filter(p=>p.actief!==false);
