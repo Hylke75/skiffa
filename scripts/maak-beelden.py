@@ -21,7 +21,7 @@ root = Path(__file__).resolve().parent.parent
 im = Image.open(bron).convert('RGB')
 im.thumbnail((1333, 2000), Image.LANCZOS)
 im.save(root / 'posters' / f'{pid}.webp', 'WEBP', quality=88, method=6)
-im.resize((600, 900), Image.LANCZOS).save(root / 'posters' / f'{pid}-klein.webp', 'WEBP', quality=82, method=6)
+im.resize((600, 900), Image.LANCZOS).save(root / 'posters' / f'{pid}-klein.webp', 'WEBP', quality=72, method=6)
 
 print(f'klaar: posters/{pid}.webp en posters/{pid}-klein.webp')
 print(f"zet in index.html bij '{pid}': actief:true")

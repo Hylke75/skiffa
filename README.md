@@ -19,7 +19,7 @@ een scène die met de tijd in Scheveningen meebeweegt (uitsneden uit de posters)
 - **Formaten**: 30 × 45 (€ 29), 50 × 75 (€ 45), 70 × 105 (€ 69). Verzending € 6,95 (BE € 9,95), gratis vanaf € 75.
 - **Nieuwe poster toevoegen**: `python3 scripts/maak-beelden.py <bestand> <id>`, dan in `index.html` bij die
   poster `actief:true` zetten en de id toevoegen aan `api/_catalogus.js`.
-  Zon en Reuzenrad staan al klaar met `actief:false` (de beelden ontbreken nog).
+  Zon, Reuzenrad en Vuurtoren staan al klaar met `actief:false` (de beelden ontbreken nog).
 - **Mandje**: wordt in de browser bewaard (`localStorage`).
 - **Afrekenen** (`api/bestel.js`, env-gated):
   1. `MOLLIE_API_KEY` → Mollie-betaling (iDEAL, Bancontact, kaart). Daarna terug naar `/?bestelling=terug`,
@@ -43,6 +43,15 @@ een scène die met de tijd in Scheveningen meebeweegt (uitsneden uit de posters)
   alles exact zoals in het ontwerp.
 
 Kort: **geen token → exact het ontwerp. Wél een token → dezelfde site, maar met content uit het CMS.**
+
+## Contactformulier
+
+`api/contact.js` stuurt berichten via Resend naar `BESTEL_EMAIL` (standaard hallo@skiffa.nl). Zonder
+`RESEND_API_KEY` opent de site een mail met het bericht erin. Spam: honeypot-veld en minimale invultijd.
+
+## Link per poster
+
+`/#<poster-id>` (bijv. `/#golf`) opent die poster direct; het productvenster zet de link zelf in de adresbalk.
 
 ## Environment variables
 
@@ -82,7 +91,3 @@ npx vercel dev      # draait index.html + /api/content + /api/bestel lokaal (Mol
 - Eerst testen op de Vercel-preview-URL; het eigen domein pas koppelen **na akkoord**.
 - Content ververst vanzelf binnen ~60s (cache), of na een redeploy.
 
-## Formulier
-
-Het contactformulier is nu client-side (bevestiging in beeld). Echte afhandeling (Resend/CRM) komt in
-een eigen serverless-route met honeypot + tijdmeting, conform `BOUW-EEN-SITE.md §9`.
