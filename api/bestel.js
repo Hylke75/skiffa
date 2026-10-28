@@ -74,6 +74,12 @@ export default async function handler(req, res) {
     if (/^https:\/\/(?!localhost|127\.)/.test(basis)) betaling.webhookUrl = `${basis}/api/mollie-webhook`;
     try {
       const p = await mollie('payments', { method: 'POST', body: JSON.stringify(betaling) });
+      // Zet het betaal-id in de terugkeer-URL, zodat de status ook klopt als de klant op een
+      // ander apparaat betaalt (bijv. iDEAL via de bank-app). Lukt dat niet, dan valt de site
+      // terug op het id in sessionStorage.
+      try {
+        await mollie(`payments/${p.id}`, { method: 'PATCH', body: JSON.stringify({ redirectUrl: `${betaling.redirectUrl}&id=${p.id}` }) });
+      } catch { /* niet erg */ }
       res.status(200).json({ ok: true, modus: 'mollie', nummer, id: p.id, url: p._links?.checkout?.href });
     } catch {
       res.status(200).json({ ok: false, reden: 'betaling-niet-gestart' });
