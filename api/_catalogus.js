@@ -14,6 +14,8 @@ export const POSTERS = {
   surf: 'Surf',
   boulevard: 'Boulevard',
   'pier-en-strand': 'Pier en Strand',
+  skiffa: 'Skiffa',
+  skyview: 'Skyview',
 };
 
 export const FORMATEN = {
