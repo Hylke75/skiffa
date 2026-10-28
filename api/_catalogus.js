@@ -16,6 +16,7 @@ export const POSTERS = {
   'pier-en-strand': 'Pier en Strand',
   skiffa: 'Skiffa',
   skyview: 'Skyview',
+  havenhoofden: 'Havenhoofden',
 };
 
 export const FORMATEN = {
