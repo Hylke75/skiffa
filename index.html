@@ -626,7 +626,7 @@ bf.addEventListener('submit',async e=>{
   try{
     const r=await fetch('/api/bestel',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({klant,regels,website:d.website,t:Date.now()-bestelStart})});
     const j=await r.json().catch(()=>null);
-    if(j&&j.ok&&j.url){location.href=j.url;return;}
+    if(j&&j.ok&&j.url){try{sessionStorage.setItem('skiffa-betaling',JSON.stringify({id:j.id,nr:j.nummer}));}catch(_){}location.href=j.url;return;}
     if(j&&j.ok){regels=[];bewaar();tekenMandje();bf.reset();toonKlaar(`Bestelling ${j.nummer} is binnen. Je krijgt een bevestiging op ${klant.email}, en binnen één werkdag een betaalverzoek.`);return;}
     if(j&&j.reden==='ongeldig'){bfout.textContent=j.melding||'Controleer je gegevens.';return;}
   }catch(_){/* geen server (statisch gehost): val terug op mail */}
@@ -634,10 +634,16 @@ bf.addEventListener('submit',async e=>{
   location.href=bestelMail(klant);
   toonKlaar(`Je mailprogramma opent met je bestelling erin. Verstuur die mail naar ${WINKEL_MAIL}, dan sturen we je binnen één werkdag een betaalverzoek.`);
 });
-/* Terug van Stripe Checkout */
-(()=>{const q=new URLSearchParams(location.search),st=q.get('bestelling');if(!st)return;history.replaceState(null,'',location.pathname);
-  if(st==='gelukt'){regels=[];bewaar();openMandje();toonKlaar(`Betaling gelukt${q.get('nr')?`, bestelling ${q.get('nr')}`:''}. Je krijgt een bevestiging per mail; je poster gaat opgerold in een koker op de post.`);}
-  else if(st==='geannuleerd')openMandje('gegevens');})();
+/* Terug van Mollie: vraag de status van de betaling op bij de server */
+(async()=>{const q=new URLSearchParams(location.search);if(q.get('bestelling')!=='terug')return;history.replaceState(null,'',location.pathname);
+  let bet=null;try{bet=JSON.parse(sessionStorage.getItem('skiffa-betaling')||'null');}catch(_){}
+  if(!bet||!bet.id)return;
+  let st='';try{const j=await(await fetch(`/api/bestel?id=${encodeURIComponent(bet.id)}`)).json();st=j&&j.ok?j.status:'';}catch(_){}
+  if(st==='paid'||st==='authorized'){try{sessionStorage.removeItem('skiffa-betaling');}catch(_){}regels=[];bewaar();openMandje();
+    toonKlaar(`Betaling gelukt, bestelling ${bet.nr}. Je krijgt een bevestiging per mail; je poster gaat opgerold in een koker op de post.`);}
+  else if(st==='open'||st==='pending'){openMandje();toonKlaar(`Je betaling voor bestelling ${bet.nr} wordt nog verwerkt. Zodra hij binnen is, krijg je een bevestiging per mail.`);}
+  else{openMandje('gegevens');bfout.textContent='De betaling is niet gelukt of afgebroken. Je mandje staat er nog; probeer het opnieuw.';}
+})();
 tekenMandje();
 
 /* ---------- CMS-hydratie (headless; env-gated op de server, valt stil terug op de content in de code) ----------

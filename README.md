@@ -22,7 +22,10 @@ een scène die met de tijd in Scheveningen meebeweegt (uitsneden uit de posters)
   Havenpier, Zon, De Pier, Surf en Pier en Strand staan al klaar met `actief:false` (de beelden ontbreken nog).
 - **Mandje**: wordt in de browser bewaard (`localStorage`).
 - **Afrekenen** (`api/bestel.js`, env-gated):
-  1. `STRIPE_SECRET_KEY` → Stripe Checkout (iDEAL/kaart), daarna terug naar `/?bestelling=gelukt`.
+  1. `MOLLIE_API_KEY` → Mollie-betaling (iDEAL, Bancontact, kaart). Daarna terug naar `/?bestelling=terug`,
+     waar de site de status opvraagt (`GET /api/bestel?id=tr_…`). Mollie meldt de betaling aan
+     `api/mollie-webhook.js`; bij `paid` gaat de bestelling per mail naar winkel en klant (als Resend is
+     ingesteld). Alle bestellingen staan ook in het Mollie-dashboard (beschrijving `Skiffa SK-…`, gegevens in de metadata).
   2. anders `RESEND_API_KEY` (+ `RESEND_FROM`, `BESTEL_EMAIL`) → bestelling per mail naar de winkel en een
      bevestiging naar de klant; de winkel stuurt een betaalverzoek.
   3. niets ingesteld (of statisch gehost) → de site opent een mail aan hallo@skiffa.nl met de bestelling erin.
@@ -49,8 +52,8 @@ Zet deze pas als er een CMS-site + token voor Skiffa bestaat (`/admin/platform`)
 |-------------|----------------------------|
 | `CMS_URL`   | `https://linkandlead.nl`   |
 | `CMS_TOKEN` | `cms_...` (48 hex, geheim) |
-| `STRIPE_SECRET_KEY` | optioneel, voor betalen via Stripe Checkout |
-| `RESEND_API_KEY`, `RESEND_FROM`, `BESTEL_EMAIL` | optioneel, bestellingen per mail |
+| `MOLLIE_API_KEY` | optioneel, voor betalen via Mollie (`live_…` of `test_…`) |
+| `RESEND_API_KEY`, `RESEND_FROM`, `BESTEL_EMAIL` | optioneel, mails bij bestellingen |
 | `SITE_URL` | optioneel, basis-URL voor terugkeer na betalen |
 
 Zet ze in Vercel onder **Production + Preview**. Nooit committen (`.env` staat in `.gitignore`).
@@ -69,7 +72,7 @@ Seed de teksten met `node scripts/cms-seed.mjs` (leest ze uit `index.html`).
 ## Lokaal draaien
 
 ```bash
-npx vercel dev      # draait index.html + /api/content + /api/bestel lokaal
+npx vercel dev      # draait index.html + /api/content + /api/bestel lokaal (Mollie-webhook alleen op een publieke https-URL)
 # of gewoon een statische server; /api/content geeft dan {ok:false} en de code-content wordt gebruikt.
 ```
 
