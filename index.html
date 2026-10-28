@@ -185,8 +185,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 #over .handtekening::after{content:"";position:absolute;left:0;right:0;bottom:-2px;height:1px;background:#000;transform:scaleX(0);transform-origin:left;transition:transform 1.4s 1.2s ease}
 #over.open .handtekening::after{transform:none}
 #over .maker{font-size:9px;letter-spacing:.2em;margin-top:10px}
-#over .blok{position:relative;margin:30px 22px 22px;background:var(--zeeblok);padding:60px 40px;display:grid;grid-template-columns:repeat(5,1fr);gap:32px;align-items:end}
-#over .blok .poster{text-align:center;font-size:9px;letter-spacing:.2em}
+#over .blok{position:relative;margin:30px 22px 22px;background:var(--zeeblok);padding:60px 40px;display:flex;flex-wrap:wrap;justify-content:center;gap:32px 28px;align-items:flex-end}
+#over .blok .poster{flex:0 0 calc((100% - 5 * 28px) / 6);text-align:center;font-size:9px;letter-spacing:.2em}
 #over .blok .poster img{display:block;width:100%;max-width:240px;aspect-ratio:2/3;object-fit:cover;margin:0 auto 14px;box-shadow:0 14px 28px rgba(0,0,0,.14);transition:transform .3s}
 #over .blok .poster:hover img{transform:translateY(-4px)}
 #over .blok .poster b{display:block;font-weight:500}
@@ -273,7 +273,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
   #modal .kader{grid-template-columns:1fr;grid-template-rows:46% 1fr;height:92vh;width:94vw}
   .modaltekst{padding:28px 22px 24px}
   #over .binnen,#contact .binnen{grid-template-columns:1fr;padding-top:90px}
-  #over .blok{grid-template-columns:repeat(2,1fr);gap:18px;padding:30px 16px}
+  #over .blok{gap:22px 18px;padding:30px 16px}
+  #over .blok .poster{flex-basis:calc((100% - 18px) / 2)}
 }
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important}
@@ -349,7 +350,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
     </div>
     <div class="kol">
       <p>Skiffa is een klein merk uit Scheveningen. Wij maken posters over de surfcultuur van ons eigen strand. Geen souvenir voor toeristen, maar iets voor aan de muur van de mensen die hier wonen, werken en het hele jaar het water in gaan — ook als het grijs is, waait en regent. <b>Van Skiffa, voor Skiffa.</b></p>
-      <p>Elke poster is een hoofdstuk: <b>Surfcultuur</b>, de eerste surfers bij de pier in de jaren zeventig. <b>Windsurf</b>, de zeilen bij de vuurtoren in de jaren tachtig. <b>Golf</b>, de zee zoals je hem 's avonds onthoudt. En de pier door de jaren heen: <b>Pier en Strand</b>, <b>Boulevard</b>, <b>De Pier</b>, <b>Surf</b>, <b>Havenpier</b>, <b>Skiffa</b> en <b>Skyview</b>. Drie formaten, kleine oplages.</p>
+      <p>Elke poster is een hoofdstuk: <b>Surfcultuur</b>, de eerste surfers bij de pier in de jaren zeventig. <b>Windsurf</b>, de zeilen bij de vuurtoren in de jaren tachtig. <b>Golf</b>, de zee zoals je hem 's avonds onthoudt. En de pier door de jaren heen: <b>Pier en Strand</b>, <b>Boulevard</b>, <b>De Pier</b>, <b>Surf</b>, <b>Havenpier</b>, <b>Skiffa</b>, <b>Skyview</b>, <b>Havenhoofden</b> en <b>Noordzee Surf</b>. Drie formaten, kleine oplages.</p>
     </div>
     <div class="kol">
       <p>We drukken ze op <b>250 grams mat fine-art papier</b>, in Den Haag. Alle posters hebben de verhouding 2:3, zodat ze in een standaardlijst passen. Ze gaan opgerold de deur uit, in een stevige koker en zonder lijst: hoe hij aan de muur komt, kies je zelf.</p>
@@ -454,6 +455,8 @@ let posters=[
   {id:'havenpier',naam:'Havenpier',kleur:'#0F4C6B',actief:true,sub:'north sea surf · foto',zin:'Windkracht zeven bij het havenhoofd. Iedereen blijft op de pier staan kijken, één iemand gaat erin.',punten:PUNTEN},
   {id:'skiffa',naam:'Skiffa',kleur:'#E8784A',actief:true,sub:'zeefdrukstijl · illustratie',zin:'De zon zakt achter de vuurtoren, de boulevard licht op en in het water wachten ze nog op die ene laatste golf.',punten:PUNTEN},
   {id:'skyview',naam:'Skyview',kleur:'#E5501F',actief:true,sub:'zeefdrukstijl · illustratie',zin:'Drie gondels van het reuzenrad, een zon die de hele lucht pakt en beneden de Noordzee in oranje en zwart.',punten:PUNTEN},
+  {id:'havenhoofden',naam:'Havenhoofden',kleur:'#1F4E8C',actief:true,sub:'linodrukstijl · illustratie',zin:'Twee vuurtorens op de havenhoofden, een rij grijze blokken en één surfer die de golf pakt. Gedrukt in één kleur, zoals vroeger.',punten:PUNTEN},
+  {id:'noordzee-surf',naam:'Noordzee Surf',kleur:'#1E3A5F',actief:true,sub:'foto · surfcultuur',zin:'Late middagzon, glinsterend water en één surfer die zijn golf vindt voor de havenhoofden. Zo ziet een goede dag in Scheveningen eruit.',punten:PUNTEN},
   {id:'vuurtoren',naam:'Vuurtoren',kleur:'#C8402A',actief:false,sub:'houtsnedestijl · illustratie',zin:'De rode vuurtoren van Scheveningen tegen een rode zon, met beneden de Noordzee in groen en wit.',punten:PUNTEN},
   {id:'reuzenrad',naam:'Reuzenrad',kleur:'#C99A2E',actief:false,sub:'paletmes · schilderij',zin:'Het reuzenrad aan het eind van de pier, in dikke verf tegen een gouden zon. Scheveningen zoals het nu is.',punten:PUNTEN},
   {id:'zon',naam:'Zon',kleur:'#E8571E',actief:false,sub:'linodrukstijl · illustratie',zin:'Een oranje zon, een blauwe muur van water en de vuurtoren klein in de verte. Wachten tot de zee rustig wordt.',punten:PUNTEN},
