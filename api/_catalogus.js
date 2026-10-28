@@ -17,6 +17,7 @@ export const POSTERS = {
   skiffa: 'Skiffa',
   skyview: 'Skyview',
   havenhoofden: 'Havenhoofden',
+  'noordzee-surf': 'Noordzee Surf',
 };
 
 export const FORMATEN = {
