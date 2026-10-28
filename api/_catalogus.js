@@ -18,6 +18,10 @@ export const POSTERS = {
   skyview: 'Skyview',
   havenhoofden: 'Havenhoofden',
   'noordzee-surf': 'Noordzee Surf',
+  regatta: 'Regatta',
+  zon: 'Zon',
+  vuurtoren: 'Vuurtoren',
+  reuzenrad: 'Reuzenrad',
 };
 
 export const FORMATEN = {
