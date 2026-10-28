@@ -18,6 +18,7 @@ export const POSTERS = {
   skyview: 'Skyview',
   havenhoofden: 'Havenhoofden',
   'noordzee-surf': 'Noordzee Surf',
+  regatta: 'Regatta',
 };
 
 export const FORMATEN = {

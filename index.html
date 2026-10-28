@@ -186,7 +186,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 #over.open .handtekening::after{transform:none}
 #over .maker{font-size:9px;letter-spacing:.2em;margin-top:10px}
 #over .blok{position:relative;margin:30px 22px 22px;background:var(--zeeblok);padding:60px 40px;display:flex;flex-wrap:wrap;justify-content:center;gap:32px 28px;align-items:flex-end}
-#over .blok .poster{flex:0 0 calc((100% - 5 * 28px) / 6);text-align:center;font-size:9px;letter-spacing:.2em}
+#over .blok .poster{flex:0 0 calc((100% - (var(--per,6) - 1) * 28px) / var(--per,6));text-align:center;font-size:9px;letter-spacing:.2em}
 #over .blok .poster img{display:block;width:100%;max-width:240px;aspect-ratio:2/3;object-fit:cover;margin:0 auto 14px;box-shadow:0 14px 28px rgba(0,0,0,.14);transition:transform .3s}
 #over .blok .poster:hover img{transform:translateY(-4px)}
 #over .blok .poster b{display:block;font-weight:500}
@@ -350,7 +350,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
     </div>
     <div class="kol">
       <p>Skiffa is een klein merk uit Scheveningen. Wij maken posters over de surfcultuur van ons eigen strand. Geen souvenir voor toeristen, maar iets voor aan de muur van de mensen die hier wonen, werken en het hele jaar het water in gaan — ook als het grijs is, waait en regent. <b>Van Skiffa, voor Skiffa.</b></p>
-      <p>Elke poster is een hoofdstuk: <b>Surfcultuur</b>, de eerste surfers bij de pier in de jaren zeventig. <b>Windsurf</b>, de zeilen bij de vuurtoren in de jaren tachtig. <b>Golf</b>, de zee zoals je hem 's avonds onthoudt. En de pier door de jaren heen: <b>Pier en Strand</b>, <b>Boulevard</b>, <b>De Pier</b>, <b>Surf</b>, <b>Havenpier</b>, <b>Skiffa</b>, <b>Skyview</b>, <b>Havenhoofden</b> en <b>Noordzee Surf</b>. Drie formaten, kleine oplages.</p>
+      <p>Elke poster is een hoofdstuk: <b>Surfcultuur</b>, de eerste surfers bij de pier in de jaren zeventig. <b>Windsurf</b>, de zeilen bij de vuurtoren in de jaren tachtig. <b>Golf</b>, de zee zoals je hem 's avonds onthoudt. En de pier door de jaren heen: <b>Pier en Strand</b>, <b>Boulevard</b>, <b>De Pier</b>, <b>Surf</b>, <b>Havenpier</b>, <b>Skiffa</b>, <b>Skyview</b>, <b>Havenhoofden</b>, <b>Noordzee Surf</b> en <b>Regatta</b>. Drie formaten, kleine oplages.</p>
     </div>
     <div class="kol">
       <p>We drukken ze op <b>250 grams mat fine-art papier</b>, in Den Haag. Alle posters hebben de verhouding 2:3, zodat ze in een standaardlijst passen. Ze gaan opgerold de deur uit, in een stevige koker en zonder lijst: hoe hij aan de muur komt, kies je zelf.</p>
@@ -457,6 +457,7 @@ let posters=[
   {id:'skyview',naam:'Skyview',kleur:'#E5501F',actief:true,sub:'zeefdrukstijl · illustratie',zin:'Drie gondels van het reuzenrad, een zon die de hele lucht pakt en beneden de Noordzee in oranje en zwart.',punten:PUNTEN},
   {id:'havenhoofden',naam:'Havenhoofden',kleur:'#1F4E8C',actief:true,sub:'linodrukstijl · illustratie',zin:'Twee vuurtorens op de havenhoofden, een rij grijze blokken en één surfer die de golf pakt. Gedrukt in één kleur, zoals vroeger.',punten:PUNTEN},
   {id:'noordzee-surf',naam:'Noordzee Surf',kleur:'#1E3A5F',actief:true,sub:'foto · surfcultuur',zin:'Late middagzon, glinsterend water en één surfer die zijn golf vindt voor de havenhoofden. Zo ziet een goede dag in Scheveningen eruit.',punten:PUNTEN},
+  {id:'regatta',naam:'Regatta',kleur:'#2F6DB5',actief:true,sub:'jaren tachtig · blauwdruk',zin:'Zeilen op een rij bij de vuurtoren, een strand vol kijkers en een zomer die naar zonnebrand rook. Windsurfen zoals het in Scheveningen begon, in één kleur blauw.',punten:PUNTEN},
   {id:'vuurtoren',naam:'Vuurtoren',kleur:'#C8402A',actief:false,sub:'houtsnedestijl · illustratie',zin:'De rode vuurtoren van Scheveningen tegen een rode zon, met beneden de Noordzee in groen en wit.',punten:PUNTEN},
   {id:'reuzenrad',naam:'Reuzenrad',kleur:'#C99A2E',actief:false,sub:'paletmes · schilderij',zin:'Het reuzenrad aan het eind van de pier, in dikke verf tegen een gouden zon. Scheveningen zoals het nu is.',punten:PUNTEN},
   {id:'zon',naam:'Zon',kleur:'#E8571E',actief:false,sub:'linodrukstijl · illustratie',zin:'Een oranje zon, een blauwe muur van water en de vuurtoren klein in de verte. Wachten tot de zee rustig wordt.',punten:PUNTEN},
@@ -627,7 +628,7 @@ shopLijst.addEventListener('click',e=>{const b=e.target.closest('[data-id]');if(
 
 /* Over */
 const over=document.getElementById('over'),ob=document.getElementById('overBlok');
-function tekenOverBlok(){if(!overGetekend)return;ob.innerHTML=zichtbaar().map(s=>`<button class="poster" data-id="${s.id}"><img src="${klein(s.id)}" alt="Poster ${s.naam}" loading="lazy"><b>${s.naam.toLowerCase()}</b>vanaf ${euro(vanaf)}</button>`).join('');}
+function tekenOverBlok(){if(!overGetekend)return;ob.style.setProperty('--per',Math.min(8,Math.max(4,Math.ceil(zichtbaar().length/2))));ob.innerHTML=zichtbaar().map(s=>`<button class="poster" data-id="${s.id}"><img src="${klein(s.id)}" alt="Poster ${s.naam}" loading="lazy"><b>${s.naam.toLowerCase()}</b>vanaf ${euro(vanaf)}</button>`).join('');}
 ob.addEventListener('click',e=>{const b=e.target.closest('[data-id]');if(!b)return;openModal(vind(b.dataset.id));});
 let overGetekend=false;
 function openOver(){if(!overGetekend){overGetekend=true;tekenOverBlok();}zetOpen(over,true);scene.classList.add('grijs');}
