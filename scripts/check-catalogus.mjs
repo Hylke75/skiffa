@@ -19,7 +19,7 @@ for (const f of formaten) {
 }
 for (const id of Object.keys(FORMATEN)) if (!formaten.some((f) => f.id === id)) fouten.push(`formaat '${id}' staat alleen op de server`);
 for (const p of posters) {
-  const bestanden = [`posters/${p.id}.webp`, `posters/${p.id}-klein.webp`, ...p.sfeer.map(([u]) => u.slice(1))];
+  const bestanden = [`posters/${p.id}.webp`, `posters/${p.id}-klein.webp`];
   for (const b of bestanden) if (!existsSync(join(root, b))) fouten.push(`bestand ontbreekt: ${b}`);
 }
 if (fouten.length) {

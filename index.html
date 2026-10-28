@@ -6,7 +6,7 @@
 <title>Skiffa — posters van de Scheveningse surfcultuur</title>
 <meta name="description" content="Skiffa maakt posters over de surfcultuur van Scheveningen. Gedrukt in Den Haag, opgerold verstuurd in een koker.">
 <meta property="og:title" content="Skiffa — posters van de Scheveningse surfcultuur">
-<meta property="og:description" content="Surfcultuur, Windsurf en Golf: posters van de grijze kant van de zee.">
+<meta property="og:description" content="Posters van de pier, het strand en de surfcultuur van Scheveningen.">
 <meta property="og:image" content="/posters/surfcultuur-klein.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Homemade+Apple&display=swap" rel="stylesheet">
@@ -72,7 +72,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 .shop{position:relative}
 .shop .lijst{position:absolute;right:0;top:30px;display:flex;flex-direction:column;gap:6px;opacity:0;transform:translateY(-6px);pointer-events:none;transition:all .35s}
 .shop:hover .lijst,.shop:focus-within .lijst{opacity:1;transform:none;pointer-events:auto}
-.shop .lijst .knop{justify-content:flex-start;min-width:150px}
+.shop .lijst .knop{justify-content:flex-start;min-width:150px;white-space:nowrap}
 .shop::after{content:"";position:absolute;left:0;right:0;top:100%;height:12px}
 
 /* Hotspots */
@@ -129,6 +129,18 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 .carrousel .dia.poster{background:var(--papier)}
 .carrousel .dia.poster img{inset:0;margin:auto;width:auto;height:84%;max-width:84%;object-fit:contain;box-shadow:0 18px 40px rgba(0,0,0,.2)}
 .carrousel .dia.poster small{color:#000;text-shadow:none;opacity:.55}
+/* dia 2: op schaal aan de muur, boven een dressoir van 160 x 75 cm (de dia is 260 cm hoog) */
+.carrousel .dia.muur{background:linear-gradient(180deg,#EEE9E1 0%,#E3DCD1 88.5%,#CDBFAE 88.5%,#C2B39F 100%)}
+.carrousel .dia.muur .dressoir{position:absolute;left:50%;bottom:11.5%;height:28.8%;aspect-ratio:160/75;transform:translateX(-50%);background:linear-gradient(180deg,#9A7F64 0 4%,#86694F 4% 100%);border-radius:2px;box-shadow:0 12px 20px rgba(0,0,0,.18)}
+.carrousel .dia.muur .dressoir::before,.carrousel .dia.muur .dressoir::after{content:"";position:absolute;top:22%;bottom:12%;width:1px;background:rgba(0,0,0,.18)}
+.carrousel .dia.muur .dressoir::before{left:33.3%}.carrousel .dia.muur .dressoir::after{left:66.6%}
+.carrousel .dia.muur .opmuur{position:absolute;left:50%;bottom:48%;height:calc(var(--ph,75) * 100% / 260);aspect-ratio:2/3;transform:translateX(-50%);transition:height .5s cubic-bezier(.2,.8,.2,1)}
+.carrousel .dia.muur .opmuur img{box-shadow:0 10px 22px rgba(0,0,0,.22),0 0 0 1px rgba(0,0,0,.05)}
+/* dia 3: in een lijst met passe-partout */
+.carrousel .dia.lijst{background:radial-gradient(ellipse at 28% 0%,#76837A 0%,#55615A 55%,#434D47 100%)}
+.carrousel .dia.lijst .lijstje{position:absolute;left:50%;top:47%;transform:translate(-50%,-50%);height:76%;aspect-ratio:2/3;border:9px solid #161616;background:#FBFAF6;padding:9%;box-shadow:0 26px 44px rgba(0,0,0,.4),inset 0 0 0 1px rgba(0,0,0,.08)}
+.carrousel .dia.lijst .lijstje img{position:static;width:100%;height:100%;object-fit:contain}
+.carrousel .dia.muur small{color:#000;text-shadow:none;opacity:.6}
 .carrousel .dia small{position:absolute;bottom:14px;left:16px;font-size:8px;letter-spacing:.2em;text-transform:uppercase;opacity:.8;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.5)}
 .modaltekst{padding:56px 40px 32px;display:flex;flex-direction:column;gap:18px;font-size:11px;line-height:1.8;overflow:auto}
 .modaltekst h3{font-family:var(--mono);font-weight:500;font-size:13px;letter-spacing:.14em}
@@ -136,12 +148,12 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 .modaltekst ul{list-style:none}
 .modaltekst li::before{content:"• "}
 .formaten{display:flex;gap:6px;flex-wrap:wrap}
-.formaten button{height:26px;padding:0 12px;border:1px solid #000;border-radius:999px;font-size:10px}
+.formaten button{flex-shrink:0;height:26px;padding:0 12px;border:1px solid #000;border-radius:999px;font-size:10px}
 .formaten button[aria-pressed="true"]{background:#000;color:#fff}
 .modaltekst .label{font-size:8px;letter-spacing:.24em;opacity:.55;margin-bottom:-10px}
 .modaltekst .naarmandje{font-size:9px;letter-spacing:.14em;border-bottom:1px solid currentColor;align-self:flex-start;opacity:0;pointer-events:none;transition:opacity .3s}
 .modaltekst .naarmandje.aan{opacity:1;pointer-events:auto}
-.bestel{margin-top:auto;align-self:flex-start;background:#000;color:#fff;border-radius:999px;height:30px;padding:0 20px;display:inline-flex;align-items:center;gap:14px;font-size:10px;letter-spacing:.12em;transition:background .3s}
+.bestel{flex-shrink:0;margin-top:auto;align-self:flex-start;background:#000;color:#fff;border-radius:999px;height:30px;padding:0 20px;display:inline-flex;align-items:center;gap:14px;font-size:10px;letter-spacing:.12em;transition:background .3s}
 .bestel:hover{background:#333}
 .bestel.klaar{background:#5c6d77}
 
@@ -163,7 +175,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 #over .handtekening::after{content:"";position:absolute;left:0;right:0;bottom:-2px;height:1px;background:#000;transform:scaleX(0);transform-origin:left;transition:transform 1.4s 1.2s ease}
 #over.open .handtekening::after{transform:none}
 #over .maker{font-size:9px;letter-spacing:.2em;margin-top:10px}
-#over .blok{position:relative;margin:30px 22px 22px;background:var(--zeeblok);padding:60px 40px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:40px;align-items:end}
+#over .blok{position:relative;margin:30px 22px 22px;background:var(--zeeblok);padding:60px 40px;display:grid;grid-template-columns:repeat(4,1fr);gap:40px;align-items:end}
 #over .blok .poster{text-align:center;font-size:9px;letter-spacing:.2em}
 #over .blok .poster img{display:block;width:100%;max-width:240px;aspect-ratio:2/3;object-fit:cover;margin:0 auto 14px;box-shadow:0 14px 28px rgba(0,0,0,.14);transition:transform .3s}
 #over .blok .poster:hover img{transform:translateY(-4px)}
@@ -245,10 +257,10 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
   #footer{height:auto}
   .tijd{position:static;transform:none;justify-content:center;margin-bottom:8px}
   .nu{display:none}
-  #modal .kader{grid-template-columns:1fr;height:92vh;width:94vw}
-  .carrousel{height:44%}
+  #modal .kader{grid-template-columns:1fr;grid-template-rows:46% 1fr;height:92vh;width:94vw}
+  .modaltekst{padding:28px 22px 24px}
   #over .binnen,#contact .binnen{grid-template-columns:1fr;padding-top:90px}
-  #over .blok{grid-template-columns:repeat(3,1fr);gap:14px;padding:30px 16px}
+  #over .blok{grid-template-columns:repeat(2,1fr);gap:18px;padding:30px 16px}
 }
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important}
@@ -321,7 +333,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
     </div>
     <div class="kol">
       <p>Skiffa is een klein merk uit Scheveningen. Wij maken posters over de surfcultuur van ons eigen strand. Geen souvenir voor toeristen, maar iets voor aan de muur van de mensen die hier wonen, werken en het hele jaar het water in gaan — ook als het grijs is, waait en regent. <b>Van Skiffa, voor Skiffa.</b></p>
-      <p>Elke poster is een hoofdstuk: <b>Surfcultuur</b>, de eerste surfers bij de pier in de jaren zeventig. <b>Windsurf</b>, de zeilen bij de vuurtoren in de jaren tachtig. En <b>Golf</b>, de zee zoals je hem 's avonds onthoudt. Drie formaten, kleine oplages.</p>
+      <p>Elke poster is een hoofdstuk: <b>Surfcultuur</b>, de eerste surfers bij de pier in de jaren zeventig. <b>Windsurf</b>, de zeilen bij de vuurtoren in de jaren tachtig. <b>Golf</b>, de zee zoals je hem 's avonds onthoudt. En de pier door de jaren heen: <b>Pier en Strand</b>, <b>Boulevard</b>, <b>De Pier</b>, <b>Surf</b> en <b>Havenpier</b>. Drie formaten, kleine oplages.</p>
     </div>
     <div class="kol">
       <p>We drukken ze op <b>250 grams mat fine-art papier</b>, in Den Haag. Alle posters hebben de verhouding 2:3, zodat ze in een standaardlijst passen. Ze gaan opgerold de deur uit, in een stevige koker en zonder lijst: hoe hij aan de muur komt, kies je zelf.</p>
@@ -415,17 +427,16 @@ const PUNTEN=['giclée op 250 grams mat fine-art papier','gedrukt in Den Haag','
 /* actief:false = klaargezet, nog niet zichtbaar (beeld volgt). Zet op true zodra /posters/<id>.webp er staat
    en voeg hem ook toe aan api/_catalogus.js. */
 let posters=[
-  {id:'surfcultuur',naam:'Surfcultuur',kleur:'#E0201B',actief:true,sub:'jaren zeventig · foto',zin:'Nazomer bij de pier. Een oude BMW op het strand, planken in het zand en niemand die haast heeft. Zo begon het surfen in Scheveningen.',punten:PUNTEN,
-   sfeer:[['/sfeer/surfcultuur-detail-1.webp','planken naast de auto'],['/sfeer/surfcultuur-detail-2.webp','de pier in de verte']]},
-  {id:'windsurf',naam:'Windsurf',kleur:'#1D63D8',actief:true,sub:'jaren tachtig · foto',zin:'Zeilen met nummers, neon op het zand en half Den Haag bij de vuurtoren. De zomer dat de wind het strand overnam.',punten:PUNTEN,
-   sfeer:[['/sfeer/windsurf-detail-1.webp','publiek bij de vuurtoren'],['/sfeer/windsurf-detail-2.webp','zeil klaar voor de start']]},
-  {id:'golf',naam:'Golf',kleur:'#F0287A',actief:true,sub:'zeefdrukstijl · illustratie',zin:'Avond, het havenhoofd in tegenlicht en één golf die blijft staan. Roze, oranje en blauw, zoals de zee er alleen in je hoofd uitziet.',punten:PUNTEN,
-   sfeer:[['/sfeer/golf-detail-1.webp','de golf'],['/sfeer/golf-detail-2.webp','terug naar de vloedlijn']]},
-  {id:'havenpier',naam:'Havenpier',kleur:'#0F4C6B',actief:false,sub:'north sea surf · foto',zin:'Windkracht zeven bij het havenhoofd. Iedereen blijft op de pier staan kijken, één iemand gaat erin.',punten:PUNTEN,sfeer:[]},
-  {id:'zon',naam:'Zon',kleur:'#E8571E',actief:false,sub:'linodrukstijl · illustratie',zin:'Een oranje zon, een blauwe muur van water en de vuurtoren klein in de verte. Wachten tot de zee rustig wordt.',punten:PUNTEN,sfeer:[]},
-  {id:'de-pier',naam:'De Pier',kleur:'#D7261E',actief:false,sub:'jaren zestig · foto',zin:'Strandkorven, de uitkijktoren vol vlaggen en een hele zomer op hetzelfde stuk zand. De pier zoals je ouders hem kennen.',punten:PUNTEN,sfeer:[]},
-  {id:'surf',naam:'Surf',kleur:'#1F4E79',actief:false,sub:'retro · illustratie',zin:'Oranje lucht, het reuzenrad aan het eind van de pier en een rij surfers die wacht op de volgende set.',punten:PUNTEN,sfeer:[]},
-  {id:'pier-en-strand',naam:'Pier en Strand',kleur:'#E4572E',actief:false,sub:'jaren dertig · illustratie',zin:'Parasols, rieten stoelen en de oude pier vol wandelaars. Scheveningen toen de badplaats nog in pak naar het strand ging.',punten:PUNTEN,sfeer:[]},
+  {id:'pier-en-strand',naam:'Pier en Strand',kleur:'#E4572E',actief:true,sub:'jaren dertig · illustratie',zin:'Parasols, rieten stoelen en de oude pier vol wandelaars. Scheveningen toen de badplaats nog in pak naar het strand ging.',punten:PUNTEN},
+  {id:'boulevard',naam:'Boulevard',kleur:'#1B2A6B',actief:true,sub:'jaren vijftig · illustratie',zin:'Een vlag die klappert in de wind, auto\'s met chroom op de boulevard en een strand zo vol dat je het zand niet meer ziet.',punten:PUNTEN},
+  {id:'de-pier',naam:'De Pier',kleur:'#D7261E',actief:true,sub:'jaren zestig · foto',zin:'Strandkorven, de uitkijktoren vol vlaggen en een hele zomer op hetzelfde stuk zand. De pier zoals je ouders hem kennen.',punten:PUNTEN},
+  {id:'surfcultuur',naam:'Surfcultuur',kleur:'#E0201B',actief:true,sub:'jaren zeventig · foto',zin:'Nazomer bij de pier. Een oude BMW op het strand, planken in het zand en niemand die haast heeft. Zo begon het surfen in Scheveningen.',punten:PUNTEN},
+  {id:'windsurf',naam:'Windsurf',kleur:'#1D63D8',actief:true,sub:'jaren tachtig · foto',zin:'Zeilen met nummers, neon op het zand en half Den Haag bij de vuurtoren. De zomer dat de wind het strand overnam.',punten:PUNTEN},
+  {id:'golf',naam:'Golf',kleur:'#F0287A',actief:true,sub:'zeefdrukstijl · illustratie',zin:'Avond, het havenhoofd in tegenlicht en één golf die blijft staan. Roze, oranje en blauw, zoals de zee er alleen in je hoofd uitziet.',punten:PUNTEN},
+  {id:'surf',naam:'Surf',kleur:'#1F4E79',actief:true,sub:'retro · illustratie',zin:'Oranje lucht, het reuzenrad aan het eind van de pier en een rij surfers die wacht op de volgende set.',punten:PUNTEN},
+  {id:'havenpier',naam:'Havenpier',kleur:'#0F4C6B',actief:true,sub:'north sea surf · foto',zin:'Windkracht zeven bij het havenhoofd. Iedereen blijft op de pier staan kijken, één iemand gaat erin.',punten:PUNTEN},
+  {id:'reuzenrad',naam:'Reuzenrad',kleur:'#C99A2E',actief:false,sub:'paletmes · schilderij',zin:'Het reuzenrad aan het eind van de pier, in dikke verf tegen een gouden zon. Scheveningen zoals het nu is.',punten:PUNTEN},
+  {id:'zon',naam:'Zon',kleur:'#E8571E',actief:false,sub:'linodrukstijl · illustratie',zin:'Een oranje zon, een blauwe muur van water en de vuurtoren klein in de verte. Wachten tot de zee rustig wordt.',punten:PUNTEN},
 ];
 const beeld=id=>`/posters/${id}.webp`,klein=id=>`/posters/${id}-klein.webp`;
 const zichtbaar=()=>posters.filter(p=>p.actief!==false);
@@ -535,8 +546,9 @@ const modal=document.getElementById('modal'),baan=document.getElementById('baan'
 let diaTimer=null,dia=0,aantalDias=3;
 function openModal(s){
   let formaat=formaten[1].id;
-  const dias=[`<div class="dia poster"><img src="${beeld(s.id)}" alt="Poster ${s.naam}"><small>poster ${s.naam.toLowerCase()} — 2:3</small></div>`]
-    .concat(s.sfeer.map(([u,l])=>`<div class="dia"><img src="${u}" alt="${l}" loading="lazy"><small>${l}</small></div>`));
+  const dias=[`<div class="dia poster"><img src="${beeld(s.id)}" alt="Poster ${s.naam}"><small>poster ${s.naam.toLowerCase()} — 2:3</small></div>`,
+    `<div class="dia muur"><div class="opmuur"><img src="${klein(s.id)}" alt="Poster ${s.naam} aan de muur, op schaal"></div><div class="dressoir"></div><small class="schaal"></small></div>`,
+    `<div class="dia lijst"><div class="lijstje"><img src="${klein(s.id)}" alt="Poster ${s.naam} in een lijst met passe-partout"></div><small>in een lijst — lijst niet meegeleverd</small></div>`];
   baan.innerHTML=dias.join('');vg.forEach((i,k)=>i.style.display=k<dias.length?'':'none');aantalDias=dias.length;
   mt.innerHTML=`<h3>${s.naam.toLowerCase()} — poster</h3><p class="sub">${s.sub}</p><p>${s.zin}</p><ul>${s.punten.map(p=>`<li>${p}</li>`).join('')}</ul>
     <div class="label">formaat</div>
@@ -544,7 +556,8 @@ function openModal(s){
     <button class="bestel">in het mandje <span></span></button>
     <button class="naarmandje">bekijk je mandje →</button>`;
   const be=mt.querySelector('.bestel'),prijs=be.querySelector('span');
-  const zetPrijs=()=>{prijs.textContent=euro(formaten.find(f=>f.id===formaat).prijs);};zetPrijs();
+  const zetPrijs=()=>{const f=formaten.find(f=>f.id===formaat);prijs.textContent=euro(f.prijs);
+    baan.style.setProperty('--ph',f.id.split('x')[1]);baan.querySelector('.schaal').textContent=`${f.label}, boven een dressoir van 75 cm hoog`;};zetPrijs();
   mt.querySelector('.formaten').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;formaat=b.dataset.f;mt.querySelectorAll('.formaten button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));zetPrijs();});
   be.addEventListener('click',()=>{voegToe(s.id,formaat);be.classList.add('klaar');be.firstChild.textContent='toegevoegd ';mt.querySelector('.naarmandje').classList.add('aan');setTimeout(()=>{be.classList.remove('klaar');be.firstChild.textContent='in het mandje ';},1600);});
   mt.querySelector('.naarmandje').addEventListener('click',()=>{sluitModal();openMandje();});
