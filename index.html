@@ -163,6 +163,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 .formaten button[aria-pressed="true"]{background:#000;color:#fff}
 .modaltekst .varinfo{font-size:10px;line-height:1.7;opacity:.8;margin-top:-6px}
 .modaltekst .varinfo b{font-weight:500}
+.modaltekst .binnenkort{font-size:11px;line-height:1.8;border-top:1px solid currentColor;padding-top:14px}.modaltekst .binnenkort .naarcontact{border-bottom:1px solid currentColor;font:inherit}
 .modaltekst .label{font-size:8px;letter-spacing:.24em;opacity:.55;margin-bottom:-10px}
 .modaltekst .naarmandje{font-size:9px;letter-spacing:.14em;border-bottom:1px solid currentColor;align-self:flex-start;opacity:0;pointer-events:none;transition:opacity .3s}
 .modaltekst .naarmandje.aan{opacity:1;pointer-events:auto}
@@ -487,6 +488,8 @@ const vind=id=>posters.find(p=>p.id===id);
 const euro=v=>'€ '+(Number.isInteger(v)?v:v.toFixed(2).replace('.',','));
 const cm=mm=>String(Math.round(mm)/10).replace('.',',');  // 304,8 mm -> 30,5
 let vanaf=Math.min(...formaten.map(f=>f.prijs));
+/* Catalogus in de database maar nog niets bestelbaar (bv. drukbestanden nog niet geüpload): posters tonen, niet verkopen. */
+let binnenkort=false;
 const WINKEL_MAIL='hallo@skiffa.nl';
 
 /* Hotspots: verankerd aan een plek in de uitsnede (fractie van beeldbreedte/-hoogte, zoals maikasui doet met videoX/videoY) */
@@ -626,6 +629,12 @@ function openModal(s){
     <button class="bestel">in het mandje <span></span></button>
     <small style="font-size:9px;opacity:.55;margin-top:-10px">incl. btw · verzending € 6,95 (België € 9,95), gratis vanaf € 75 · 14 dagen bedenktijd, zie <a href="/voorwaarden.html" style="color:inherit">voorwaarden</a></small>
     <button class="naarmandje">bekijk je mandje →</button>`;
+  if(binnenkort){mt.querySelectorAll('.label,.formaten,.papierkeuze,.varinfo,.bestel,.naarmandje,.bestel+small').forEach(x=>x.remove());
+    mt.querySelector('ul').insertAdjacentHTML('afterend',`<p class="binnenkort"><b>Binnenkort te koop.</b> Deze poster komt in 30 × 40, 50 × 70 en 70 × 100 cm, op bestelling gedrukt op Hahnemühle German Etching. Vragen? <button class="naarcontact">stuur een bericht →</button></p>`);
+    mt.querySelector('.naarcontact').addEventListener('click',()=>{sluitModal();openContact();});
+    tekenDias();mt.querySelectorAll('[data-blader]').forEach(b=>b.addEventListener('click',()=>bladerPoster(+b.dataset.blader)));
+    mt.querySelector('.alle').addEventListener('click',()=>{sluitModal();openOver();});
+    zetOpen(modal,true,document.getElementById('modalSluit'));scene.classList.add('grijs');history.replaceState(null,'','#'+s.id);return;}
   const be=mt.querySelector('.bestel'),prijs=be.querySelector('span');
   const zetVariant=()=>{const ps=papieren();if(!ps.some(p=>p.id===papier))papier=(ps[0]||{}).id;
     mt.querySelector('.papierkeuze').innerHTML=ps.length>1?`<div class="label">papier</div><div class="formaten" role="group" aria-label="Papier" data-keuze="papier">${ps.map(p=>`<button data-p="${p.id}" aria-pressed="${p.id===papier}">${p.naam.toLowerCase()}</button>`).join('')}</div>`:'';
@@ -653,7 +662,7 @@ modal.addEventListener('click',e=>{if(e.target===modal)sluitModal();});
 document.querySelector('.carrousel').addEventListener('click',e=>{if(e.target.closest('.voortgang'))return;dia=(dia+1)%aantalDias;toonDia();});
 
 const shopLijst=document.getElementById('shopLijst');
-function tekenShop(){shopLijst.innerHTML=zichtbaar().map(s=>`<button class="knop vol" data-id="${s.id}"><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${s.kleur};margin-right:8px;border:1px solid rgba(0,0,0,.15)"></i>${s.naam.toLowerCase()} — vanaf ${euro(vanafVan(s.id))}</button>`).join('');}
+function tekenShop(){shopLijst.innerHTML=zichtbaar().map(s=>`<button class="knop vol" data-id="${s.id}"><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${s.kleur};margin-right:8px;border:1px solid rgba(0,0,0,.15)"></i>${s.naam.toLowerCase()} — ${binnenkort?'binnenkort':`vanaf ${euro(vanafVan(s.id))}`}</button>`).join('');}
 tekenShop();
 /* Shopmenu: hover/focus op desktop, tikken op touchscreens */
 const shop=document.querySelector('.shop'),shopKnop=document.getElementById('shopKnop');
@@ -664,7 +673,7 @@ shopLijst.addEventListener('click',e=>{const b=e.target.closest('[data-id]');if(
 
 /* Over */
 const over=document.getElementById('over'),ob=document.getElementById('overBlok');
-function tekenOverBlok(){if(!overGetekend)return;ob.style.setProperty('--per',Math.min(8,Math.max(4,Math.ceil(zichtbaar().length/2))));ob.innerHTML=zichtbaar().map(s=>`<button class="poster" data-id="${s.id}"><img src="${klein(s.id)}" alt="Poster ${s.naam}" loading="lazy"><b>${s.naam.toLowerCase()}</b>vanaf ${euro(vanafVan(s.id))}</button>`).join('');}
+function tekenOverBlok(){if(!overGetekend)return;ob.style.setProperty('--per',Math.min(8,Math.max(4,Math.ceil(zichtbaar().length/2))));ob.innerHTML=zichtbaar().map(s=>`<button class="poster" data-id="${s.id}"><img src="${klein(s.id)}" alt="Poster ${s.naam}" loading="lazy"><b>${s.naam.toLowerCase()}</b>${binnenkort?'binnenkort te koop':`vanaf ${euro(vanafVan(s.id))}`}</button>`).join('');}
 ob.addEventListener('click',e=>{const b=e.target.closest('[data-id]');if(!b)return;openModal(vind(b.dataset.id));});
 let overGetekend=false;
 function openOver(){if(!overGetekend){overGetekend=true;tekenOverBlok();}zetOpen(over,true);scene.classList.add('grijs');}
@@ -715,7 +724,7 @@ function tekenMandje(){
   mtot.innerHTML=regels.length?totaalHtml('NL'):'';naarAf.disabled=!regels.length;
   document.getElementById('bestelTotaal').innerHTML=totaalHtml(bf.land.value);
 }
-function voegToe(id,v){const r=regels.find(x=>x.id===id&&variantVan(x)?.sku===v.sku);if(r)r.aantal=Math.min(10,r.aantal+1);else regels.push({id,sku:v.sku,formaat:v.formaat,papier:v.papier,aantal:1});bewaar();tekenMandje();}
+function voegToe(id,v){if(binnenkort)return;const r=regels.find(x=>x.id===id&&variantVan(x)?.sku===v.sku);if(r)r.aantal=Math.min(10,r.aantal+1);else regels.push({id,sku:v.sku,formaat:v.formaat,papier:v.papier,aantal:1});bewaar();tekenMandje();}
 ml.addEventListener('click',e=>{const b=e.target.closest('button[data-i]');if(!b)return;const i=+b.dataset.i;
   if(b.hasAttribute('data-weg'))regels.splice(i,1);else{regels[i].aantal=Math.min(10,regels[i].aantal+ +b.dataset.d);if(regels[i].aantal<1)regels.splice(i,1);}
   bewaar();tekenMandje();});
@@ -766,7 +775,7 @@ tekenMandje();
 (()=>{const id=decodeURIComponent(location.hash.slice(1));const p=vind(id);if(p&&p.actief!==false)setTimeout(()=>openModal(p),rm?0:2800);})();
 
 /* Productgegevens voor zoekmachines (schema.org) */
-(()=>{const s=document.createElement('script');s.type='application/ld+json';
+(()=>{const s=document.createElement('script');s.type='application/ld+json';s.id='productdata';
   s.textContent=JSON.stringify({'@context':'https://schema.org','@graph':zichtbaar().map(p=>({'@type':'Product',name:`Poster ${p.naam}`,description:p.zin,
     image:location.origin+beeld(p.id),url:location.origin+'/#'+p.id,brand:{'@type':'Brand',name:'Skiffa'},
     offers:{'@type':'AggregateOffer',priceCurrency:'EUR',lowPrice:vanafVan(p.id),highPrice:Math.max(...variantenVan(p.id).map(v=>v.prijs)),offerCount:variantenVan(p.id).length,availability:'https://schema.org/InStock'}}))});
@@ -780,6 +789,9 @@ tekenMandje();
     const r=await fetch('/api/catalogus');if(!r.ok)return;
     const d=await r.json();if(!d||!d.ok)return;
     if(d.visuals)visuals=d.visuals;
+    if(d.bron==='database'&&Array.isArray(d.producten)&&!d.producten.some(p=>Array.isArray(p.varianten)&&p.varianten.length)){
+      binnenkort=true;regels=[];bewaar();document.getElementById('productdata')?.remove();
+      tekenShop();if(overGetekend)tekenOverBlok();tekenMandje();if(huidigePoster)openModal(huidigePoster);return;}
     if(d.bron!=='database'||!Array.isArray(d.producten)||!d.producten.length||!Array.isArray(d.formaten)||!d.formaten.length)return;
     // Alleen wat echt besteld kan worden: producten met bestelbare varianten.
     const met=d.producten.filter(p=>Array.isArray(p.varianten)&&p.varianten.length);if(!met.length)return;
