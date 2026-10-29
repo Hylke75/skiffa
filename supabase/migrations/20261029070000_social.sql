@@ -181,3 +181,16 @@ create table if not exists public.audit_log (
 );
 create index if not exists audit_log_op_idx on public.audit_log (op desc);
 alter table public.audit_log enable row level security;
+
+-- Storage: de buckets volgen de huidige uploads. Drukbestanden zijn pdf, png of jpg (plus foto's bij
+-- serviceverzoeken, privé); visuals krijgen ook video's voor social. Geen eigen groottelimiet: de
+-- uploadlimiet van het Supabase-project geldt (Storage → Settings).
+do $$
+begin
+  if exists (select 1 from information_schema.tables where table_schema = 'storage' and table_name = 'buckets') then
+    update storage.buckets set allowed_mime_types = array['application/pdf','image/png','image/jpeg','image/webp','image/heic'], file_size_limit = null
+     where id = 'drukbestanden';
+    update storage.buckets set allowed_mime_types = array['image/jpeg','image/png','image/webp','video/mp4','video/quicktime'], file_size_limit = null
+     where id = 'visuals';
+  end if;
+end $$;
