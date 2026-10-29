@@ -141,9 +141,9 @@ export const ok = (cond, msg) => { console.log((cond ? '✓ ' : '✗ ') + msg); 
 
 /** Vult de catalogus zoals de migratie 20261029030000_catalogus.sql dat doet. */
 export function zaaiCatalogus(teksten) {
-  const F = [['30x40', '30 × 40 cm', 300, 400, true, 10, 29], ['50x70', '50 × 70 cm', 500, 700, true, 20, 45], ['70x100', '70 × 100 cm', 700, 1000, true, 30, 69], ['18x24in', '18 × 24 inch', 457.2, 609.6, false, 40], ['24x36in', '24 × 36 inch', 609.6, 914.4, false, 50]];
+  const F = [['30x40', '30 × 40 cm', 304.8, 406.4, true, 10, 29], ['50x70', '50 × 70 cm', 508, 711.2, true, 20, 45], ['70x100', '70 × 100 cm', 711.2, 1016, true, 30, 69], ['18x24in', '18 × 24 inch', 457.2, 609.6, false, 40], ['24x36in', '24 × 36 inch', 609.6, 914.4, false, 50]];
   for (const [id, label, b, h, actief, volgorde] of F) T.formaten.push({ id, label, breedte_mm: b, hoogte_mm: h, actief, volgorde });
-  T.papiersoorten.push({ id: 'mat', naam: 'Mat fine-art papier', uitleg: 'Dik, mat papier.', gewicht_gsm: 250, actief: true, volgorde: 10 });
+  T.papiersoorten.push({ id: 'mat', naam: 'Mat art-papier', uitleg: 'Mat papier.', gewicht_gsm: 200, actief: true, volgorde: 10 });
   Object.entries(teksten).forEach(([id, t], i) => {
     T.producten.push({ ...STANDAARD.producten(), id, code: 'SKF-' + String(i + 1).padStart(3, '0'), interne_naam: t.naam, titel: t.naam, beschrijving: t.zin, stijl: t.sub, status: 'actief', volgorde: (i + 1) * 10 });
     for (const [f, , , , , , prijs] of F.slice(0, 3)) T.varianten.push({ ...STANDAARD.varianten(), sku: ('SKF-' + id + '-' + f).toUpperCase(), product_id: id, formaat_id: f, papier_id: 'mat', prijs });

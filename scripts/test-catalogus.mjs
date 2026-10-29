@@ -89,7 +89,7 @@ r = await call(catalogus, { url: '/api/catalogus' });
 ok(r.j.producten.length === 1 && r.j.producten[0].varianten.length === 1 && r.j.producten[0].varianten[0].sku === 'SKF-GOLF-50X70' && r.j.papiersoorten[0].uitleg && r.j.formaten.length === 1, 'webshop: alleen golf in 50×70, met papieruitleg');
 r = await call(bestel, { method: 'POST', body: { klant, regels: [{ id: 'golf', sku: 'SKF-GOLF-50X70', aantal: 1 }], akkoord: true, t: 5000 } });
 const b1 = T.bestellingen.at(-1), rg = T.bestelregels.find((x) => x.bestelling_id === b1.id);
-ok(r.j.ok && rg.variant_sku === 'SKF-GOLF-50X70' && rg.drukbestand_versie_id === d1.versie_id && rg.papier_label === 'Mat fine-art papier' && Number(b1.subtotaal) === 45, 'bestelling met vaste kopie: SKU, drukbestandversie, papier, prijs');
+ok(r.j.ok && rg.variant_sku === 'SKF-GOLF-50X70' && rg.drukbestand_versie_id === d1.versie_id && rg.papier_label === 'Mat art-papier' && Number(b1.subtotaal) === 45, 'bestelling met vaste kopie: SKU, drukbestandversie, papier, prijs');
 r = await call(bestel, { method: 'POST', body: { klant, regels: [{ id: 'golf', formaat: '70x100', aantal: 1 }], akkoord: true, t: 5000 } }); ok(r.c === 400, 'niet-bestelbare variant (70×100) geweigerd');
 
 // ---- nieuwe versie: bestaande bestelling houdt zijn versie ----

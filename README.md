@@ -66,6 +66,17 @@ Een poster voer je één keer in bij **/admin → producten**; webshop, kanalen 
 
 ## Prodigi: printen, verpakken en verzenden
 
+**Startcatalogus (opgezocht 29 oktober 2026 in de live-API, migratie `20261029080000_prodigi_producten.sql`):**
+
+| formaat | Prodigi-artikel | echte maat | drukbestand | kostprijs NL (excl. btw, incl. verzending) |
+|---|---|---|---|---|
+| 30 × 40 cm | `GLOBAL-FAP-12X16` | 30,5 × 40,6 cm (12 × 16 inch) | 3600 × 4800 px | € 15,05 |
+| 50 × 70 cm | `GLOBAL-FAP-20X28` | 50,8 × 71,1 cm (20 × 28 inch) | 6000 × 8400 px | € 20,05 |
+| 70 × 100 cm | `GLOBAL-FAP-28X40` | 71,1 × 101,6 cm (28 × 40 inch) | 8400 × 12000 px | € 33,30 |
+
+Papier: EMA, Enhanced Matte Art Paper, 200 g/m², gedrukt in Nederland. Hahnemühle Photo Rag (308 g/m²) en
+German Etching (310 g/m²) bestaan in dezelfde maten, maar kosten fors meer (70 × 100 Photo Rag: € 59,30 excl. btw).
+
 Eén route naar productie: elke betaalde bestelling (webshop of kanaal) gaat vanuit SKIFFA **hooguit één keer** naar
 Prodigi (`api/_prodigi.js`, `api/prodigi.js`, migratie `20261029040000_prodigi.sql`). Instellingen in **/admin → kanalen →
 Prodigi**; per variant in **/admin → producten**.

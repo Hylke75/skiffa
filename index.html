@@ -445,9 +445,9 @@ const rm=matchMedia('(prefers-reduced-motion: reduce)').matches;
 /* Catalogus. De prijzen staan ook in api/_catalogus.js (de server rekent altijd zelf);
    controleer met: node scripts/check-catalogus.mjs */
 const formaten=[
-  {id:'30x40',label:'30 × 40 cm',prijs:29,mm:[300,400]},
-  {id:'50x70',label:'50 × 70 cm',prijs:45,mm:[500,700],standaard:true},
-  {id:'70x100',label:'70 × 100 cm',prijs:69,mm:[700,1000]},
+  {id:'30x40',label:'30 × 40 cm',prijs:29,mm:[304.8,406.4]},
+  {id:'50x70',label:'50 × 70 cm',prijs:45,mm:[508,711.2],standaard:true},
+  {id:'70x100',label:'70 × 100 cm',prijs:69,mm:[711.2,1016]},
 ];
 const PUNTEN=['op bestelling gedrukt op fine-art papier','standaard lijstmaten','opgerold verstuurd in een koker, zonder lijst'];
 /* actief:false = klaargezet, nog niet zichtbaar (beeld volgt). Zet op true zodra /posters/<id>.webp er staat
@@ -474,7 +474,7 @@ let posters=[
    de poster en de twee lijst-dia's. Visuals en de centrale catalogus komen uit /api/catalogus (onderaan). */
 let visuals={};const eigenBeeld={};
 /* Varianten (formaat × papier) per poster. Zonder centrale catalogus: elk formaat op mat papier. */
-let papiersoorten=[{id:'mat',naam:'Mat fine-art papier',uitleg:'Dik, mat papier zonder glans: kleuren blijven rustig en er is geen spiegeling van lampen of ramen.',gsm:250}];
+let papiersoorten=[{id:'mat',naam:'Mat art-papier',uitleg:'Enhanced Matte Art Paper van 200 g/m²: mat, zonder glans, dus geen spiegeling van lampen of ramen. Kleuren blijven rustig en diep.',gsm:200}];
 let varianten={};
 const variantenVan=id=>varianten[id]||formaten.map(f=>({sku:`SKF-${id}-${f.id}`.toUpperCase(),formaat:f.id,papier:'mat',prijs:f.prijs,levertijd:null}));
 const variantVan=r=>variantenVan(r.id).find(v=>r.sku?v.sku===r.sku:(v.formaat===r.formaat&&v.papier===(r.papier||'mat')));
@@ -484,6 +484,7 @@ const beeld=id=>eigenBeeld[id]?.beeld||`/posters/${id}.webp`,klein=id=>eigenBeel
 const zichtbaar=()=>posters.filter(p=>p.actief!==false);
 const vind=id=>posters.find(p=>p.id===id);
 const euro=v=>'€ '+(Number.isInteger(v)?v:v.toFixed(2).replace('.',','));
+const cm=mm=>String(Math.round(mm)/10).replace('.',',');  // 304,8 mm -> 30,5
 let vanaf=Math.min(...formaten.map(f=>f.prijs));
 const WINKEL_MAIL='hallo@skiffa.nl';
 
@@ -630,7 +631,7 @@ function openModal(s){
     mt.querySelector('[data-keuze="papier"]')?.addEventListener('click',kies);
     const v=huidig(),f=formaatVan(formaat),pa=papierVan(v?.papier);prijs.textContent=v?euro(v.prijs):'';
     const lt=v?.levertijd?`Gemaakt op bestelling: verwacht ${v.levertijd.productie+v.levertijd.verzending}–${v.levertijd.productie+v.levertijd.verzending+2} werkdagen tot bezorging.`:'Gemaakt op bestelling.';
-    mt.querySelector('.varinfo').innerHTML=`${f?.mm?`Exact ${String(f.mm[0]/10).replace('.',',')} × ${String(f.mm[1]/10).replace('.',',')} cm, zonder lijst.`:''} ${pa?`<b>${pa.naam}</b>${pa.gsm?` (${pa.gsm} g/m²)`:''}: ${pa.uitleg}`:''}<br>${lt}`;
+    mt.querySelector('.varinfo').innerHTML=`${f?.mm?`Exact ${cm(f.mm[0])} × ${cm(f.mm[1])} cm, zonder lijst.`:''} ${pa?`<b>${pa.naam}</b>${pa.gsm?` (${pa.gsm} g/m²)`:''}: ${pa.uitleg}`:''}<br>${lt}`;
     tekenDias();};
   function kies(e){const b=e.target.closest('button');if(!b)return;
     if(b.dataset.f)formaat=b.dataset.f;if(b.dataset.p)papier=b.dataset.p;
