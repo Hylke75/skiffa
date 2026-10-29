@@ -175,7 +175,7 @@ async function stapVerzendingen(sp, s, log) {
     if (sp.proef) { sp.overgeslagen.push(`confirmShipment ${b.extern_id}`); continue; }
     const r = await sp.call('POST', `/orders/v0/orders/${encodeURIComponent(b.extern_id)}/shipmentConfirmation`, {}, {
       marketplaceId: b.extern_meta?.marketplace_id || s.marketplace_id,
-      packageDetail: { packageReferenceId: '1', ...vervoerderCode('amazon', b.vervoerder), trackingNumber: b.track_trace, shipDate: new Date().toISOString(), orderItems: items.map((i) => ({ orderItemId: i.extern_item_id, quantity: i.aantal })) },
+      packageDetail: { packageReferenceId: String(b.zending?.id || 1), ...vervoerderCode('amazon', b.vervoerder), trackingNumber: b.track_trace, shipDate: new Date().toISOString(), orderItems: items.map((i) => ({ orderItemId: i.extern_item_id, quantity: i.aantal })) },
     });
     if (r.status === 204 || r.status === 200) { ok++; await gemeld(b); }
     else { log.push({ stap: 'verzendingen', ok: false, info: `${b.nummer}: ${foutTekst(r.data)}` }); await meldenMislukt(b, `(${r.status}) ${foutTekst(r.data)}`, MAX_VERZENDPOGINGEN); }

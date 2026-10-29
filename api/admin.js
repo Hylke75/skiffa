@@ -20,6 +20,7 @@ import { mails, vanRij, mailAan } from './_mails.js';
 import { betaald, verwerkMollie } from './_verwerk.js';
 import { metDrukbestanden } from './_media.js';
 import { fulfilmentVan, fulfilmentsVan, annuleer as prodigiAnnuleer } from './_prodigi.js';
+import { registreer, zendingenVan } from './_zendingen.js';
 
 const STATUSSEN = ['open', 'betaald', 'in_productie', 'verzonden', 'geleverd', 'geannuleerd', 'mislukt', 'terugbetaald'];
 const param = (req, k) => String(req.query?.[k] ?? new URL(req.url || '/', 'http://x').searchParams.get(k) ?? '');
@@ -78,6 +79,7 @@ async function bestelling(id) {
     r.bestelregels = m.map((x) => ({ ...x, druk: x.druk ? { status: x.druk.status, versie: x.druk.versie, link: `/api/media?actie=druk&v=${x.druk.versie_id}` } : null }));
   } catch { /* zonder catalogus-tabellen: geen drukbestanden */ }
   r.drukker = !!process.env.DRUKKER_EMAIL;
+  try { r.zendingen = await zendingenVan(id); } catch { r.zendingen = []; }
   try { r.fulfilments = await fulfilmentsVan(id); r.fulfilment = r.fulfilments.find((f) => !f.herdruk_nr) || null; } catch { r.fulfilments = []; r.fulfilment = null; }
   return r;
 }
@@ -109,35 +111,32 @@ async function zetStatus(id, body) {
   if (!['in_productie', 'verzonden', 'geleverd', 'geannuleerd', 'open'].includes(nieuw)) return { fout: 'Onbekende status.' };
   const r = await haalBestelling('id', id);
   if (!r) return { fout: 'Bestelling niet gevonden.' };
-  const velden = { status: nieuw };
+  // Verzonden = een zending vastleggen (ook bij gesplitste levering: één zending per pakket).
   if (nieuw === 'verzonden') {
-    velden.track_trace = String(body.track_trace || '').trim().slice(0, 300) || null;
-    velden.verzonden_op = new Date().toISOString();
-    if (['postnl', 'dhl', 'dpd', 'ups', 'gls', 'bpost'].includes(body.vervoerder)) velden.vervoerder = body.vervoerder;
-    if (r.kanaal !== 'webshop' && !velden.track_trace) return { fout: `${r.kanaal} eist een track-and-trace-code.` };
+    const tt = String(body.track_trace || '').trim().slice(0, 300);
+    if (r.kanaal !== 'webshop' && !tt) return { fout: `${r.kanaal} eist een track-and-trace-code.` };
+    const vervoerder = ['postnl', 'dhl', 'dpd', 'ups', 'gls', 'bpost'].includes(body.vervoerder) ? body.vervoerder : r.vervoerder;
+    const regels = Array.isArray(body.regels) && body.regels.length ? body.regels.map(String) : null;
+    const z = await registreer({ bestellingId: id, bron: 'handmatig', extern_ref: tt || `handmatig-${Date.now()}`, vervoerder,
+      tracking_code: /^https?:\/\//.test(tt) ? null : tt || null, tracking_url: /^https?:\/\//.test(tt) ? tt : null, regels, door: 'admin', mail: body.mail !== false });
+    if (!z.nieuw) return { fout: 'Deze zending (track-and-trace) is al vastgelegd.' };
+    return r.kanaal !== 'webshop' ? { ok: true, gemaild: false, kanaal: r.kanaal } : { ok: true, gemaild: body.mail !== false, deels: z.dekking !== 'volledig' };
   }
+  const velden = { status: nieuw };
   if (nieuw === 'geannuleerd' && r.kanaal !== 'webshop') return { fout: `Annuleer een ${r.kanaal}-order bij ${r.kanaal} zelf; de volgende synchronisatie neemt dat over.` };
   // Nog niet naar Prodigi verstuurd? Dan gaat het ook niet meer. Al verstuurd: melden.
   if (nieuw === 'geannuleerd') {
     try {
       const f = await fulfilmentVan(id);
       if (f && !f.extern_id && !['geannuleerd'].includes(f.status)) await prodigiAnnuleer(id, 'admin');
-      else if (f?.extern_id && !['geannuleerd'].includes(f.status)) await log(id, 'waarschuwing', `Deze bestelling is al bij Prodigi (${f.extern_id}); annuleer hem daar ook (knop "annuleer bij Prodigi").`, 'admin');
+      else if (f?.extern_id && !['geannuleerd'].includes(f.status)) await log(id, 'waarschuwing', `Deze bestelling is al bij Prodigi (${f.extern_id}); annuleer de productie daar ook (knop "productie annuleren").`, 'admin');
     } catch { /* zonder Prodigi-tabel */ }
   }
   const bijgewerkt = await werkBij(id, velden);
-  await log(id, 'status', `${r.status} → ${nieuw}${velden.track_trace ? ` (${velden.track_trace})` : ''}`, 'admin');
+  await log(id, 'status', `${r.status} → ${nieuw}`, 'admin');
   let gemaild = false;
-  // Kanaalorders: het kanaal mailt de koper zelf; de track-and-trace gaat bij de volgende sync mee.
-  if (r.kanaal !== 'webshop') {
-    if (nieuw === 'verzonden') await log(id, 'kanaal', `track-and-trace gaat bij de volgende synchronisatie naar ${r.kanaal}`, 'admin');
-    return { ok: true, gemaild: false, kanaal: r.kanaal };
-  }
-  if (body.mail !== false) {
-    const o = vanRij({ ...r, ...bijgewerkt, bestelregels: r.bestelregels });
-    if (nieuw === 'verzonden') gemaild = await mailEnLog(id, 'verzonden', () => mails.verzonden(o));
-    if (nieuw === 'geannuleerd') gemaild = await mailEnLog(id, 'geannuleerd', () => mails.geannuleerd(o));
-  }
+  if (r.kanaal !== 'webshop') return { ok: true, gemaild: false, kanaal: r.kanaal };
+  if (body.mail !== false && nieuw === 'geannuleerd') gemaild = await mailEnLog(id, 'geannuleerd', () => mails.geannuleerd(vanRij({ ...r, ...bijgewerkt, bestelregels: r.bestelregels })));
   return { ok: true, gemaild };
 }
 

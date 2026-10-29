@@ -60,8 +60,8 @@ export const mails = {
   ontvangen: (o) => stuur(o.email, `We hebben je bestelling ${o.nummer} ontvangen`, opmaak(`Dank je, ${esc(o.naam.split(' ')[0])}. Je bestelling is binnen.`,
     `<p>Je ontvangt binnen één werkdag een betaalverzoek. Na betaling gaat je poster opgerold in een koker op de post.</p>${overzicht(o)}<p style="margin-top:20px">Verzendadres:<br>${adres(o)}</p>`), winkelMail()),
 
-  verzonden: (o) => stuur(o.email, `Je Skiffa-bestelling ${o.nummer} is onderweg`, opmaak('Je poster is onderweg.',
-    `<p>Je bestelling ${esc(o.nummer)} is vandaag verstuurd, opgerold in een stevige koker.</p>
+  verzonden: (o, { deel = false } = {}) => stuur(o.email, `Je Skiffa-bestelling ${o.nummer} is onderweg${deel ? ' (deelzending)' : ''}`, opmaak(deel ? 'Een deel van je bestelling is onderweg.' : 'Je poster is onderweg.',
+    `<p>${deel ? `Een deel van je bestelling ${esc(o.nummer)} is verstuurd; de rest volgt in een aparte zending, met een eigen mail.` : `Je bestelling ${esc(o.nummer)} is verstuurd, opgerold in een stevige koker.`}</p>
 ${o.track_trace ? `<p>Track-and-trace: ${/^https?:\/\//.test(o.track_trace) ? `<a href="${esc(o.track_trace)}">${esc(o.track_trace)}</a>` : `<b>${esc(o.track_trace)}</b>`}</p>` : ''}
 <p>Tip: leg de poster na het uitpakken een nacht plat onder een paar boeken, dan ligt hij weer recht.</p>${knop(statusLink(o), 'bekijk je bestelling')}`), winkelMail()),
 

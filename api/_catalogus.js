@@ -134,6 +134,8 @@ export async function laadCatalogus({ vers = false } = {}) {
       db('varianten?select=*'),
       db('kanaal_instellingen?kanaal=eq.prodigi&select=waarden').catch(() => []),
     ]);
+    const webshop = await db('product_kanalen?kanaal=eq.webshop&select=product_id,publiceren').catch(() => []);
+    const opWebshop = (id) => { const r = webshop.find((x) => x.product_id === id); return r ? !!r.publiceren : true; };
     if (!p.length || !f.length || !pa.length) return (bron = 'code');
     const ids = v.map((x) => x.drukbestand_id).filter(Boolean);
     const druk = ids.length ? await db(`drukbestand_versies?id=in.(${ids.join(',')})&select=id,status`) : [];
@@ -160,7 +162,8 @@ export async function laadCatalogus({ vers = false } = {}) {
     vervang(FORMATEN, Object.fromEntries(Object.entries(ALLE_FORMATEN).filter(([id, x]) => x.actief && bestelbaar.some((b) => b.formaat === id))
       .map(([id, x]) => [id, { ...x, prijs: Math.min(...bestelbaar.filter((b) => b.formaat === id).map((b) => b.prijs)) }])));
     vervang(ALLE_POSTERS, Object.fromEntries(p.map((x) => [x.id, x.titel])));
-    vervang(POSTERS, Object.fromEntries(p.filter((x) => x.status === 'actief' && bestelbaar.some((b) => b.product_id === x.id)).map((x) => [x.id, x.titel])));
+    // POSTERS = te koop in de eigen webshop (actief, bestelbare variant, aangevinkt voor de webshop).
+    vervang(POSTERS, Object.fromEntries(p.filter((x) => x.status === 'actief' && opWebshop(x.id) && bestelbaar.some((b) => b.product_id === x.id)).map((x) => [x.id, x.titel])));
     vervang(TEKSTEN, Object.fromEntries(p.map((x) => [x.id, { naam: x.titel, sub: x.stijl, zin: x.beschrijving, kleur: x.accentkleur }])));
     vervang(PRODUCTEN, pOp);
     vervang(BEELDEN, Object.fromEntries(p.filter((x) => x.beeld).map((x) => [x.id, { groot: x.beeld, klein: x.beeld_klein || x.beeld }])));

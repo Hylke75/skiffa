@@ -110,14 +110,7 @@ ok(auth.host === 'www.etsy.com' && auth.searchParams.get('code_challenge_method'
 r = await call(kanalen, { url: `/api/kanalen?actie=etsy-terug&code=abc&state=${auth.searchParams.get('state')}`, cookie }); ok(r.c === 302 && /gekoppeld/.test(decodeURIComponent(r.h.location)) && T.etsy_koppeling[0]?.shop_id === 555, 'Etsy-callback: winkel gekoppeld, tokens server-side');
 r = await call(kanalen, { url: `/api/kanalen?actie=etsy-terug&code=abc&state=${auth.searchParams.get('state')}`, cookie }); ok(/mislukt/.test(decodeURIComponent(r.h.location)), 'zelfde koppelpoging kan niet twee keer');
 await K('instellingen', { kanaal: 'etsy', waarden: { aan: true, proef: false } });
-const el = (await K('listings', null, { q: '&kanaal=etsy' })).j.listings; ok(el.length === 16 && el[0].formaat === 'alle', 'Etsy: één listing per poster');
-const eg = el.find((l) => l.poster_id === 'golf'); await K('listing', { id: eg.id, ingeschakeld: true });
-await K('sync', { kanaal: 'etsy', stap: 'listings' }); ok(/verzendprofiel/.test(T.kanaal_listings.find((l) => l.id === eg.id).laatste_fout), 'Etsy-listing wacht op verzendprofiel');
-await K('instellingen', { kanaal: 'etsy', waarden: { verzendprofiel_id: '111', verwerkingsprofiel_id: '222', taxonomy_id: '1027' } });
-await K('sync', { kanaal: 'etsy', stap: 'listings' });
-const L = Object.values(E.listings)[0];
-ok(L && L.foto && L.state === 'active' && L.velden.when_made === 'made_to_order' && L.velden.taxonomy_id === '1027', 'Etsy-listing: concept → foto → voorraad → actief');
-ok(JSON.stringify(L.inventaris.products.map((p) => p.offerings[0].price)) === '[33.95,51.95,79.95]' && L.inventaris.products[1].sku === 'SKF-GOLF-50X70', 'Etsy-variaties: drie formaten met eigen prijs en SKU');
+r = await K('listings', null, { q: '&kanaal=etsy' }); ok(r.j.listings.length === 0 && /Verkoopkanalen/.test(r.j.melding), 'Etsy publiceer je per poster op de pagina Verkoopkanalen (zie test-publicatie)');
 E.receipts = [{ receipt_id: 4242, status: 'paid', is_paid: true, name: 'Anna Smith', buyer_email: 'anna@example.com', first_line: '1 High St', city: 'London', zip: 'sw1a 1aa', country_iso: 'GB', message_from_buyer: 'Mooi!', grandtotal: { amount: 5795, divisor: 100, currency_code: 'EUR' }, total_shipping_cost: { amount: 600, divisor: 100, currency_code: 'EUR' }, transactions: [{ transaction_id: 1, sku: 'SKF-GOLF-50X70', title: 'Scheveningen poster Golf', quantity: 1, price: { amount: 5195, divisor: 100, currency_code: 'EUR' } }], updated_timestamp: 1793260000 }];
 await K('sync', { kanaal: 'etsy', stap: 'orders' });
 const eo = T.bestellingen.find((b) => b.kanaal === 'etsy');

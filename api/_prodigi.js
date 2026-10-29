@@ -17,9 +17,9 @@ import { db, rpc, haalBestelling, werkBij, log } from './_db.js';
 import { ALLE_FORMATEN, VARIANTEN } from './_catalogus.js';
 import { downloadUrl } from './_opslag.js';
 import { metDrukbestanden, beoordeel, doelVoor } from './_media.js';
-import { mails, vanRij } from './_mails.js';
 import { bedrijf } from './_bedrijf.js';
 import { onderteken } from './_auth.js';
+import { registreer } from './_zendingen.js';
 
 export const BASIS = { sandbox: 'https://api.sandbox.prodigi.com/v4.0', live: 'https://api.prodigi.com/v4.0' };
 export const VERZENDMETHODEN = ['Budget', 'Standard', 'StandardPlus', 'Express', 'Overnight'];
@@ -353,7 +353,7 @@ async function bouwItems(b, regels) {
   for (const [i, r] of regels.entries()) {
     const v = VARIANTEN[r.variant_sku];
     items.push({
-      merchantReference: `${b.nummer}-${i + 1}`, sku: r.prodigi_sku || v?.prodigi_sku, copies: r.aantal, sizing: r.sizing || v?.sizing || 'fitPrintArea',
+      merchantReference: `${b.nummer}-R${r.id}`, sku: r.prodigi_sku || v?.prodigi_sku, copies: r.aantal, sizing: r.sizing || v?.sizing || 'fitPrintArea',
       attributes: r.prodigi_attributen || v?.prodigi_attributen || {},
       assets: [{ printArea: 'default', url: await downloadUrl('drukbestanden', r.druk.pad, 7 * 86400) }],
     });
@@ -466,8 +466,6 @@ export async function verwerk({ bestellingId, max = 10 } = {}) {
   return uit;
 }
 
-const VERVOERDERS = { postnl: 'postnl', dhl: 'dhl', dpd: 'dpd', ups: 'ups', gls: 'gls', bpost: 'bpost' };
-const vervoerderVan = (naam) => VERVOERDERS[Object.keys(VERVOERDERS).find((k) => String(naam || '').toLowerCase().replace(/\s/g, '').includes(k))] || null;
 
 function kostenVan(order) {
   const ch = (order?.charges || []).filter(Boolean);
@@ -486,21 +484,23 @@ async function verwerkOrder(f, order) {
     await log(f.bestelling_id, 'fout', 'Prodigi heeft de productieopdracht geannuleerd. Controleer de bestelling.', 'prodigi');
     return 'geannuleerd';
   }
-  const zending = (order?.shipments || []).find((z) => z?.tracking?.number || z?.tracking?.url);
-  if (zending && f.status !== 'verzonden') {
-    await zet(f.id, { status: 'verzonden' });
-    const b = await haalBestelling('id', f.bestelling_id);
-    if (b && !f.herdruk_nr && !['verzonden', 'geleverd', 'geannuleerd', 'terugbetaald'].includes(b.status)) {
-      const tt = zending.tracking.url || zending.tracking.number;
-      const v = vervoerderVan(zending.carrier?.name);
-      const nieuw = await werkBij(b.id, { status: 'verzonden', track_trace: String(tt).slice(0, 300), verzonden_op: new Date().toISOString(), ...(v ? { vervoerder: v } : {}) });
-      await log(b.id, 'status', `${b.status} → verzonden door Prodigi (${zending.carrier?.name || 'vervoerder onbekend'}: ${zending.tracking.number || tt})`, 'prodigi');
-      if ((b.kanaal || 'webshop') === 'webshop') {
-        try { if (await mails.verzonden(vanRij({ ...b, ...nieuw, bestelregels: b.bestelregels }))) await log(b.id, 'mail', 'verzonden', 'prodigi'); }
-        catch (e) { await log(b.id, 'fout', `mail verzonden: ${e.message}`, 'prodigi'); }
-      } else await log(b.id, 'kanaal', `track-and-trace gaat bij de volgende synchronisatie naar ${b.kanaal}`, 'prodigi');
-    } else if (b && f.herdruk_nr) await log(b.id, 'status', `herdruk ${f.herdruk_nr} verzonden (${zending.carrier?.name || ''}: ${zending.tracking.number || zending.tracking.url})`, 'prodigi');
-    return 'verzonden';
+  // Zendingen (ook gesplitst): elke zending met tracking één keer vastleggen; klant en kanaal krijgen hem één keer.
+  const regelVan = Object.fromEntries((order?.items || []).map((i) => [i.id, String(i.merchantReference || '').match(/-R(\d+)$/)?.[1] || null]));
+  const metTracking = (order?.shipments || []).filter((z) => z?.tracking?.number || z?.tracking?.url);
+  let nieuw = 0;
+  for (const z of metTracking) {
+    const regels = (z.items || []).map((x) => regelVan[x.itemId || x.id]).filter(Boolean);
+    const r = await registreer({ bestellingId: f.bestelling_id, bron: 'prodigi', extern_ref: z.id || z.tracking.number || z.tracking.url,
+      vervoerder: [z.carrier?.name, z.carrier?.service].filter(Boolean).join(' ') || null, tracking_code: z.tracking.number || null, tracking_url: z.tracking.url || null,
+      regels: regels.length ? regels : null, fulfilment_id: f.id, door: 'prodigi' });
+    if (r.nieuw) nieuw++;
+  }
+  if (metTracking.length) {
+    const alleItems = (order.items || []).map((i) => i.id);
+    const gedekt = metTracking.some((z) => !(z.items || []).length) || alleItems.every((id) => metTracking.some((z) => (z.items || []).some((x) => (x.itemId || x.id) === id)));
+    const fst = gedekt || stage === 'Complete' ? 'verzonden' : 'in_productie';
+    if (fst !== f.status) await zet(f.id, { status: fst });
+    if (nieuw) return fst === 'verzonden' ? 'verzonden' : 'deels verzonden';
   }
   if (stage === 'InProgress' && f.status === 'verstuurd') await zet(f.id, { status: 'in_productie' });
   return stage || 'onbekend';

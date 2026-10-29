@@ -139,8 +139,10 @@ async function bewaarProduct(b) {
     accentkleur: kleur, seo_titel: tekst(b.seo_titel, 70), seo_beschrijving: tekst(b.seo_beschrijving, 170), status,
     volgorde: geheel(b.volgorde, bestaand?.volgorde || 0), bijgewerkt_op: new Date().toISOString(),
   };
-  if (b.nieuw) await db('producten', { method: 'POST', body: rij });
-  else await db(`producten?id=eq.${enc(id)}`, { method: 'PATCH', body: rij });
+  if (b.nieuw) {
+    await db('producten', { method: 'POST', body: rij });
+    await db('product_kanalen?on_conflict=product_id,kanaal', { method: 'POST', prefer: 'resolution=ignore-duplicates', body: { product_id: id, kanaal: 'webshop', publiceren: true } }).catch(() => {});
+  } else await db(`producten?id=eq.${enc(id)}`, { method: 'PATCH', body: rij });
   return { ok: true, id, code, melding: b.nieuw ? `Poster ${titel} aangemaakt (${code})` : 'Opgeslagen' };
 }
 

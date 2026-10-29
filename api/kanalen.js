@@ -23,6 +23,7 @@ import * as bol from './_kanalen/bol.js';
 import * as etsy from './_kanalen/etsy.js';
 import * as amazon from './_kanalen/amazon.js';
 import * as prodigi from './_prodigi.js';
+import * as publicatie from './_publicatie.js';
 
 const MOD = { bol, etsy, amazon };
 const INGESTELD = { bol: bol.bolIngesteld, etsy: etsy.etsyIngesteld, amazon: amazon.amazonIngesteld };
@@ -51,13 +52,13 @@ function schoon(kanaal, w) {
   return uit;
 }
 
-async function draaiKanaal(kanaal, stap, door) {
+async function draaiKanaal(kanaal, stap, door, opties = {}) {
   const s = await instellingen(kanaal);
   const mod = MOD[kanaal];
   const stappen = stap ? mod.STAPPEN.filter((x) => x === stap) : mod.STAPPEN;
   if (!stappen.length) throw new Error(`Onbekende stap: ${stap}`);
   const start = Date.now();
-  const uit = await mod.draai(stappen, s);
+  const uit = await mod.draai(stappen, s, opties);
   const ok = uit.log.every((l) => l.ok);
   const detail = { door, proef: s.proef, ms: Date.now() - start, ...uit };
   await logRun(kanaal, stap || 'alles', ok, detail);
@@ -109,6 +110,30 @@ export default async function handler(req, res) {
 
   if (!isAdmin(req)) return fout(res, 401, 'Niet ingelogd.');
   const kanaal = String(body.kanaal || param(req, 'kanaal'));
+  // Verkoopkanalen per product (centrale catalogus): overzicht, aanvinken, sjablonen, publiceren.
+  if (actie.startsWith('publicatie') || actie === 'sjabloon' || actie === 'publiceer') {
+    try {
+      if (actie === 'publicatie' && req.method === 'GET') return res.status(200).json({ ok: true, ...(await publicatie.overzicht()) });
+      if (req.method !== 'POST') return fout(res, 405, 'Gebruik POST.');
+      let uit;
+      if (actie === 'publicatie-zet') uit = await publicatie.zetPublicatie(body);
+      else if (actie === 'sjabloon') uit = await publicatie.zetSjabloon(body);
+      else if (actie === 'publiceer') {
+        if (body.kanaal === 'webshop') uit = { ok: true, melding: 'De webshop toont het product zodra het actief en bestelbaar is.' };
+        else if (body.kanaal !== 'etsy') uit = { fout: 'Dit kanaal kan hier nog niet publiceren.' };
+        else if (!etsy.etsyIngesteld()) uit = { fout: `Zet eerst in Vercel: ${SLEUTELS.etsy}.` };
+        else {
+          const r = await draaiKanaal('etsy', 'publiceren', 'beheer', { productId: String(body.product_id || ''), handmatig: true });
+          uit = r.ok ? { ok: true, melding: r.proef ? `Proefmodus: ${r.proef_schrijfacties?.[0] || 'er is niets verstuurd'}` : (r.log.find((l) => l.stap === 'publiceren')?.info || 'Verwerkt'), log: r.log } : { fout: r.log.filter((l) => !l.ok).map((l) => l.info).join(' · ') };
+        }
+      } else return fout(res, 400, 'Onbekende actie.');
+      if (!uit.fout && actie !== 'publiceer') await laadCatalogus({ vers: true });
+      return uit.fout ? fout(res, 400, uit.fout) : res.status(200).json(uit);
+    } catch (e) {
+      console.error('publicatie', e);
+      return fout(res, 500, String(e.message || 'Er ging iets mis.').slice(0, 300));
+    }
+  }
   const kanaalNodig = !['overzicht'].includes(actie) && !actie.startsWith('etsy') && actie !== 'ean' && actie !== 'listing';
   if (kanaalNodig && !KANALEN.includes(kanaal)) return fout(res, 400, 'Kies een kanaal (bol, etsy of amazon).');
 
@@ -130,6 +155,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true, kanalen: uit, cron: (process.env.CRON_SECRET || '').length >= 16 });
     }
     if (actie === 'listings') {
+      if (kanaal === 'etsy') return res.status(200).json({ ok: true, listings: [], melding: 'Etsy publiceer je per poster op de pagina Verkoopkanalen.' });
       const s = await instellingen(kanaal), rijen = await listings(kanaal), e = await eans();
       return res.status(200).json({
         ok: true,

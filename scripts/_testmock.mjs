@@ -1,6 +1,6 @@
 // Nagebootste Supabase (PostgREST-subset + de RPC's uit supabase/migrations) voor de tests.
 import crypto from 'node:crypto';
-export const T = { bestellingen: [], bestelregels: [], bestelling_log: [], factuurteller: {}, poster_ean: [], kanaal_instellingen: [], kanaal_listings: [], kanaal_sync_log: [], etsy_koppeling: [], etsy_oauth_states: [], poster_visuals: [], producten: [], formaten: [], papiersoorten: [], varianten: [], drukbestand_versies: [], fulfilments: [], proefbestellingen: [] };
+export const T = { bestellingen: [], bestelregels: [], bestelling_log: [], factuurteller: {}, poster_ean: [], kanaal_instellingen: [], kanaal_listings: [], kanaal_sync_log: [], etsy_koppeling: [], etsy_oauth_states: [], poster_visuals: [], producten: [], formaten: [], papiersoorten: [], varianten: [], drukbestand_versies: [], fulfilments: [], proefbestellingen: [], zendingen: [], kanaal_sjablonen: [], product_kanalen: [] };
 // Nagebootste Supabase Storage: S[bucket][pad] = { size, type }
 export const S = { drukbestanden: {}, visuals: {} };
 let seq = 1;
@@ -12,14 +12,17 @@ const STANDAARD = {
   producten: () => ({ status: 'concept', kleuren: [], zoekwoorden: [], beschrijving: '', stijl: '', collectie: '', onderwerp: '', accentkleur: '#1F4E79', seo_titel: '', seo_beschrijving: '', beeld: null, beeld_klein: null, volgorde: 0, aangemaakt_op: nu() }),
   varianten: () => ({ lijst: null, lijst_kleur: null, kostprijs: null, actief: true, ean: null, prodigi_sku: null, prodigi_attributen: {}, sizing: 'fitPrintArea', prodigi_status: 'niet_gekoppeld', prodigi_product: null, prodigi_melding: null, prodigi_gecontroleerd_op: null, verzendmethode: 'Standard', kosten: null, kosten_gecontroleerd_op: null, handmatig_leverbaar: false, handmatig_reden: null, levertijd_productie_dagen: 3, levertijd_verzending_dagen: 3, drukbestand_id: null, qc_uitzondering: null, qc_uitzondering_op: null }),
   drukbestand_versies: () => ({ id: seq++, geupload_op: nu() }),
+  zendingen: () => ({ id: seq++, fulfilment_id: null, regels: null, kanaal_gemeld_op: null, kanaal_fout: null, kanaal_pogingen: 0, klant_gemaild_op: null, verzonden_op: nu(), aangemaakt_op: nu() }),
+  kanaal_sjablonen: () => ({ id: seq++, standaard: false, waarden: {}, bijgewerkt_op: nu() }),
+  product_kanalen: () => ({ publiceren: false, sjabloon_id: null, afwijkingen: {}, status: 'niet_gepubliceerd', melding: null, extern_id: null, extern_url: null, gepubliceerd_hash: null, poging_hash: null, verwerken_sinds: null, aanmaken_gestart_op: null, laatste_sync_op: null, meta: {}, bijgewerkt_op: nu() }),
   proefbestellingen: () => ({ id: crypto.randomUUID(), status: 'offerte', extern_id: null, laatste_fout: null, aangemaakt_op: new Date().toISOString(), geplaatst_op: null }),
   fulfilments: () => ({ id: seq++, herdruk_nr: 0, herdruk_reden: null, vrijgegeven_reden: null, branding: null, kosten: null, aanbieder: 'prodigi', status: 'wacht', pogingen: 0, geclaimd_op: null, extern_id: null, extern_status: null, laatste_fout: null, verstuurd_op: null, vanaf: new Date().toISOString(), aangemaakt_op: nu(), bijgewerkt_op: new Date().toISOString() }),
 };
-const UNIEK = { kanaal_listings: ['kanaal', 'poster_id', 'formaat'], poster_ean: ['poster_id', 'formaat'], kanaal_instellingen: ['kanaal'], etsy_koppeling: ['id'], poster_visuals: ['poster_id', 'positie'], producten: ['id'], formaten: ['id'], papiersoorten: ['id'], varianten: ['sku'], fulfilments: ['bestelling_id', 'herdruk_nr'], proefbestellingen: ['id'] };
+const UNIEK = { kanaal_listings: ['kanaal', 'poster_id', 'formaat'], poster_ean: ['poster_id', 'formaat'], kanaal_instellingen: ['kanaal'], etsy_koppeling: ['id'], poster_visuals: ['poster_id', 'positie'], producten: ['id'], formaten: ['id'], papiersoorten: ['id'], varianten: ['sku'], fulfilments: ['bestelling_id', 'herdruk_nr'], proefbestellingen: ['id'], zendingen: ['bestelling_id', 'extern_ref'], product_kanalen: ['product_id', 'kanaal'] };
 function voldoet(x, k, v) {
   if (k === 'or') {
     const conds = v.slice(1, -1).split(',').map((c) => { const [f, op, ...r] = c.split('.'); return [f, op, r.join('.')]; });
-    return conds.some(([f, op, val]) => op === 'ilike' && String(x[f] ?? '').toLowerCase().includes(val.replace(/\*/g, '').toLowerCase()));
+    return conds.some(([f, op, val]) => op === 'ilike' ? String(x[f] ?? '').toLowerCase().includes(val.replace(/\*/g, '').toLowerCase()) : voldoet(x, f, `${op}.${val}`));
   }
   const [op, ...r] = v.split('.'); const val = r.join('.');
   const xv = k.includes('->>') ? x[k.split('->>')[0]]?.[k.split('->>')[1]] : x[k];

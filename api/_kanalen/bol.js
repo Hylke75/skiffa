@@ -171,7 +171,7 @@ async function stapVerzendingen(bol, s, log) {
     const r = await bol.call('POST', '/retailer/shipments', {
       body: {
         orderItems: items.map((i) => ({ orderItemId: i.extern_item_id, quantity: i.aantal })),
-        shipmentReference: b.nummer,
+        shipmentReference: b.zending ? `${b.nummer}-${b.zending.id}` : b.nummer,
         transport: { transporterCode: vervoerderCode('bol', b.vervoerder) || s.vervoerder, trackAndTrace: b.track_trace },
       },
     });
