@@ -1,16 +1,16 @@
 // Etsy Open API v3. Zelfde opzet als Luna Azul (etsy-sync):
 //   koppelen      OAuth 2.0 + PKCE vanuit Beheer → Kanalen (refresh token 90 dagen, server-side)
-//   listings      per poster één listing met de drie formaten als variatie: concept → foto → voorraad → actief
-//   bijwerken     prijzen/voorraad opnieuw pushen als ze afwijken (vingerafdruk), pauzeren/hervatten
+//   publiceren    per product één advertentie (formaat en papier als keuze) vanuit de centrale catalogus:
+//                 nieuw aanmaken of bijwerken, foto's, varianten en prijzen volgens de prijsregel, offline halen
 //   orders        betaalde receipts importeren (venster op 'updated'), annuleringen verwerken
 //   verzendingen  track-and-trace doorgeven (createReceiptShipment); Etsy mailt de koper zelf
 // Secrets (Vercel): ETSY_KEYSTRING, ETSY_SHARED_SECRET (etsy.com/developers → Your apps).
 import crypto from 'node:crypto';
-import { POSTERS, FORMATEN } from '../_catalogus.js';
+import { ALLE_POSTERS } from '../_catalogus.js';
+import { context as publicatieContext, inhoudEtsy, statusVan, VASTGELOPEN_MS } from '../_publicatie.js';
 import { db } from '../_db.js';
-import { MAX_SCHRIJFACTIES, MAX_VERZENDPOGINGEN, foutTekst, kanaalPrijs, sku, titelEn, omschrijving, vervoerderCode } from './gemeen.js';
-import { kanaalBeelden } from '../_media.js';
-import { listings, zetListing, bekendeOrders, regel, importeer, teMelden, gemeld, meldenMislukt, annuleerVanKanaal, zetInstellingen } from './opslag.js';
+import { MAX_VERZENDPOGINGEN, foutTekst, vervoerderCode } from './gemeen.js';
+import { bekendeOrders, regel, importeer, teMelden, gemeld, meldenMislukt, annuleerVanKanaal, zetInstellingen } from './opslag.js';
 
 const API = 'https://api.etsy.com/v3/application';
 const CONNECT = 'https://www.etsy.com/oauth/connect';
@@ -112,98 +112,121 @@ export class EtsyClient {
 }
 const ok = (s) => s >= 200 && s < 300;
 
-// Voorraad/prijzen voor updateListingInventory: één product per formaat, prijs per formaat.
-export function inventaris(poster_id, s, aan) {
-  const products = Object.entries(FORMATEN).map(([formaat, f]) => ({
-    sku: sku(poster_id, formaat),
-    property_values: [{ property_id: PROPERTY, property_name: 'Size', value_ids: [], values: [f.label.replace(/ /g, '')] }],
-    offerings: [{ price: kanaalPrijs(f.prijs, s.opslag_pct), quantity: aan ? s.voorraad : 0, is_enabled: aan, readiness_state_id: Number(s.verwerkingsprofiel_id) }],
-  }));
-  return { products, price_on_property: [PROPERTY], quantity_on_property: [PROPERTY], sku_on_property: [PROPERTY], readiness_state_on_property: [] };
-}
-const vingerafdruk = (inv) => JSON.stringify(inv.products.map((p) => [p.sku, p.offerings[0].price, p.offerings[0].quantity, p.offerings[0].is_enabled]));
+// ---- Publiceren vanuit de centrale catalogus (pagina Verkoopkanalen; zie api/_publicatie.js) ----
+const PAPIER_PROPERTY = 514; // tweede eigen variatie-eigenschap: papiersoort (alleen als er meer dan één is)
 
-function blokkade(s) {
-  if (!s.verzendprofiel_id) return 'Vul eerst het Etsy-verzendprofiel-id in (Beheer → Kanalen → Etsy)';
-  if (!s.verwerkingsprofiel_id) return 'Vul eerst het Etsy-verwerkingsprofiel-id (readiness state) in';
-  if (!s.taxonomy_id) return 'Vul eerst de Etsy-categorie (taxonomy-id, bv. posters/prints) in';
+/** Voorraad en prijzen per variant voor updateListingInventory: formaat (en papier) als keuze. */
+export function inventaris(payload, verwerkingsprofiel) {
+  const props = payload.twee_eigenschappen ? [PROPERTY, PAPIER_PROPERTY] : [PROPERTY];
+  const products = payload.varianten.map((v) => ({
+    sku: v.sku,
+    property_values: [
+      { property_id: PROPERTY, property_name: 'Size', value_ids: [], values: [v.formaat.replace(/ /g, '')] },
+      ...(payload.twee_eigenschappen ? [{ property_id: PAPIER_PROPERTY, property_name: 'Paper', value_ids: [], values: [v.papier] }] : []),
+    ],
+    offerings: [{ price: v.prijs, quantity: payload.voorraad, is_enabled: true, readiness_state_id: Number(verwerkingsprofiel) }],
+  }));
+  return { products, price_on_property: props, quantity_on_property: props, sku_on_property: props, readiness_state_on_property: [] };
+}
+
+/** Na een onderbreking tijdens het aanmaken: bestaat de advertentie al (herkenbaar aan de tag skf-<code>)? */
+async function zoekOpTag(etsy, tag) {
+  for (const state of ['draft', 'active', 'inactive']) {
+    const r = await etsy.call('GET', `/shops/${etsy.shop}/listings`, { query: { state, limit: 100 } });
+    const hit = (r.data?.results || []).find((l) => (l.tags || []).map((t) => String(t).toLowerCase()).includes(tag));
+    if (hit) return String(hit.listing_id);
+  }
   return null;
 }
 
-async function stapListings(etsy, s, log) {
-  const rijen = (await listings('etsy')).filter((r) => r.ingeschakeld && !r.meta?.actief);
-  let nieuw = 0, af = 0, mis = 0;
-  for (const r of rijen) {
-    if (nieuw + af + mis >= Math.min(5, MAX_SCHRIJFACTIES)) break; // foto-uploads zijn zwaar
-    const b = blokkade(s);
-    if (b) { await zetListing(r.id, { status: 'concept', laatste_fout: b }); continue; }
-    const naam = POSTERS[r.poster_id];
-    try {
-      let id = r.extern_id;
-      const inv = inventaris(r.poster_id, s, true);
-      if (!id) {
-        const velden = {
-          quantity: String(s.voorraad), title: titelEn(naam).slice(0, 140), description: omschrijving(r.poster_id, 'en'),
-          price: Math.min(...inv.products.map((p) => p.offerings[0].price)).toFixed(2),
-          who_made: 'i_did', when_made: 'made_to_order', is_supply: 'false', taxonomy_id: String(s.taxonomy_id), type: 'physical',
-          shipping_profile_id: String(s.verzendprofiel_id), readiness_state_id: String(s.verwerkingsprofiel_id), should_auto_renew: 'true',
-          tags: ['scheveningen', 'surf poster', 'dutch poster', 'north sea', 'beach art', 'wall art', 'the hague', 'retro poster', 'surf art', 'holland'].join(','),
-          materials: 'paper',
-          ...(s.retourbeleid_id ? { return_policy_id: String(s.retourbeleid_id) } : {}),
-        };
-        if (etsy.proef) { etsy.schrijf.push(`createDraftListing "${velden.title}"`); continue; }
-        const res = await etsy.call('POST', `/shops/${etsy.shop}/listings`, { form: velden });
-        if (!ok(res.status) || !res.data?.listing_id) throw new Error(`Aanmaken (${res.status}): ${foutTekst(res.data)}`);
-        id = String(res.data.listing_id); nieuw++;
-        await zetListing(r.id, { extern_id: id, status: 'wacht', laatste_fout: null });
-      } else { if (etsy.proef) { etsy.schrijf.push(`listing ${id} afmaken`); continue; } af++; }
-      const meta = { ...(r.meta || {}) };
-      if (!meta.foto) {
-        // De poster als eerste foto, daarna de visuals (max. 10 op Etsy). Bij een fout gaat de volgende run verder.
-        const urls = (await kanaalBeelden(r.poster_id)).slice(0, 10);
-        for (let i = Number(meta.fotos || 0); i < urls.length; i++) {
-          const img = await fetch(urls[i]);
-          if (!img.ok) throw new Error(`Foto ${i + 1} ophalen mislukt (${img.status})`);
-          const form = new FormData();
-          form.append('image', new Blob([Buffer.from(await img.arrayBuffer())], { type: 'image/jpeg' }), `${r.poster_id}-${i + 1}.jpg`);
-          form.append('rank', String(i + 1));
-          const up = await etsy.call('POST', `/shops/${etsy.shop}/listings/${id}/images`, { multipart: form });
-          if (!ok(up.status)) throw new Error(`Foto ${i + 1} uploaden (${up.status}): ${foutTekst(up.data)}`);
-          meta.fotos = i + 1; await zetListing(r.id, { meta });
-        }
-        meta.foto = true; await zetListing(r.id, { meta });
-      }
-      const ir = await etsy.call('PUT', `/listings/${id}/inventory`, { json: inv });
-      if (!ok(ir.status)) throw new Error(`Voorraad (${ir.status}): ${foutTekst(ir.data)}`);
-      const act = await etsy.call('PATCH', `/shops/${etsy.shop}/listings/${id}`, { form: { state: 'active' } });
-      if (!ok(act.status)) throw new Error(`Activeren (${act.status}): ${foutTekst(act.data)}`);
-      await zetListing(r.id, { status: 'actief', laatste_fout: null, meta: { ...meta, actief: true, inventaris: vingerafdruk(inv) } });
-    } catch (e) {
-      mis++;
-      await zetListing(r.id, { status: 'fout', laatste_fout: String(e.message || e).slice(0, 500) });
-      log.push({ stap: 'listings', ok: false, info: `${naam}: ${String(e.message || e).slice(0, 200)}` });
-    }
+async function vervangFotos(etsy, id, fotos) {
+  const huidig = await etsy.call('GET', `/listings/${id}/images`);
+  for (const img of huidig.data?.results || []) await etsy.call('DELETE', `/shops/${etsy.shop}/listings/${id}/images/${img.listing_image_id}`);
+  for (const [i, url] of fotos.entries()) {
+    const img = await fetch(url);
+    if (!img.ok) throw new Error(`Foto ${i + 1} ophalen mislukt (${img.status})`);
+    const form = new FormData();
+    form.append('image', new Blob([Buffer.from(await img.arrayBuffer())], { type: 'image/jpeg' }), `foto-${i + 1}.jpg`);
+    form.append('rank', String(i + 1));
+    const up = await etsy.call('POST', `/shops/${etsy.shop}/listings/${id}/images`, { multipart: form });
+    if (!ok(up.status)) throw new Error(`Foto ${i + 1} uploaden (${up.status}): ${foutTekst(up.data)}`);
   }
-  log.push({ stap: 'listings', ok: mis === 0, info: `aangemaakt ${nieuw}, afgemaakt ${af}, mislukt ${mis}` });
 }
 
-async function stapBijwerken(etsy, s, log) {
-  const rijen = (await listings('etsy')).filter((r) => r.extern_id && r.meta?.actief);
-  let bij = 0, mis = 0;
-  for (const r of rijen) {
-    if (bij + mis >= MAX_SCHRIJFACTIES) break;
-    const inv = inventaris(r.poster_id, s, r.ingeschakeld);
-    const vinger = vingerafdruk(inv);
-    const wilStatus = r.ingeschakeld ? 'actief' : 'gepauzeerd';
-    if (r.meta?.inventaris === vinger && r.status === wilStatus) continue;
-    const res = await etsy.call('PUT', `/listings/${r.extern_id}/inventory`, { json: inv });
-    if (res.status === 299) continue;
-    if (!ok(res.status)) { mis++; await zetListing(r.id, { laatste_fout: `Bijwerken (${res.status}): ${foutTekst(res.data)}` }); continue; }
-    if (r.status !== wilStatus) await etsy.call('PATCH', `/shops/${etsy.shop}/listings/${r.extern_id}`, { form: { state: r.ingeschakeld ? 'active' : 'inactive' } });
-    bij++;
-    await zetListing(r.id, { status: wilStatus, laatste_fout: null, meta: { ...r.meta, inventaris: vinger } });
+const pkPad = (productId) => `product_kanalen?product_id=eq.${encodeURIComponent(productId)}&kanaal=eq.etsy`;
+const zetPk = (productId, velden) => db(pkPad(productId), { method: 'PATCH', body: { ...velden, bijgewerkt_op: new Date().toISOString() } });
+
+/**
+ * Eén product publiceren of bijwerken op Etsy. Claimt eerst de rij (status → verwerken), zodat twee runs
+ * nooit tegelijk dezelfde advertentie aanmaken; een nieuwe advertentie krijgt meteen haar id opgeslagen.
+ */
+export async function publiceerProduct(etsy, ctx, productId) {
+  const pk = ctx.pk.find((x) => x.product_id === productId && x.kanaal === 'etsy');
+  if (!pk) return { overgeslagen: 'niet aangevinkt' };
+  const inhoud = inhoudEtsy(ctx, productId, pk);
+  const st = statusVan('etsy', pk, inhoud).status;
+  if (st !== 'gereed') return { overgeslagen: st };
+  if (etsy.proef) { etsy.schrijf.push(`${pk.extern_id ? `bijwerken ${pk.extern_id}` : 'nieuwe advertentie'}: "${inhoud.payload?.titel || productId}"`); return { proef: true }; }
+  const grens = new Date(Date.now() - VASTGELOPEN_MS).toISOString();
+  const claim = await db(`${pkPad(productId)}&or=(status.neq.verwerken,verwerken_sinds.lt.${encodeURIComponent(grens)})`, { method: 'PATCH', prefer: 'return=representation',
+    body: { status: 'verwerken', verwerken_sinds: new Date().toISOString(), poging_hash: inhoud.hash, melding: pk.publiceren ? (pk.extern_id ? 'bijwerken…' : 'aanmaken…') : 'offline halen…' } });
+  if (!claim?.length) return { overgeslagen: 'al in behandeling' };
+  let id = pk.extern_id;
+  try {
+    if (!pk.publiceren) {
+      const r = await etsy.call('PATCH', `/shops/${etsy.shop}/listings/${id}`, { form: { state: 'inactive' } });
+      if (!ok(r.status)) throw new Error(`Offline halen (${r.status}): ${foutTekst(r.data)}`);
+      await zetPk(productId, { status: 'niet_gepubliceerd', melding: null, laatste_sync_op: new Date().toISOString(), gepubliceerd_hash: null });
+      return { offline: true };
+    }
+    const p = inhoud.payload, meta = { ...(pk.meta || {}) };
+    const velden = {
+      title: p.titel, description: p.beschrijving, taxonomy_id: p.categorie, tags: p.tags.join(','), materials: p.materialen.join(','),
+      who_made: p.who_made, when_made: p.when_made, is_supply: 'false', type: 'physical', should_auto_renew: 'true',
+      shipping_profile_id: p.verzendprofiel_id, readiness_state_id: p.verwerkingsprofiel_id, ...(p.retourbeleid_id ? { return_policy_id: p.retourbeleid_id } : {}),
+    };
+    let nieuw = false;
+    if (!id && pk.aanmaken_gestart_op) {
+      id = await zoekOpTag(etsy, `skf-${inhoud.code}`.toLowerCase());
+      if (id) await zetPk(productId, { extern_id: id, aanmaken_gestart_op: null });   // eerder aangemaakt: overnemen, niet opnieuw aanmaken
+    }
+    if (!id) {
+      await zetPk(productId, { aanmaken_gestart_op: new Date().toISOString() });
+      const res = await etsy.call('POST', `/shops/${etsy.shop}/listings`, { form: { ...velden, quantity: String(p.voorraad), price: Math.min(...p.varianten.map((v) => v.prijs)).toFixed(2) } });
+      if (!ok(res.status) || !res.data?.listing_id) throw new Error(`Aanmaken (${res.status}): ${foutTekst(res.data)}`);
+      id = String(res.data.listing_id); nieuw = true;
+      await zetPk(productId, { extern_id: id, extern_url: res.data.url || `https://www.etsy.com/listing/${id}`, aanmaken_gestart_op: null });
+    } else {
+      const res = await etsy.call('PATCH', `/shops/${etsy.shop}/listings/${id}`, { form: velden });
+      if (!ok(res.status)) throw new Error(`Bijwerken (${res.status}): ${foutTekst(res.data)}`);
+    }
+    const fotoHash = crypto.createHash('sha256').update(p.fotos.join('|')).digest('hex').slice(0, 16);
+    if (nieuw || meta.fotos !== fotoHash) { await vervangFotos(etsy, id, p.fotos); meta.fotos = fotoHash; await zetPk(productId, { meta }); }
+    const ir = await etsy.call('PUT', `/listings/${id}/inventory`, { json: inventaris(p, p.verwerkingsprofiel_id) });
+    if (!ok(ir.status)) throw new Error(`Varianten en prijzen (${ir.status}): ${foutTekst(ir.data)}`);
+    const act = await etsy.call('PATCH', `/shops/${etsy.shop}/listings/${id}`, { form: { state: 'active' } });
+    if (!ok(act.status)) throw new Error(`Activeren (${act.status}): ${foutTekst(act.data)}`);
+    await zetPk(productId, { extern_id: id, status: 'actief', melding: null, gepubliceerd_hash: inhoud.hash, laatste_sync_op: new Date().toISOString(), extern_url: act.data?.url || pk.extern_url || `https://www.etsy.com/listing/${id}`, verwerken_sinds: null });
+    return { ok: true, nieuw };
+  } catch (e) {
+    await zetPk(productId, { status: 'fout', melding: String(e.message || e).slice(0, 500), verwerken_sinds: null, ...(id ? { extern_id: id } : {}) });
+    return { fout: String(e.message || e) };
   }
-  log.push({ stap: 'bijwerken', ok: mis === 0, info: `bijgewerkt ${bij}, mislukt ${mis}` });
+}
+
+async function stapPubliceren(etsy, s, log, { productId, handmatig = false } = {}) {
+  if (!handmatig && !s.auto_publiceren) { log.push({ stap: 'publiceren', ok: true, info: 'automatisch publiceren staat uit (gebruik "publiceer" op de pagina Verkoopkanalen)' }); return; }
+  const ctx = await publicatieContext();
+  const ids = productId ? [productId] : ctx.pk.filter((x) => x.kanaal === 'etsy' && (x.publiceren || x.extern_id)).map((x) => x.product_id);
+  let nieuw = 0, bij = 0, offline = 0, mis = 0;
+  for (const id of ids) {
+    if (nieuw + bij + offline + mis >= 5) break;   // foto-uploads zijn zwaar; de volgende run gaat verder
+    const r = await publiceerProduct(etsy, ctx, id);
+    if (r.ok) r.nieuw ? nieuw++ : bij++;
+    else if (r.offline) offline++;
+    else if (r.fout) { mis++; log.push({ stap: 'publiceren', ok: false, info: `${ALLE_POSTERS[id] || id}: ${r.fout.slice(0, 200)}` }); }
+  }
+  log.push({ stap: 'publiceren', ok: mis === 0, info: `nieuw ${nieuw}, bijgewerkt ${bij}, offline gehaald ${offline}, mislukt ${mis}` });
 }
 
 const geld = (m) => (m ? Number(m.amount) / Number(m.divisor || 100) : 0);
@@ -265,15 +288,14 @@ async function stapVerzendingen(etsy, log) {
   log.push({ stap: 'verzendingen', ok: true, info: `doorgegeven ${ok2}` });
 }
 
-export const STAPPEN = ['listings', 'bijwerken', 'orders', 'verzendingen'];
-export async function draai(stappen, s) {
+export const STAPPEN = ['publiceren', 'orders', 'verzendingen'];
+export async function draai(stappen, s, opties = {}) {
   const etsy = new EtsyClient(s.proef), log = [];
   await etsy.laad();
   if (!etsy.k) return { log: [{ stap: 'koppeling', ok: false, info: 'Etsy is nog niet gekoppeld (Beheer → Kanalen → koppel Etsy)' }], proef_schrijfacties: [] };
   for (const stap of stappen) {
     try {
-      if (stap === 'listings') await stapListings(etsy, s, log);
-      if (stap === 'bijwerken') await stapBijwerken(etsy, s, log);
+      if (stap === 'publiceren') await stapPubliceren(etsy, s, log, opties);
       if (stap === 'orders') await stapOrders(etsy, s, log);
       if (stap === 'verzendingen') await stapVerzendingen(etsy, log);
     } catch (e) { log.push({ stap, ok: false, info: String(e.message || e).slice(0, 500) }); }

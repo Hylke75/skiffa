@@ -6,6 +6,6 @@
   "description": "Skiffa — posters van de Scheveningse surfcultuur. Webshop met Mollie, Resend, Supabase-administratie en koppelingen met bol.com, Etsy en Amazon.",
   "license": "UNLICENSED",
   "scripts": {
-    "test": "node scripts/check-catalogus.mjs && node scripts/test-webshop.mjs && node scripts/test-kanalen.mjs && node scripts/test-media.mjs"
+    "test": "node scripts/check-catalogus.mjs && node scripts/test-webshop.mjs && node scripts/test-kanalen.mjs && node scripts/test-catalogus.mjs && node scripts/test-prodigi.mjs && node scripts/test-publicatie.mjs && node scripts/test-zendingen.mjs && node scripts/test-service.mjs && node scripts/test-social.mjs && node scripts/test-feeds.mjs"
   }
 }

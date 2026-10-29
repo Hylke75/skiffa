@@ -20,38 +20,79 @@ een scène die met de tijd in Scheveningen meebeweegt (uitsneden uit de posters)
   (€ 29, instap/cadeau), 70 × 100 cm (€ 69, grote uitvoering). Klaargezet voor Noord-Amerika, nog niet te koop:
   18 × 24 inch en 24 × 36 inch (`actief: false` in `api/_catalogus.js`; prijzen voorlopig). Verzending € 6,95
   (BE € 9,95), gratis vanaf € 75.
-- **Nieuwe poster toevoegen**: `python3 scripts/maak-beelden.py <bestand> <id>`, dan in `index.html` bij die
-  poster `actief:true` zetten en de id toevoegen aan `api/_catalogus.js`.
+- **Nieuwe poster toevoegen**: met database in /admin → producten (zie hieronder). Zonder database:
+  `python3 scripts/maak-beelden.py <bestand> <id>`, in `index.html` `actief:true` zetten en de id toevoegen aan `api/_catalogus.js`.
 - **Mandje**: wordt in de browser bewaard (`localStorage`).
 - **Afrekenen**: zie [Webshop en administratie](#webshop-en-administratie).
 
-## Drukbestanden en visuals
+## Centrale catalogus (één keer invoeren)
 
-Per poster hoort bij **elk formaat een eigen drukbestand** (hoge-resolutie pdf) en heeft de poster **zes visuals**
-voor de presentatie in de webshop. Beheer alles in **/admin → posters**.
+Een poster voer je één keer in bij **/admin → producten**; webshop, kanalen en productie lezen dezelfde gegevens
+(migratie `20261029030000_catalogus.sql`, code `api/_catalogus.js`, `api/catalogus.js`, `beheer/producten.js`).
 
-- **Uploaden**: sleep een hele map tegelijk naar het vak bovenaan. De bestandsnaam bepaalt de koppeling:
-  `golf-50x70.pdf`, `pier-en-strand-30x40.pdf`, `regatta-18x24in.pdf` (drukbestanden) en `golf-1.jpg` t/m
-  `golf-6.jpg` (visuals). Niet herkend? Kies poster en formaat in de lijst. Losse bestanden kun je ook op een rij of
-  vakje slepen. Bestanden gaan rechtstreeks naar Supabase Storage (privé bucket `drukbestanden`, publieke bucket
-  `visuals`); de Vercel-functie geeft alleen een ondertekende upload-URL.
-- **Maatcontrole**: de browser leest de MediaBox/TrimBox uit de pdf. Goed = precies het formaat, eventueel met
-  0–5 mm afloop rondom. Wijkt de maat af, dan wordt het bestand wel gekoppeld maar rood gemarkeerd.
-- **Automatisch gekoppeld aan bestellingen**: elke orderregel (webshop, bol, Etsy, Amazon) wijst via poster +
-  formaat naar het drukbestand: in de administratie (download per regel), in de mail aan de winkel, en met
-  `DRUKKER_EMAIL` gaat na elke betaling vanzelf een **drukopdracht** (verzendadres + downloadlinks, 30 dagen geldig,
-  ondertekend) naar de drukker. Ontbreekt een drukbestand, dan gaat er niets naar de drukker en zie je een
-  waarschuwing; na uploaden stuur je de opdracht met één knop vanuit de bestelling.
-- **Visuals**: verkleind in de browser (2000 px + 900 px, jpg) en in volgorde 1–6 getoond in het productvenster.
-  Zolang een poster geen visuals heeft, toont het venster de poster en de twee lijst-dia's. Etsy en Amazon krijgen
-  de poster als hoofdfoto en de visuals als extra foto's.
-- **Drukbestanden maken uit een hr-beeld**: `python3 scripts/maak-drukbestanden.py <bron> <poster-id>` schrijft
-  `drukbestanden/<id>-<formaat>.pdf` voor alle formaten (ware grootte + 3 mm afloop, max. 300 dpi, bijgesneden vanuit
-  het midden; `--passend` vult aan met wit, `--afloop 5` voor meer afloop). Sleep die map daarna in /admin.
-  Let op: 30 × 40 (3:4), 50 × 70 (5:7) en 70 × 100 (7:10) hebben elk een andere verhouding dan de 2:3-posters;
-  heb je per formaat een eigen ontwerp, exporteer dat dan als pdf met dezelfde namen.
-- **Code**: `api/media.js` (route), `api/_media.js` (koppelen, maat, links, drukopdracht), `api/_opslag.js`
-  (Storage), migratie `supabase/migrations/20261029020000_media.sql`.
+- **Product**: interne naam, productcode (`SKF-001` …), verkooptitel, beschrijving, stijlregel, collectie, onderwerp,
+  kleuren, zoekwoorden, SEO-titel en -beschrijving, URL (`/#<id>`, staat vast) en status: concept → gereed voor
+  publicatie → actief → gearchiveerd. Gereed/actief kan pas als minstens één variant klaar is voor verkoop.
+- **Varianten**: formaat × papiersoort (later ook lijst). Elke variant heeft een eigen SKU, verkoopprijs, kostprijs,
+  levertijd, drukbestand en gekoppeld Prodigi-product. Formaten en papiersoorten (met uitleg voor de klant) beheer
+  je onder "formaten en papier".
+- **Bestelbaar** is een variant pas als: poster actief, variant/formaat/papier actief, prijs ingevuld, leverbaar
+  bevestigd (Prodigi-product gecontroleerd; zonder Prodigi alleen "handmatig leverbaar" met reden) en een
+  drukbestand dat de verplichte controles doorstond, of een gemotiveerde uitzondering. Wat ontbreekt staat per variant
+  in gewone taal. De webshop toont alleen bestelbare varianten.
+- **Beelden**: productfoto's, interieur-mock-ups, detail- en papierbeelden (max. 30, openbaar), optioneel per formaat of
+  papiersoort; de webshop wisselt ze mee bij de keuze.
+- **Vaste kopie bij bestelling**: elke bestelregel bewaart SKU, papier, prijs, drukbestandversie, Prodigi-product,
+  opties en kostprijs. Latere wijzigingen veranderen een bestaande bestelling niet.
+- Zonder database (of met lege tabellen) geldt de catalogus in de code: elke poster in elk formaat op mat papier.
+  **Let op**: na het koppelen van Supabase toont de winkel alleen wat bestelbaar is; regel per variant eerst het
+  drukbestand en de leverbaarheid.
+
+## Drukbestanden en controle
+
+- Per variant een eigen drukbestand (jpg, png of pdf) in de **privé** bucket `drukbestanden`, met versienummer. Downloaden
+  kan alleen ingelogd (kortlevende link) of via een ondertekende link in de mail aan de drukker; Prodigi krijgt een
+  tijdelijke link.
+- Bij elke upload controleert de **server zelf** (eerste bytes van het bestand) type, leesbaarheid en pixelmaten; de
+  browser meet alleen aanvullend. Controles: bestandstype, leesbaarheid, oriëntatie, beeldverhouding, resolutie op het
+  formaat, en de pixeleis van het gekoppelde Prodigi-product. Pdf's moeten precies passen (Prodigi schaalt ze niet).
+- Er wordt nooit stilzwijgend bijgesneden of vervormd: per variant kies je "passend" (witte rand) of "vullend" (bijsnijden,
+  alleen met uitzondering). "Toon uitsnede op het papier" laat precies zien wat er op het papier komt.
+- Meerdere bestanden tegelijk: sleep ze naar het vak in /admin → producten; de naam koppelt (`golf-50x70.png`,
+  `golf-50x70-mat.pdf`, `golf-1.jpg` voor beelden).
+- `python3 scripts/maak-drukbestanden.py <bron> <poster-id>` maakt jpg's op ware grootte voor alle formaten (bijgesneden vanuit
+  het midden, of `--passend` met wit; `--pdf` voor pdf met afloop). Formaten 30×40 (3:4), 50×70 (5:7) en 70×100 (7:10)
+  hebben elk een andere verhouding dan de 2:3-posters: een eigen ontwerp per formaat is beter.
+
+## Prodigi: printen, verpakken en verzenden
+
+Eén route naar productie: elke betaalde bestelling (webshop of kanaal) gaat vanuit SKIFFA **hooguit één keer** naar
+Prodigi (`api/_prodigi.js`, `api/prodigi.js`, migratie `20261029040000_prodigi.sql`). Instellingen in **/admin → kanalen →
+Prodigi**; per variant in **/admin → producten**.
+
+- **Productcontrole**: "controleer bij Prodigi" vraagt het product op (`GET /products/{sku}`): bestaat het, kloppen de
+  opties, de productiemaat (moet overeenkomen met het formaat), de pixeleis en levering naar NL/BE. Pas dan heet een
+  variant leverbaar; het drukbestand wordt daarna aan de pixeleis getoetst.
+- **Kosten**: "kosten ophalen" haalt een actuele offerte (`POST /quotes`): artikel, verzending, merktoevoegingen, btw,
+  vervoerder en of je merktoevoegingen leverbaar zijn. De kostprijs (excl. btw) wordt opgeslagen met datum.
+- **Proefbestelling**: toont eerst kosten en afleveradres; pas na expliciete bevestiging wordt hij geplaatst (in live is
+  dat een betaalde bestelling). Een offerte is 30 minuten geldig en wordt maar één keer geplaatst.
+- **Automatische productie**: na betaling (of import van een kanaalorder) een regel in `fulfilments` met wachttijd
+  ("wijzigen kan tot …"). Vóór versturen: betaling bevestigd, adres compleet, varianten gekoppeld, juiste
+  drukbestandversie aanwezig, niet geannuleerd/geblokkeerd. Atomaire claim, vaste idempotentiesleutel per bestelling.
+  Bij een onduidelijk antwoord (time-out, 5xx) wordt de opdracht **onzeker** en zoekt de volgende run eerst bij Prodigi
+  (`GET /orders?merchantReferences=`) of hij al bestaat, voordat er opnieuw wordt besteld.
+- **Merktoevoegingen** (sticker, kaartje, pakbon): ontwerp-URL per toevoeging, verplicht ja/nee, en beleid als een
+  verplichte toevoeging niet leverbaar is: blokkeren voor beoordeling, goedgekeurd alternatief, of zonder (expliciet
+  toegestaan). Per zending gecontroleerd via een offerte; een voorkeur is geen garantie.
+- **Terugkoppeling**: statusmeldingen op `/api/prodigi?actie=callback&t=<token>`; de opdracht wordt altijd opnieuw bij
+  Prodigi opgevraagd. Verzonden → tracking in de administratie, klantmail (webshop) of door naar het kanaal. Werkelijke
+  kosten (charges) worden bewaard. Vangnet: de cron vraagt open opdrachten elk uur op.
+- **Terugbetalen ≠ annuleren**: een terugbetaling houdt een nog niet verstuurde productie tegen tot je beslist ("toch
+  produceren" met reden, of productie annuleren). Annuleren bij Prodigi kan zolang Prodigi dat toestaat.
+- **Herdruk**: een nieuwe, expliciet bevestigde opdracht bij dezelfde bestelling, met eigen sleutel.
+- **Omgevingen**: sandbox (`PRODIGI_SANDBOX_API_KEY`, er wordt niets gedrukt) en live (`PRODIGI_API_KEY`); een proefopdracht
+  kan na live zetten één keer live worden verstuurd, een live-opdracht nooit opnieuw.
 
 ## Webshop en administratie
 
@@ -82,15 +123,15 @@ Juridisch: `voorwaarden.html` (incl. herroepingsrecht en modelformulier) en `pri
 
 ```bash
 supabase link --project-ref <project-ref>
-supabase db push            # past de migraties in supabase/migrations toe (webshop, kanalen, media)
+supabase db push            # past de migraties in supabase/migrations toe (webshop, kanalen, media, catalogus, prodigi; nog op geen enkele database toegepast)
 ```
 
 Zet daarna in Vercel: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_WACHTWOORD`, `MOLLIE_API_KEY`,
 `RESEND_API_KEY`, `RESEND_FROM` (op een in Resend geverifieerd domein), `BESTEL_EMAIL`, `SITE_URL`, `BEDRIJF_*` en
-eventueel `DRUKKER_EMAIL`. Grote pdf's: verhoog in Supabase (Storage → Settings) de uploadlimiet; op het gratis plan
+eventueel `DRUKKER_EMAIL` en `PRODIGI_SANDBOX_API_KEY` / `PRODIGI_API_KEY`. Grote pdf's: verhoog in Supabase (Storage → Settings) de uploadlimiet; op het gratis plan
 is die 50 MB per bestand.
 
-**Testen**: `npm test` (catalogus, de hele bestelstroom, de drie kanalen en de drukbestanden/visuals, met nagebootste Supabase, Storage, Mollie, Resend, bol, Etsy en Amazon).
+**Testen**: `npm test` (catalogus, de hele bestelstroom, de drie kanalen, drukbestanden/visuals, de centrale catalogus en Prodigi, met nagebootste Supabase, Storage, Mollie, Resend, bol, Etsy, Amazon en Prodigi).
 
 ## Verkoopkanalen: bol.com, Etsy en Amazon
 
@@ -114,18 +155,123 @@ vertaald naar posters op bestelling (geen fysieke voorraad: we tonen een vaste v
   track-and-trace; de volgende synchronisatie geeft die door. Terugbetalen en annuleren gaan via het kanaal zelf.
 - **Prijzen**: winkelprijs + instelbare opslag (commissie), afgerond op x,95 (15% → € 33,95 / € 51,95 / € 79,95).
 - **Veilig starten**: elk kanaal staat uit en in proefmodus. In proefmodus wordt er niets naar het kanaal
-  geschreven (wel opgehaald); je ziet in Beheer → Kanalen wat er verstuurd zou worden.
+  geschreven (wel opgehaald); je ziet in Beheer → Koppelingen wat er verstuurd zou worden.
 - **Automatisch**: `.github/workflows/kanalen-sync.yml` roept elke 15 minuten `/api/kanalen?actie=cron` aan
-  (zet `CRON_SECRET` in Vercel én als GitHub-secret). Handmatig: "nu synchroniseren" in Beheer → Kanalen.
+  (zet `CRON_SECRET` in Vercel én als GitHub-secret). Handmatig: "nu synchroniseren" in Beheer → Koppelingen.
 - **Beelden**: Etsy en Amazon accepteren geen WebP; `posters/<id>.jpg` wordt meegeleverd (`maak-beelden.py`).
 
 **Wat je per kanaal nodig hebt**
 1. **bol.com**: verkopersaccount, API-sleutels, en per poster × formaat een **EAN** (GS1 Nederland). Vul de EAN's in
-   onder Beheer → Kanalen → assortiment (de controle op het GS1-controlecijfer zit erin).
+   onder Beheer → Koppelingen → assortiment (de controle op het GS1-controlecijfer zit erin).
 2. **Etsy**: een Etsy-winkel en een app op etsy.com/developers (callback `https://skiffa.store/etsy/terug`). Klik
    "koppel Etsy", dan "profielen ophalen" en vul verzendprofiel, verwerkingsprofiel en categorie (taxonomy-id) in.
 3. **Amazon**: Pro-verkopersaccount, een SP-API-app met refresh token en dezelfde EAN's (of een GTIN-vrijstelling
    voor merk Skiffa). Producttype standaard `POSTER`; Amazon meldt ontbrekende verplichte velden bij de listing.
+
+## Publiceren per kanaal (Beheer → Verkoopkanalen)
+
+Eén product, één keer ingevoerd; per kanaal vink je aan of het daar verschijnt.
+
+- **Kanalen**: SKIFFA-webshop en Etsy zijn per product te publiceren. bol.com en Amazon werken per variant met EAN
+  (Beheer → Koppelingen → assortiment). eBay en TikTok Shop staan er eerlijk bij als "geen koppeling": er wordt
+  niets naartoe gestuurd.
+- **Statussen**: Niet gepubliceerd · Onvolledig (melding zegt wat ontbreekt) · Gereed · Wordt verwerkt · Actief
+  (met link en tijdstip van de laatste synchronisatie) · Fout (met uitleg).
+- **Sjablonen en afwijkingen**: kanaalinstellingen < sjabloon < afwijkingen per product (titel, beschrijving, taal,
+  categorie, tags, foto's, prijsregel). Leeg = de centrale gegevens gelden.
+- **Prijsregels**: zelfde als basisprijs, + vast bedrag, + percentage (optioneel afgerond op ,95) of handmatig per
+  variant. De prijs per variant staat bij de afwijkingen.
+- **Geen dubbele advertenties**: "aanmaken" maakt een nieuwe Etsy-advertentie, "bijwerken" past de bestaande aan.
+  De verwerking wordt geclaimd (één tegelijk); na een onderbreking wordt een al aangemaakte advertentie
+  teruggevonden via de tag `skf-<code>` en overgenomen in plaats van opnieuw aangemaakt. Uitvinken haalt de
+  advertentie offline (inactief), verwijdert niets.
+- **Automatisch publiceren** staat standaard uit (Koppelingen → Etsy). Uit = alleen via de knop.
+  Tabellen: `product_kanalen`, `kanaal_sjablonen` (`supabase/migrations/20261029050000_publicatie_zendingen.sql`).
+
+## Zendingen en tracking
+
+- Een bestelling kan in **meerdere zendingen** gaan (tabel `zendingen`, één rij per pakket, met regels, vervoerder
+  en track-and-trace). Status `deels_verzonden` tot alle regels onderweg zijn.
+- Prodigi-zendingen komen binnen via de callback; handmatig: in het bestelpaneel vervoerder + code invullen en
+  aanvinken welke regels in het pakket zitten.
+- **Webshop**: per zending precies één mail in SKIFFA-stijl (geclaimd vóór verzending, dus ook bij dubbele
+  callbacks niet twee keer); zonder code staat er geen tracking in de mail.
+- **Kanalen**: elke zending wordt apart aan het oorspronkelijke kanaal gemeld (Etsy, bol, Amazon), met
+  herhaalpogingen en de foutmelding in het bestelpaneel.
+- Het bestelpaneel toont **betaling, productie en verzending los van elkaar**: een terugbetaling stopt de productie
+  niet automatisch (annuleer die apart). Herdruk = een nieuwe, expliciet bevestigde productieopdracht met reden.
+
+## Dashboard, actielijst en service (Beheer → dashboard)
+
+- **Actielijst** bovenaan: mislukte of geblokkeerde productie (met "opnieuw proberen"), bestellingen die langer dan
+  7 dagen betaald maar niet verzonden zijn, tracking die niet aan het kanaal is doorgegeven ("opnieuw doorgeven"
+  na 5 mislukte pogingen), publicatiefouten, mislukte synchronisaties, open serviceverzoeken, en terugbetaalde
+  bestellingen waarvan de productie nog op een besluit wacht. Een melding afvinken (met notitie) verbergt haar
+  tot er iets verandert.
+- **Cijfers per periode**: bestellingen, omzet excl. btw, productiekosten, resultaat na productie, per kanaal, per
+  dag, populaire ontwerpen/formaten/papier. Alleen echte, betaalde bestellingen; zonder data staat er "geen
+  bestellingen" en niets verzonnens.
+- **Marge** (ook per bestelling in het paneel): werkelijk = wat Prodigi factureerde (excl. btw, incl. herdrukken);
+  anders een schatting op basis van de kostprijs die bij het bestellen is vastgelegd. Niet meegerekend:
+  Mollie-kosten, kanaalcommissie en eigen verpakking (staat ook op het dashboard).
+- **Serviceverzoeken** (annulering, schade, retour, klacht) per bestelling, met foto's in de privé-bucket
+  (alleen via tijdelijke links). Afsluiten vraagt een oplossing; afwijzen vraagt een reden. De oplossing zelf
+  (terugbetalen, herdruk, annuleren) is altijd een aparte, bevestigde actie.
+- **Klant**: op de statuspagina kan een webshopklant annulering *aanvragen* zolang de bestelling betaald of in
+  productie is. Dat wordt een serviceverzoek en een mail aan de winkel, geen automatische annulering. Tracking
+  verschijnt pas als er een code is, per zending. Schadefoto's stuurt de klant (nog) per mail; jij voegt ze toe.
+  Tabellen: `serviceverzoeken`, `actie_afgehandeld` (`supabase/migrations/20261029060000_service.sql`).
+
+## Social via Buffer (Beheer → social)
+
+- **Accounts** koppel je in Buffer zelf; "accounts ophalen" haalt ze op (met status: actief, ontkoppeld, vergrendeld,
+  gepauzeerd). Per account kies je of SKIFFA erop mag plannen. Geen inbox en geen statistieken.
+- **Contentstudio**: één bericht met een basistekst (`{link}` = campagnelink naar het product met UTM-codes),
+  media (openbaar en blijvend; Buffer haalt ze pas bij plaatsing op) en per account een eigen variant: tekst,
+  soort (post/reel/story), tijdstip in Europe/Amsterdam en publicatiewijze. "Voorbeeld" toont per account de
+  definitieve tekst, de lengte tegen de limiet en wat er ontbreekt, zonder iets te versturen.
+- **Automatisch of afronden op telefoon**: automatisch = Buffer plaatst zelf. Telefoon = Buffer stuurt een
+  herinnering; die staat als "herinnering" en wordt **nooit** als geplaatst getoond, tot Buffer meldt dat je het
+  als gepubliceerd hebt gemarkeerd of jij hier op "ik heb het geplaatst" klikt.
+- **Hoogstens één keer**: elk account krijgt een taak met een unieke sleutel (`publishing_jobs`), geclaimd door één
+  verwerker. Bij een onduidelijk antwoord (time-out, serverfout) zoekt SKIFFA eerst in Buffer of het bericht er al
+  staat en neemt het dan over; alleen als het er niet is, wordt het één keer opnieuw verstuurd.
+- **Maak socialmediabericht**: knop bij elk product (Beheer → producten) maakt een concept met tekst, beelden en de
+  actieve accounts.
+- **Aan/uit**: social staat los aan/uit en heeft een eigen proefmodus. De cron (elke 15 minuten) verwerkt taken en
+  haalt statussen op; mislukte berichten, herinneringen en ontkoppelde accounts staan op de actielijst.
+
+## Meta-productfeed (Facebook / Instagram)
+
+- Feed-URL: `https://skiffa.store/api/catalogus?actie=feed&kanaal=meta`: RSS-XML met `g:`-velden volgens de
+  Meta-specificatie (gecontroleerd oktober 2026). Eén item per bestelbare variant: id = SKU, item_group_id per
+  poster, size = formaat, material = papier, prijs als `49.95 EUR`, brand SKIFFA, hoofdbeeld als jpg/png.
+- In Commerce Manager: Catalogus → Gegevensbronnen → Gegevensfeed → gepland (bv. dagelijks) met deze URL.
+- Beheer → koppelingen toont per variant wat ontbreekt (onvolledige items gaan niet in de feed), laat je varianten
+  uitsluiten, controleert of de feed bereikbaar is en waarschuwt als Meta de feed nooit of meer dan 48 uur geleden
+  ophaalde. Goedkeuring per item (goedgekeurd/afgekeurd met reden) alleen met `META_TOKEN` + `META_CATALOG_ID`.
+- Meta biedt geen afrekenen op Facebook/Instagram meer: kopers rekenen af op skiffa.store.
+
+## TikTok Shop
+
+- Vraagt een TikTok Shop-verkopersaccount (Nederland sinds juni 2026) en een eigen app in TikTok Partner Center
+  (`TIKTOK_APP_KEY`, `TIKTOK_APP_SECRET`, `TIKTOK_SERVICE_ID`, callback `https://skiffa.store/tiktok/terug`).
+  Daarna "koppel TikTok Shop" onder Koppelingen.
+- **Orders**: alleen orders met status AWAITING_SHIPMENT (betaald en buiten de annuleringstermijn) worden
+  geïmporteerd, idempotent, met een vaste kopie van de variant; daarna gaan ze de normale productieroute in.
+- **Annuleringen**: een verzoek van de koper komt als serviceverzoek op de actielijst (jij beslist; goedkeuren of
+  weigeren gaat met een idempotency-sleutel). Afgeronde annuleringen worden overgenomen.
+- **Tracking**: per pakket, met eigen vervoerder uit de TikTok-lijst voor die order; staat je vervoerder er niet
+  in, dan meldt SKIFFA dat in plaats van te gokken.
+- **Producten**: SKIFFA maakt per poster een **concept** (beelden, varianten, EUR-prijzen, magazijn). Afronden en
+  indienen doe je in Seller Center; daarna volgt SKIFFA de beoordeling (afgekeurd = melding met reden).
+- Niets hiervan is getest tegen de echte TikTok-API; begin met de proefmodus.
+
+## Auditlog
+
+Elke schrijfactie in de beheeromgeving (instellingen, publiceren, productie, terugbetalen, social, feeds) en elke
+inlogpoging komt in `audit_log`: route, actie, uitkomst en een samenvatting van de invoer. Wachtwoorden, tokens en
+sleutels worden nooit opgeslagen. Zichtbaar onderaan het dashboard.
 
 ## Hoe het in elkaar zit
 

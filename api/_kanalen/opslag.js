@@ -1,8 +1,8 @@
 // Database-kant van de kanalen: instellingen, listings, EAN's, import van orders en logboek.
 import { db, rpc, log as orderLog } from '../_db.js';
-import { POSTERS, FORMATEN } from '../_catalogus.js';
+import { POSTERS, ALLE_POSTERS, FORMATEN, ALLE_FORMATEN, VARIANTEN, PAPIER, variantVoor } from '../_catalogus.js';
 import { mails, vanRij } from '../_mails.js';
-import { drukOverzicht, drukopdracht } from '../_verwerk.js';
+import { drukOverzicht, naBetaling } from '../_verwerk.js';
 import { haalBestelling } from '../_db.js';
 import { STANDAARD, varianten, vanSku } from './gemeen.js';
 
@@ -21,9 +21,10 @@ export async function zetInstellingen(kanaal, patch) {
 
 // Zorg dat er voor elke variant (bol/Amazon) of poster (Etsy) een listingrij bestaat.
 export async function zorgVoorListings(kanaal) {
-  const rijen = kanaal === 'etsy'
-    ? Object.keys(POSTERS).map((poster_id) => ({ kanaal, poster_id, formaat: 'alle' }))
-    : varianten().map((v) => ({ kanaal, poster_id: v.poster_id, formaat: v.formaat }));
+  // Etsy publiceert per product via de pagina Verkoopkanalen (product_kanalen); bol en Amazon per variant.
+  if (kanaal === 'etsy') return;
+  const rijen = varianten().map((v) => ({ kanaal, poster_id: v.poster_id, formaat: v.formaat }));
+  if (!rijen.length) return;
   await db('kanaal_listings?on_conflict=kanaal,poster_id,formaat', { method: 'POST', prefer: 'resolution=ignore-duplicates', body: rijen });
 }
 
@@ -31,7 +32,7 @@ export async function listings(kanaal) {
   await zorgVoorListings(kanaal);
   const rijen = await db(`kanaal_listings?kanaal=eq.${kanaal}&order=poster_id.asc,formaat.asc`);
   // Posters die niet (meer) in de catalogus staan worden niet meer aangeboden.
-  return rijen.filter((r) => POSTERS[r.poster_id] && (r.formaat === 'alle' || FORMATEN[r.formaat]));
+  return rijen.filter((r) => ALLE_POSTERS[r.poster_id] && r.formaat !== 'alle' && FORMATEN[r.formaat]);
 }
 
 export async function zetListing(id, velden) {
@@ -60,12 +61,16 @@ export async function bekendeOrders(kanaal, ids) {
  */
 export function regel({ sku: s, listing, titel, prijs, aantal, extern_item_id }) {
   const v = (listing && listing.formaat !== 'alle' ? { poster_id: listing.poster_id, formaat: listing.formaat } : null) || vanSku(s);
-  const f = v && FORMATEN[v.formaat];
+  const f = v && ALLE_FORMATEN[v.formaat];
+  const vk = (v?.sku && VARIANTEN[v.sku]) || (v && variantVoor(v.poster_id, v.formaat)) || null;
   return {
     poster_id: v?.poster_id || 'onbekend',
-    poster_naam: (v && POSTERS[v.poster_id]) || String(titel || 'Onbekend product').slice(0, 120),
+    poster_naam: (v && ALLE_POSTERS[v.poster_id]) || String(titel || 'Onbekend product').slice(0, 120),
     formaat: v?.formaat || '?',
     formaat_label: f?.label || '?',
+    // vaste kopie van de variant op het moment van bestellen
+    variant_sku: vk?.sku || null, papier_id: vk?.papier || null, papier_label: vk ? PAPIER[vk.papier]?.naam || vk.papier : null, lijst: vk?.lijst || null,
+    drukbestand_versie_id: vk?.drukbestand_id || null, prodigi_sku: vk?.prodigi_sku || null, prodigi_attributen: vk?.prodigi_attributen || {}, sizing: vk?.sizing || null, kostprijs: vk?.kostprijs ?? null,
     prijs: Math.round(Number(prijs) * 100) / 100,
     aantal: Number(aantal),
     extern_item_id: String(extern_item_id),
@@ -84,32 +89,17 @@ export async function importeer(payload, notities = []) {
       const o = vanRij(await haalBestelling('id', res.id));
       if (await mails.winkelNieuw(o, `Nieuwe ${payload.kanaal}-bestelling (${payload.extern_id}). Verstuur binnen de levertijd en vul de track-and-trace in; die gaat automatisch naar ${payload.kanaal}.`, await drukOverzicht(o)))
         await orderLog(res.id, 'mail', 'winkel', payload.kanaal);
-      if (!ongekoppeld) await drukopdracht(o, payload.kanaal, payload.kanaal);
+      if (!ongekoppeld) await naBetaling(o, payload.kanaal, payload.kanaal);
     } catch (e) { await orderLog(res.id, 'fout', `mail winkel: ${e.message}`, payload.kanaal); }
   }
   return res;
 }
 
-// Verzonden kanaalorders met track-and-trace die nog niet aan het kanaal zijn doorgegeven.
-export async function teMelden(kanaal) {
-  return db(`bestellingen?kanaal=eq.${kanaal}&status=in.(verzonden,geleverd)&extern_verzonden_op=is.null&track_trace=not.is.null&select=*,bestelregels(*)&limit=50`);
-}
-
-export async function gemeld(b, extraMeta = {}) {
-  await db(`bestellingen?id=eq.${b.id}`, { method: 'PATCH', body: { extern_verzonden_op: new Date().toISOString(), extern_meta: { ...(b.extern_meta || {}), ...extraMeta, verzend_fout: null } } });
-  await orderLog(b.id, 'kanaal', `track-and-trace doorgegeven aan ${b.kanaal}`, b.kanaal);
-}
-
-export async function meldenMislukt(b, fout, max) {
-  const pogingen = Number(b.extern_meta?.verzend_pogingen || 0) + 1;
-  await db(`bestellingen?id=eq.${b.id}`, { method: 'PATCH', body: { extern_meta: { ...(b.extern_meta || {}), verzend_fout: fout, verzend_pogingen: pogingen } } });
-  await orderLog(b.id, 'fout', pogingen >= max
-    ? `Track-and-trace doorgeven aan ${b.kanaal} ${pogingen}x mislukt; automatisch doorgeven gestopt. Markeer de order handmatig als verzonden bij ${b.kanaal}. Laatste fout: ${fout}`
-    : `Track-and-trace doorgeven aan ${b.kanaal} mislukt (poging ${pogingen}): ${fout}`, b.kanaal);
-}
+// Zendingen doorgeven aan het kanaal: zie api/_zendingen.js (per zending, nooit dubbel).
+export { teMelden, gemeld, meldenMislukt } from '../_zendingen.js';
 
 export async function annuleerVanKanaal(b, reden) {
-  if (['verzonden', 'geleverd', 'geannuleerd', 'terugbetaald'].includes(b.status)) return false;
+  if (['deels_verzonden', 'verzonden', 'geleverd', 'geannuleerd', 'terugbetaald'].includes(b.status)) return false;
   await db(`bestellingen?id=eq.${b.id}`, { method: 'PATCH', body: { status: 'geannuleerd' } });
   await orderLog(b.id, 'status', reden, b.kanaal);
   return true;

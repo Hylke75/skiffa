@@ -8,6 +8,10 @@
     {
       "source": "/etsy/terug",
       "destination": "/api/kanalen?actie=etsy-terug"
+    },
+    {
+      "source": "/tiktok/terug",
+      "destination": "/api/kanalen?actie=tiktok-terug"
     }
   ],
   "headers": [

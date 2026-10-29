@@ -11,15 +11,20 @@
 // POST ververs {id}               actuele betaalstatus bij Mollie ophalen
 // POST notitie {id, tekst}        interne notitie
 // POST mail {id, soort}           mail opnieuw sturen (bevestiging, verzonden)
+import { metAudit } from './_audit.js';
+import { laadCatalogus } from './_catalogus.js';
 import { dbAan, db, haalBestelling, werkBij, log } from './_db.js';
 import { isAdmin, wachtwoordKlopt, sessieCookie, uitlogCookie, adminIngesteld } from './_auth.js';
 import { mollie, euro } from './_bestelling.js';
 import { btwDeel } from './_bedrijf.js';
 import { mails, vanRij, mailAan } from './_mails.js';
 import { betaald, verwerkMollie } from './_verwerk.js';
-import { drukbestanden } from './_media.js';
+import { metDrukbestanden } from './_media.js';
+import { fulfilmentVan, fulfilmentsVan, annuleer as prodigiAnnuleer } from './_prodigi.js';
+import { registreer, zendingenVan } from './_zendingen.js';
+import * as service from './_service.js';
 
-const STATUSSEN = ['open', 'betaald', 'in_productie', 'verzonden', 'geleverd', 'geannuleerd', 'mislukt', 'terugbetaald'];
+const STATUSSEN = ['open', 'betaald', 'in_productie', 'deels_verzonden', 'verzonden', 'geleverd', 'geannuleerd', 'mislukt', 'terugbetaald'];
 const param = (req, k) => String(req.query?.[k] ?? new URL(req.url || '/', 'http://x').searchParams.get(k) ?? '');
 const isUuid = (s) => /^[0-9a-f-]{36}$/.test(String(s));
 const fout = (res, code, melding) => res.status(code).json({ ok: false, melding });
@@ -43,7 +48,7 @@ async function overzicht() {
   const perStatus = Object.fromEntries(STATUSSEN.map((s) => [s, rijen.filter((r) => r.status === s).length]));
   return {
     perStatus,
-    teVerzenden: perStatus.betaald + perStatus.in_productie,
+    teVerzenden: perStatus.betaald + perStatus.in_productie + perStatus.deels_verzonden,
     omzetMaand: Math.round(omzet(maandStart) * 100) / 100,
     omzetJaar: Math.round(omzet(jaarStart) * 100) / 100,
     aantalBetaald: rijen.filter((r) => r.betaald_op).length,
@@ -58,7 +63,7 @@ async function lijst(req) {
   const kanaal = param(req, 'kanaal');
   if (['webshop', 'bol', 'etsy', 'amazon'].includes(kanaal)) pad += `&kanaal=eq.${kanaal}`;
   if (STATUSSEN.includes(status)) pad += `&status=eq.${status}`;
-  else if (status === 'actie') pad += '&status=in.(betaald,in_productie)';
+  else if (status === 'actie') pad += '&status=in.(betaald,in_productie,deels_verzonden)';
   if (q) {
     const v = encodeURIComponent(`*${q}*`);
     pad += `&or=(nummer.ilike.${v},naam.ilike.${v},email.ilike.${v},factuurnummer.ilike.${v},plaats.ilike.${v},extern_id.ilike.${v})`;
@@ -70,15 +75,16 @@ async function bestelling(id) {
   const r = await haalBestelling('id', id);
   if (!r) return null;
   r.log = await db(`bestelling_log?bestelling_id=eq.${id}&order=op.asc`);
-  // Drukbestand per regel (vast gekoppeld via poster + formaat).
+  // Drukbestand per regel: de versie uit de vaste kopie van de bestelregel.
   try {
-    const m = await drukbestanden((r.bestelregels || []).map((x) => x.poster_id));
-    r.bestelregels = (r.bestelregels || []).map((x) => {
-      const d = m.get(`${x.poster_id}|${x.formaat}`);
-      return { ...x, druk: d ? { status: d.maat_status, link: `/api/media?actie=druk&p=${encodeURIComponent(x.poster_id)}&f=${encodeURIComponent(x.formaat)}` } : null };
-    });
-  } catch { /* zonder media-migratie: geen drukbestanden */ }
+    const m = await metDrukbestanden(r.bestelregels || []);
+    r.bestelregels = m.map((x) => ({ ...x, druk: x.druk ? { status: x.druk.status, versie: x.druk.versie, link: `/api/media?actie=druk&v=${x.druk.versie_id}` } : null }));
+  } catch { /* zonder catalogus-tabellen: geen drukbestanden */ }
   r.drukker = !!process.env.DRUKKER_EMAIL;
+  try { r.zendingen = await zendingenVan(id); } catch { r.zendingen = []; }
+  try { r.fulfilments = await fulfilmentsVan(id); r.fulfilment = r.fulfilments.find((f) => !f.herdruk_nr) || null; } catch { r.fulfilments = []; r.fulfilment = null; }
+  try { r.service = await service.verzoekenMetFotos(id); } catch { r.service = []; }
+  r.marge = service.margeVan(r, r.fulfilments);
   return r;
 }
 
@@ -109,27 +115,32 @@ async function zetStatus(id, body) {
   if (!['in_productie', 'verzonden', 'geleverd', 'geannuleerd', 'open'].includes(nieuw)) return { fout: 'Onbekende status.' };
   const r = await haalBestelling('id', id);
   if (!r) return { fout: 'Bestelling niet gevonden.' };
-  const velden = { status: nieuw };
+  // Verzonden = een zending vastleggen (ook bij gesplitste levering: één zending per pakket).
   if (nieuw === 'verzonden') {
-    velden.track_trace = String(body.track_trace || '').trim().slice(0, 300) || null;
-    velden.verzonden_op = new Date().toISOString();
-    if (['postnl', 'dhl', 'dpd', 'ups', 'gls', 'bpost'].includes(body.vervoerder)) velden.vervoerder = body.vervoerder;
-    if (r.kanaal !== 'webshop' && !velden.track_trace) return { fout: `${r.kanaal} eist een track-and-trace-code.` };
+    const tt = String(body.track_trace || '').trim().slice(0, 300);
+    if (r.kanaal !== 'webshop' && !tt) return { fout: `${r.kanaal} eist een track-and-trace-code.` };
+    const vervoerder = ['postnl', 'dhl', 'dpd', 'ups', 'gls', 'bpost'].includes(body.vervoerder) ? body.vervoerder : r.vervoerder;
+    const regels = Array.isArray(body.regels) && body.regels.length ? body.regels.map(String) : null;
+    const z = await registreer({ bestellingId: id, bron: 'handmatig', extern_ref: tt || `handmatig-${Date.now()}`, vervoerder,
+      tracking_code: /^https?:\/\//.test(tt) ? null : tt || null, tracking_url: /^https?:\/\//.test(tt) ? tt : null, regels, door: 'admin', mail: body.mail !== false });
+    if (!z.nieuw) return { fout: 'Deze zending (track-and-trace) is al vastgelegd.' };
+    return r.kanaal !== 'webshop' ? { ok: true, gemaild: false, kanaal: r.kanaal } : { ok: true, gemaild: body.mail !== false, deels: z.dekking !== 'volledig' };
   }
+  const velden = { status: nieuw };
   if (nieuw === 'geannuleerd' && r.kanaal !== 'webshop') return { fout: `Annuleer een ${r.kanaal}-order bij ${r.kanaal} zelf; de volgende synchronisatie neemt dat over.` };
+  // Nog niet naar Prodigi verstuurd? Dan gaat het ook niet meer. Al verstuurd: melden.
+  if (nieuw === 'geannuleerd') {
+    try {
+      const f = await fulfilmentVan(id);
+      if (f && !f.extern_id && !['geannuleerd'].includes(f.status)) await prodigiAnnuleer(id, 'admin');
+      else if (f?.extern_id && !['geannuleerd'].includes(f.status)) await log(id, 'waarschuwing', `Deze bestelling is al bij Prodigi (${f.extern_id}); annuleer de productie daar ook (knop "productie annuleren").`, 'admin');
+    } catch { /* zonder Prodigi-tabel */ }
+  }
   const bijgewerkt = await werkBij(id, velden);
-  await log(id, 'status', `${r.status} → ${nieuw}${velden.track_trace ? ` (${velden.track_trace})` : ''}`, 'admin');
+  await log(id, 'status', `${r.status} → ${nieuw}`, 'admin');
   let gemaild = false;
-  // Kanaalorders: het kanaal mailt de koper zelf; de track-and-trace gaat bij de volgende sync mee.
-  if (r.kanaal !== 'webshop') {
-    if (nieuw === 'verzonden') await log(id, 'kanaal', `track-and-trace gaat bij de volgende synchronisatie naar ${r.kanaal}`, 'admin');
-    return { ok: true, gemaild: false, kanaal: r.kanaal };
-  }
-  if (body.mail !== false) {
-    const o = vanRij({ ...r, ...bijgewerkt, bestelregels: r.bestelregels });
-    if (nieuw === 'verzonden') gemaild = await mailEnLog(id, 'verzonden', () => mails.verzonden(o));
-    if (nieuw === 'geannuleerd') gemaild = await mailEnLog(id, 'geannuleerd', () => mails.geannuleerd(o));
-  }
+  if (r.kanaal !== 'webshop') return { ok: true, gemaild: false, kanaal: r.kanaal };
+  if (body.mail !== false && nieuw === 'geannuleerd') gemaild = await mailEnLog(id, 'geannuleerd', () => mails.geannuleerd(vanRij({ ...r, ...bijgewerkt, bestelregels: r.bestelregels })));
   return { ok: true, gemaild };
 }
 
@@ -153,11 +164,19 @@ async function terugbetalen(id, body) {
   const volledig = totaalTerug >= Number(r.totaal) - 0.001;
   await werkBij(id, { terugbetaald: totaalTerug, ...(volledig ? { status: 'terugbetaald' } : {}) });
   await log(id, 'terugbetaling', `${euro(b)} teruggestort${r.mollie_id ? ' via Mollie' : ' (handmatig)'}`, 'admin');
+  // Terugbetalen is niet hetzelfde als de productie annuleren: een opdracht die nog niet bij Prodigi is,
+  // wordt tegengehouden tot je beslist ("toch produceren" of "productie annuleren").
+  try {
+    const f = await fulfilmentVan(id);
+    if (f && !f.extern_id && !['geannuleerd', 'verzonden'].includes(f.status)) await log(id, 'waarschuwing', 'Terugbetaling geregistreerd: de productie wacht op jouw beslissing (toch produceren of productie annuleren).', 'admin');
+    else if (f?.extern_id && !['geannuleerd', 'verzonden'].includes(f.status)) await log(id, 'waarschuwing', `De productie loopt bij Prodigi (${f.extern_id}). Annuleer de productie apart als er niet meer gedrukt moet worden.`, 'admin');
+  } catch { /* zonder Prodigi-tabel */ }
   const gemaild = await mailEnLog(id, 'terugbetaald', () => mails.terugbetaald(vanRij(r), b));
   return { ok: true, gemaild };
 }
 
-export default async function handler(req, res) {
+async function handler(req, res) {
+  await laadCatalogus();
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('X-Robots-Tag', 'noindex');
   const actie = param(req, 'actie');
@@ -190,6 +209,9 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       if (actie === 'overzicht') return res.status(200).json({ ok: true, ...(await overzicht()) });
+      if (actie === 'dashboard') return res.status(200).json({ ok: true, ...(await service.dashboard({ van: param(req, 'van'), tot: param(req, 'tot') })) });
+      if (actie === 'actielijst') return res.status(200).json({ ok: true, ...(await service.actielijst()) });
+      if (actie === 'audit') return res.status(200).json({ ok: true, log: await db('audit_log?select=*&order=op.desc&limit=100').catch(() => []) });
       if (actie === 'bestellingen') return res.status(200).json({ ok: true, bestellingen: await lijst(req) });
       if (actie === 'bestelling') {
         const id = param(req, 'id');
@@ -201,6 +223,14 @@ export default async function handler(req, res) {
         res.setHeader('content-disposition', `attachment; filename="skiffa-facturen-${param(req, 'van') || 'alles'}-${param(req, 'tot') || 'nu'}.csv"`);
         return res.status(200).send(await exporteer(req));
       }
+    }
+    // Actielijst en serviceverzoeken (eigen id's, geen bestelling-id).
+    const SERVICE = { afvinken: () => service.afvinken(body.sleutel, body.notitie), 'zending-opnieuw': () => service.zendingOpnieuw(body.zending_id),
+      'service-foto-upload': () => service.fotoUpload(body), 'service-foto-bevestig': () => service.fotoBevestig(body), 'service-zet': () => service.zetVerzoek(body, 'admin'),
+      'service-nieuw': () => (isUuid(body.bestelling_id) ? service.nieuwVerzoek(body, 'admin') : { fout: 'Geen bestelling gekozen.' }) };
+    if (req.method === 'POST' && SERVICE[actie]) {
+      const uit = await SERVICE[actie]();
+      return uit.fout ? fout(res, 400, uit.fout) : res.status(200).json(uit);
     }
     if (req.method === 'POST') {
       const id = String(body.id || '');
@@ -235,3 +265,5 @@ export default async function handler(req, res) {
     return fout(res, 500, 'Er ging iets mis. Probeer het opnieuw.');
   }
 }
+
+export default metAudit('admin', handler);

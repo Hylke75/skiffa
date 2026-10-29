@@ -11,7 +11,7 @@ export function vanRij(r) {
     naam: r.naam, email: r.email, straat: r.straat, postcode: r.postcode, plaats: r.plaats, land: r.land, opmerking: r.opmerking || '',
     subtotaal: Number(r.subtotaal), verzending: Number(r.verzending), totaal: Number(r.totaal),
     factuurnummer: r.factuurnummer, track_trace: r.track_trace,
-    regels: (r.bestelregels || []).map((x) => ({ poster_id: x.poster_id, formaat: x.formaat, naam: x.poster_naam, formaatLabel: x.formaat_label, prijs: Number(x.prijs), aantal: x.aantal })),
+    regels: (r.bestelregels || []).map((x) => ({ poster_id: x.poster_id, formaat: x.formaat, variant_sku: x.variant_sku || null, drukbestand_versie_id: x.drukbestand_versie_id || null, papierLabel: x.papier_label || null, naam: x.poster_naam, formaatLabel: x.formaat_label, prijs: Number(x.prijs), aantal: x.aantal })),
   };
 }
 
@@ -23,7 +23,7 @@ const knop = (href, tekst) => href ? `<p style="margin:22px 0"><a href="${href}"
 export function overzicht(o) {
   const rij = (l, r, b) => `<tr><td style="padding:5px 18px 5px 0;${b ? 'font-weight:600' : ''}">${l}</td><td style="padding:5px 0;text-align:right;${b ? 'font-weight:600' : ''}">${r}</td></tr>`;
   return `<table style="border-collapse:collapse;font-size:13px;width:100%;max-width:420px">` +
-    o.regels.map((r) => rij(`${r.aantal}× poster ${esc(r.naam)}<br><span style="opacity:.6">${esc(r.formaatLabel)}</span>`, euro(r.prijs * r.aantal))).join('') +
+    o.regels.map((r) => rij(`${r.aantal}× poster ${esc(r.naam)}<br><span style="opacity:.6">${esc(r.formaatLabel)}${r.papierLabel ? ` · ${esc(r.papierLabel)}` : ''}</span>`, euro(r.prijs * r.aantal))).join('') +
     `<tr><td colspan="2" style="border-top:1px solid #ddd;padding-top:4px"></td></tr>` +
     rij('subtotaal', euro(o.subtotaal)) +
     rij('verzending', o.verzending ? euro(o.verzending) : 'gratis') +
@@ -60,8 +60,8 @@ export const mails = {
   ontvangen: (o) => stuur(o.email, `We hebben je bestelling ${o.nummer} ontvangen`, opmaak(`Dank je, ${esc(o.naam.split(' ')[0])}. Je bestelling is binnen.`,
     `<p>Je ontvangt binnen één werkdag een betaalverzoek. Na betaling gaat je poster opgerold in een koker op de post.</p>${overzicht(o)}<p style="margin-top:20px">Verzendadres:<br>${adres(o)}</p>`), winkelMail()),
 
-  verzonden: (o) => stuur(o.email, `Je Skiffa-bestelling ${o.nummer} is onderweg`, opmaak('Je poster is onderweg.',
-    `<p>Je bestelling ${esc(o.nummer)} is vandaag verstuurd, opgerold in een stevige koker.</p>
+  verzonden: (o, { deel = false } = {}) => stuur(o.email, `Je Skiffa-bestelling ${o.nummer} is onderweg${deel ? ' (deelzending)' : ''}`, opmaak(deel ? 'Een deel van je bestelling is onderweg.' : 'Je poster is onderweg.',
+    `<p>${deel ? `Een deel van je bestelling ${esc(o.nummer)} is verstuurd; de rest volgt in een aparte zending, met een eigen mail.` : `Je bestelling ${esc(o.nummer)} is verstuurd, opgerold in een stevige koker.`}</p>
 ${o.track_trace ? `<p>Track-and-trace: ${/^https?:\/\//.test(o.track_trace) ? `<a href="${esc(o.track_trace)}">${esc(o.track_trace)}</a>` : `<b>${esc(o.track_trace)}</b>`}</p>` : ''}
 <p>Tip: leg de poster na het uitpakken een nacht plat onder een paar boeken, dan ligt hij weer recht.</p>${knop(statusLink(o), 'bekijk je bestelling')}`), winkelMail()),
 

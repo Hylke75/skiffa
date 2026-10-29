@@ -35,7 +35,7 @@ tbody tr{cursor:pointer}
 tbody tr:hover{background:var(--zee)}
 .r{text-align:right}
 .st{display:inline-block;padding:1px 8px;border-radius:999px;font-size:10px;letter-spacing:.08em;border:1px solid currentColor;white-space:nowrap}
-.st.open{color:#8a6d00}.st.betaald,.st.in_productie{color:#1d4ed8}.st.verzonden,.st.geleverd{color:var(--groen)}
+.st.open{color:#8a6d00}.st.betaald,.st.in_productie,.st.deels_verzonden{color:#1d4ed8}.st.verzonden,.st.geleverd{color:var(--groen)}
 .st.geannuleerd,.st.mislukt{color:#777}.st.terugbetaald{color:var(--rood)}
 .leeg{padding:30px;text-align:center;opacity:.6;background:#fff;border:1px solid var(--lijn);border-radius:12px}
 #paneel{position:fixed;inset:0;background:rgba(0,0,0,.3);display:none;z-index:10}
@@ -58,7 +58,7 @@ tbody tr:hover{background:var(--zee)}
 #login input{width:100%;margin:6px 0 12px}
 .waarschuw{background:#fff7e0;border:1px solid #e5c76b;border-radius:10px;padding:10px 14px;margin-bottom:16px}
 .verberg{display:none!important}
-.nav{display:flex;gap:6px}
+.nav{display:flex;gap:6px;flex-wrap:wrap}
 .nav button[aria-current=true]{background:#111;color:#fff}
 .kb{display:inline-block;font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:0 6px;border-radius:4px;background:var(--zee);margin-left:6px}
 .kb.bol{background:#e6efff}.kb.etsy{background:#ffe9dc}.kb.amazon{background:#fff3cc}
@@ -79,26 +79,68 @@ tbody tr:hover{background:var(--zee)}
 .schakel:checked{background:#111}
 .schakel::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#fff;transition:left .2s}
 .schakel:checked::after{left:16px}
-.drop{display:block;background:#fff;border:1.5px dashed #999;border-radius:12px;padding:22px;text-align:center;cursor:pointer;margin-bottom:14px}
+.st.concept{color:#777}.st.gereed{color:#8a6d00}.st.actief{color:var(--groen)}.st.gearchiveerd{color:#999}
+.drop{display:block;background:#fff;border:1.5px dashed #999;border-radius:12px;padding:18px;text-align:center;cursor:pointer;margin-bottom:14px}
 .drop.over{border-color:#111;background:var(--zee)}
 .drop code,.mini code{background:var(--zee);padding:0 4px;border-radius:4px}
-#wachtrij table{margin-bottom:14px}#wachtrij tbody tr{cursor:default}#wachtrij select{font-size:11px;padding:3px 6px}
 .balkje{height:3px;background:var(--zee);border-radius:2px;overflow:hidden;margin-top:4px}.balkje i{display:block;height:100%;background:#111;width:0}
-.posterkaarten{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(380px,100%),1fr));gap:14px}
-.pk{background:#fff;border:1px solid var(--lijn);border-radius:12px;padding:14px 16px}
-.pk h3{font-size:13px;font-weight:500;letter-spacing:.08em;display:flex;justify-content:space-between;gap:8px;margin-bottom:8px}
-.pk .sub{font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin:10px 0 6px}
-.druklijst{display:grid;gap:5px}
-.drukrij{display:grid;grid-template-columns:110px 1fr auto;gap:8px;align-items:center;font-size:11px;padding:4px 8px;border-radius:8px;background:var(--papier)}
-.drukrij.later{opacity:.6}.drukrij.sleep{outline:1.5px dashed #111}
-.drukrij .acties{gap:4px;flex-wrap:nowrap}.drukrij button{padding:1px 9px;font-size:10px}
-.vis{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
-.vis .slot{position:relative;aspect-ratio:4/5;border:1px dashed #aaa;border-radius:8px;display:grid;place-items:center;font-size:10px;color:#777;cursor:pointer;overflow:hidden;background:var(--papier)}
-.vis .slot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.vis .slot.sleep{border-color:#111;background:var(--zee)}
-.vis .slot .x{position:absolute;top:3px;right:3px;width:18px;height:18px;padding:0;border-radius:50%;background:rgba(255,255,255,.9);border:0;font-size:11px;line-height:18px;display:none}
-.vis .slot:hover .x,.vis .slot:focus-within .x{display:block}
-.vis .slot .nr{position:absolute;left:4px;bottom:2px;font-size:9px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+#pWachtrij table{margin-bottom:6px}#pWachtrij tbody tr{cursor:default}
+.duim{width:34px;height:50px;object-fit:cover;border-radius:4px;display:block;background:var(--zee)}.leegbeeld{border:1px dashed #aaa}
+.ptabel td{vertical-align:middle}
+.pgrid{display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:14px}
+.pform{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:8px 12px}
+.pform label,.vgrid label{display:flex;flex-direction:column;gap:3px;font-size:10px;letter-spacing:.06em;opacity:.95}
+.pform label.breed{grid-column:1/-1}
+.pform input,.pform textarea,.pform select,.vgrid input,.vgrid textarea,.vgrid select{font-size:12px;padding:6px 8px;width:100%}
+.vgrid label.rijtje{flex-direction:row;align-items:center;justify-content:space-between}
+.vgrid label.rijtje input{width:auto}
+.vgrid input.schakel,.pform input.schakel,table.kaal input.schakel{width:30px;padding:0}
+input.kort{max-width:110px}
+.pbeeld{width:100%;aspect-ratio:2/3;border:1px dashed #aaa;border-radius:10px;overflow:hidden;cursor:pointer;display:grid;place-items:center;font-size:11px;color:#777;background:var(--papier);position:relative}
+.pbeeld img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.beelden{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:6px}
+.bl{border:1px solid var(--lijn);border-radius:10px;overflow:hidden;background:var(--papier)}
+.bl img{width:100%;aspect-ratio:4/5;object-fit:cover;display:block}
+.blv{display:grid;gap:4px;padding:6px}.blv select,.blv input{font-size:11px;padding:3px 6px}.blv .acties button{padding:1px 9px;font-size:10px}
+.bl.nieuw{display:grid;place-items:center;min-height:180px;cursor:pointer;border-style:dashed;color:#777;font-size:11px}
+.schuif{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.kaal{border:0}table.kaal td,table.kaal th{padding:6px 8px}table.kaal input,table.kaal textarea{font-size:11px;padding:4px 6px;width:100%}
+.vtabel{min-width:760px}.vtabel tbody tr.vrij{cursor:pointer}.vtabel tbody tr.vrij.open{background:var(--zee)}
+.vdetail{border:1px solid #111;border-radius:12px;padding:12px;margin-top:12px;background:var(--papier)}
+.vgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;padding:8px 2px}
+.vgrid h4{font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;font-weight:400;margin-bottom:6px}
+.vgrid > div{display:flex;flex-direction:column;gap:6px}
+.ontbreekt{margin:6px 0 0 16px;font-size:11px;color:var(--rood)}
+.controles{list-style:none;font-size:11px;display:grid;gap:3px;margin:6px 0}.controles .ok{color:var(--groen)}.controles .waarschuwing{color:#8a6d00}.controles .afgekeurd{color:var(--rood)}
+.kosten{font-size:11px;background:#fff;border:1px solid var(--lijn);border-radius:8px;padding:8px 10px;margin-top:6px}
+.proefvak{background:#fff;border:1px solid #111;border-radius:10px;padding:10px;margin-top:8px;display:grid;gap:8px}
+.uits{position:relative;overflow:hidden;background:#eee;margin:6px 0}.uits img{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:fill}
+.uits i{position:absolute;outline:1.5px dashed #fff}.uits.papier{background:#fff;outline:1px solid #ccc}
+.genereer{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:8px}.genereer label{display:flex;align-items:center;gap:6px;margin:3px 0}
+.merkrij{display:grid;grid-template-columns:170px 1fr 80px;gap:6px 10px;align-items:center;margin:3px 0}@media (max-width:620px){.merkrij{grid-template-columns:1fr;border-bottom:1px solid var(--lijn);padding-bottom:6px}}
+.pchip{display:inline-block;font-size:10px;padding:2px 8px;border-radius:99px;background:var(--zee);white-space:nowrap}
+.pchip.actief{background:#d9efe0;color:var(--groen)}.pchip.fout{background:#fbe1e1;color:var(--rood)}.pchip.onvolledig{background:#fff2c9;color:#7a5c00}.pchip.gereed{background:#e3e9ff;color:#2a3f8f}.pchip.verwerken{background:#eee;color:#555}
+.drie{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.drie div{background:var(--papier);border:1px solid var(--lijn);border-radius:10px;padding:8px 10px;display:grid;gap:2px}.drie b{font-size:12px;font-weight:500}
+.splits{display:flex;flex-wrap:wrap;gap:4px 12px;width:100%;margin-top:4px}.splits label{display:flex;gap:4px;align-items:center}.acties .splits input{flex:none;min-width:0;width:auto}
+@media (max-width:520px){.drie{grid-template-columns:1fr}}
+.dacties{display:grid;gap:8px}.dactie{display:flex;justify-content:space-between;gap:10px;align-items:center;border:1px solid var(--lijn);border-left:3px solid #bbb;border-radius:8px;padding:8px 10px;background:#fff}
+.dactie.hoog{border-left-color:var(--rood)}.dactie.middel{border-left-color:#c89b00}.dactie .acties{flex:none;justify-content:flex-end}
+.dgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:0 14px}
+.dbalk{height:8px;background:var(--zee);border-radius:4px;overflow:hidden}.dbalk i{display:block;height:100%;background:#111}
+.fotos{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.fotos img{width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid var(--lijn)}
+.sv{border:1px solid var(--lijn);border-radius:10px;padding:8px 10px;margin-bottom:8px;background:var(--papier)}
+@media (max-width:620px){.dactie{flex-direction:column;align-items:flex-start}.dactie .acties{justify-content:flex-start}}
+.skal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}.skdag{background:var(--papier);border:1px solid var(--lijn);border-radius:8px;padding:6px;display:grid;gap:4px;align-content:start;min-height:90px}
+.skitem{text-align:left;font-size:10px;padding:4px 6px;border-radius:6px;line-height:1.4;background:#fff}.skitem .pchip{white-space:normal}.skitem span{opacity:.7}
+.smedia{display:flex;flex-wrap:wrap;gap:8px}.sm{width:130px;border:1px solid var(--lijn);border-radius:8px;overflow:hidden;background:#fff;display:grid;gap:4px;padding-bottom:4px}.sm img,.sm video{width:100%;height:110px;object-fit:cover;display:block}.sm input{font-size:10px;padding:3px 5px;margin:0 4px}.sm .acties{padding:0 4px;gap:4px}.sm .acties button{padding:1px 7px;font-size:10px}
+.sm.nieuw{display:grid;place-items:center;height:150px;border-style:dashed;color:#777;font-size:11px;padding:0}
+.sdoel{border:1px solid var(--lijn);border-radius:10px;padding:10px;margin-bottom:8px;background:#fff;display:grid;gap:6px}.sdoel{min-width:0}.sdoel .pcel{flex-wrap:wrap}.sdoel .pchip,.svb .pchip{white-space:normal}.svbtekst{overflow-wrap:anywhere}.svb .mini{overflow-wrap:anywhere}
+.svb{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:10px;margin-top:12px}.svbtekst{white-space:pre-wrap;font:inherit;font-size:12px;background:var(--papier);padding:8px;border-radius:6px;margin:6px 0}
+button.link{background:none;border:0;padding:0;text-decoration:underline;font-weight:600;cursor:pointer}
+@media (min-width:900px){.sbreed{grid-column:span 2}}.sbreed table td{word-break:break-word}
+@media (max-width:760px){.skal{grid-template-columns:1fr}}
+.pcel{display:flex;align-items:center;gap:8px}.ptabel tr.open{background:var(--zee)}.ptabel tr.pdetail td{padding:0 8px 12px}
+@media (max-width:900px){.pgrid{grid-template-columns:1fr}.vgrid{grid-template-columns:1fr}}
 @media (max-width:760px){.drukrij{grid-template-columns:80px 1fr}.drukrij .acties{grid-column:1/-1}.vb{display:none}main{padding:14px}.log div{grid-template-columns:1fr}}
 </style>
 </head>
@@ -114,7 +156,7 @@ tbody tr:hover{background:var(--zee)}
 <div id="app" class="verberg">
   <header>
     <b>SKIFFA</b>
-    <div class="nav"><button data-view="bestellingen" aria-current="true">bestellingen</button><button data-view="kanalen">kanalen</button><button data-view="posters">posters</button></div>
+    <div class="nav"><button data-view="dashboard">dashboard</button><button data-view="bestellingen" aria-current="true">bestellingen</button><button data-view="producten">producten</button><button data-view="verkoop">verkoopkanalen</button><button data-view="social">social</button><button data-view="kanalen">koppelingen</button></div>
     <span style="flex:1"></span>
     <a href="/" target="_blank" rel="noopener">winkel ↗</a>
     <button id="uitloggen">uitloggen</button>
@@ -122,7 +164,10 @@ tbody tr:hover{background:var(--zee)}
   <main>
     <div id="instellingen"></div>
     <section id="viewKanalen" class="verberg">
+      <div class="kanalen" id="prodigiKaart" style="margin-bottom:14px"></div>
       <div class="kanalen" id="kanaalKaarten"></div>
+      <div id="tiktokProducten" style="margin-top:14px"></div>
+      <div id="metaFeed" style="margin-top:14px"></div>
       <div class="assort">
         <div class="balk"><b style="margin-right:8px">assortiment</b>
           <select id="assortKanaal"><option value="bol">bol.com</option><option value="etsy">Etsy</option><option value="amazon">Amazon</option></select>
@@ -131,14 +176,10 @@ tbody tr:hover{background:var(--zee)}
         <div id="assortLijst"></div>
       </div>
     </section>
-    <section id="viewPosters" class="verberg">
-      <div class="kaarten" id="mediaTellers"></div>
-      <label class="drop" id="drop"><input type="file" id="dropInput" multiple accept=".pdf,application/pdf,image/jpeg,image/png,image/webp" hidden>
-        <b>Sleep al je drukbestanden en visuals hierheen</b> (of klik om te kiezen). De bestandsnaam bepaalt de koppeling:
-        <span class="mini" style="display:block;margin-top:4px">drukbestand: <code>golf-50x70.pdf</code> · <code>pier-en-strand-30x40.pdf</code> · <code>regatta-18x24in.pdf</code> &nbsp;—&nbsp; visuals: <code>golf-1.jpg</code> t/m <code>golf-6.jpg</code></span></label>
-      <div id="wachtrij"></div>
-      <div class="posterkaarten" id="posterKaarten"></div>
-    </section>
+    <section id="viewProducten" class="verberg"><div id="producten"></div></section>
+    <section id="viewVerkoop" class="verberg"><div id="verkoop"></div></section>
+    <section id="viewDashboard" class="verberg"><div id="dashboard"></div></section>
+    <section id="viewSocial" class="verberg"><div id="social"></div></section>
     <section id="viewBestellingen">
     <div class="kaarten" id="kaarten"></div>
     <div class="balk" id="filters">
@@ -168,7 +209,7 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const euro=v=>'€ '+Number(v||0).toFixed(2).replace('.',',');
 const datum=d=>d?new Date(d).toLocaleString('nl-NL',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Amsterdam'}):'';
-const LABEL={open:'open',betaald:'betaald',in_productie:'in productie',verzonden:'verzonden',geleverd:'geleverd',geannuleerd:'geannuleerd',mislukt:'mislukt',terugbetaald:'terugbetaald'};
+const LABEL={open:'open',betaald:'betaald',in_productie:'in productie',deels_verzonden:'deels verzonden',verzonden:'verzonden',geleverd:'geleverd',geannuleerd:'geannuleerd',mislukt:'mislukt',terugbetaald:'terugbetaald'};
 const st=s=>`<span class="st ${esc(s)}">${esc(LABEL[s]||s)}</span>`;
 let filter='actie',zoekTimer=null,huidig=null;
 
@@ -196,7 +237,7 @@ async function start(){
   $('#instellingen').innerHTML=mist.length?`<div class="waarschuw">Nog niet ingesteld in Vercel: ${mist.map(esc).join(', ')}.</div>`:'';
   if(!s.database)return;
   laadOverzicht();laadLijst();
-  const h=decodeURIComponent(location.hash.slice(1));if(h&&!['kanalen','posters'].includes(h))open(h);
+  const h=decodeURIComponent(location.hash.slice(1));if(h&&!['kanalen','producten'].includes(h)&&!h.startsWith('product/'))open(h);
 }
 
 async function laadOverzicht(){
@@ -224,29 +265,104 @@ async function open(id){
   catch(e){if(e.message!=='uit')meld(e.message,true);}
 }
 function sluit(){$('#paneel').classList.remove('open');huidig=null;history.replaceState(null,'',location.pathname);}
-$('#paneel').addEventListener('click',e=>{if(e.target.id==='paneel')sluit();if(e.target.closest('[data-naarposters]')){e.preventDefault();sluit();toonView('posters');}});
+$('#paneel').addEventListener('click',e=>{if(e.target.id==='paneel')sluit();const np=e.target.closest('[data-naarproduct]');if(np){e.preventDefault();sluit();toonView('producten');Producten.product(np.dataset.naarproduct);}});
 addEventListener('keydown',e=>{if(e.key==='Escape')sluit();});
 
+const FSTATUS={wacht:'wacht (wijzigen kan nog)',bezig:'wordt verstuurd',opnieuw:'volgt opnieuw',onzeker:'onzeker: wordt gecontroleerd',verstuurd:'bij Prodigi',in_productie:'in productie bij Prodigi',verzonden:'verzonden door Prodigi',geblokkeerd:'geblokkeerd',fout:'fout',geannuleerd:'geannuleerd'};
+function prodigiBlok(b){
+  const f=b.fulfilment;
+  if(!f)return b.betaald_op&&!['geannuleerd','terugbetaald'].includes(b.status)?`<div class="blok"><h3>prodigi</h3><div class="acties"><span class="mini">Niet aangemeld bij Prodigi.</span><button data-p="aanmelden">naar Prodigi</button></div></div>`:'';
+  const k=['fout','geblokkeerd'].includes(f.status)?'nok':['verzonden','verstuurd','in_productie'].includes(f.status)?'ok':'';
+  return `<div class="blok"><h3>prodigi${f.omgeving==='sandbox'?' · proefomgeving':''}</h3>
+    <p><span class="${k}">${esc(FSTATUS[f.status]||f.status)}</span>${f.extern_id?` · order <code>${esc(f.extern_id)}</code>${f.extern_status?` (${esc(f.extern_status)})`:''}`:''}${f.status==='wacht'?` · vanaf ${datum(f.vanaf)}`:''}${f.pogingen?` · ${f.pogingen} poging${f.pogingen>1?'en':''}`:''}</p>
+    ${f.laatste_fout?`<p class="mini nok" style="margin-top:4px">${esc(f.laatste_fout)}</p>`:''}
+    <div class="acties" style="margin-top:8px">
+      ${['fout','geblokkeerd','wacht','opnieuw'].includes(f.status)?`<button data-p="opnieuw">${f.status==='wacht'?'nu versturen':'opnieuw proberen'}</button>`:''}
+      ${!['geannuleerd','verzonden'].includes(f.status)?`<button data-p="annuleer">${f.extern_id?'annuleer bij Prodigi':'niet naar Prodigi'}</button>`:''}
+      ${['geblokkeerd','fout'].includes(f.status)&&!f.extern_id?'<button data-p="vrijgeven">toch vrijgeven (met reden)</button>':''}
+      ${f.omgeving==='sandbox'&&f.extern_id?'<button data-p="reset-sandbox">proeforder loskoppelen (daarna live)</button>':''}
+      ${b.betaald_op&&['verstuurd','in_productie','verzonden'].includes(f.status)?'<button data-p="herdruk">herdruk (schade/fout)</button>':''}
+    </div>
+    ${(b.fulfilments||[]).filter(x=>x.herdruk_nr).map(x=>`<p class="mini" style="margin-top:6px">herdruk ${x.herdruk_nr}: ${esc(FSTATUS[x.status]||x.status)}${x.extern_id?` · order <code>${esc(x.extern_id)}</code>`:''}${x.laatste_fout?` · <span class="nok">${esc(x.laatste_fout)}</span>`:''}</p>`).join('')}</div>`;
+}
+async function papi(actie,body){
+  const r=await fetch('/api/prodigi?actie='+actie,{method:body?'POST':'GET',headers:body?{'content-type':'application/json'}:{},body:body?JSON.stringify(body):undefined});
+  const j=await r.json().catch(()=>({ok:false,melding:'Onverwacht antwoord'}));
+  if(r.status===401){toonLogin();throw new Error('uit');}
+  if(!j.ok)throw new Error(j.melding||j.info||'Mislukt');return j;
+}
+// Betaling, productie en verzending los van elkaar: een terugbetaling betekent niet dat de productie stopt.
+function drieStatussen(b){
+  const bet=b.status==='terugbetaald'||(Number(b.terugbetaald)>=Number(b.totaal)&&b.betaald_op)?['nok','terugbetaald']:Number(b.terugbetaald)>0?['nok',`deels terugbetaald (${euro(b.terugbetaald)})`]:b.betaald_op?['ok','betaald']:b.status==='mislukt'?['nok','mislukt']:['','nog niet betaald'];
+  const fs=(b.fulfilments||[]).filter(f=>f.status!=='geannuleerd'),f=fs[fs.length-1];
+  const prod=f?[['fout','geblokkeerd','onzeker'].includes(f.status)?'nok':['verzonden','verstuurd','in_productie'].includes(f.status)?'ok':'',`Prodigi: ${FSTATUS[f.status]||f.status}${f.herdruk_nr?` (herdruk ${f.herdruk_nr})`:''}`]
+    :(b.fulfilments||[]).length?['','Prodigi: geannuleerd']:b.status==='in_productie'||['deels_verzonden','verzonden','geleverd'].includes(b.status)?['ok','eigen productie']:['','nog niet in productie'];
+  const zs=b.zendingen||[];
+  const verz=b.status==='geleverd'?['ok','geleverd']:b.status==='verzonden'?['ok',`verzonden${zs.length>1?` in ${zs.length} zendingen`:''}`]:b.status==='deels_verzonden'?['',`deels verzonden (${zs.length})`]:['','nog niet verzonden'];
+  return `<div class="drie">${[['betaling',bet],['productie',prod],['verzending',verz]].map(([n,[k,t]])=>`<div><span class="mini">${n}</span><b class="${k}">${esc(t)}</b></div>`).join('')}</div>`;
+}
+// Regels die al in een zending zitten (een zending zonder regels = alles).
+function verzondenRegels(b){const zs=b.zendingen||[];if(zs.some(z=>!Array.isArray(z.regels)||!z.regels.length))return new Set((b.bestelregels||[]).map(r=>String(r.id)));return new Set(zs.flatMap(z=>z.regels.map(String)));}
+function zendingenBlok(b){
+  const zs=b.zendingen||[];if(!zs.length)return '';
+  const naam=id=>{const r=(b.bestelregels||[]).find(x=>String(x.id)===String(id));return r?`${r.aantal}× ${r.poster_naam} ${r.formaat_label||''}`:`regel ${id}`;};
+  return `<div class="blok"><h3>zendingen</h3><table>${zs.map(z=>`<tr><td>${datum(z.verzonden_op)} · ${esc(z.vervoerder||'vervoerder onbekend')} · ${esc(z.bron)}
+    <div class="mini">${z.tracking_url?`<a href="${esc(z.tracking_url)}" target="_blank" rel="noopener">${esc(z.tracking_code||'volg zending')} ↗</a>`:z.tracking_code?esc(z.tracking_code):'nog geen track-and-trace'}
+    · ${Array.isArray(z.regels)&&z.regels.length?z.regels.map(naam).map(esc).join(', '):'hele bestelling'}</div>
+    <div class="mini">${b.kanaal==='webshop'?(z.klant_gemaild_op?`klant gemaild ${datum(z.klant_gemaild_op)}`:'klant (nog) niet gemaild'):(z.kanaal_gemeld_op?`doorgegeven aan ${esc(b.kanaal)} ${datum(z.kanaal_gemeld_op)}`:z.kanaal_fout?`<span class="nok">doorgeven aan ${esc(b.kanaal)} mislukt (${z.kanaal_pogingen}×): ${esc(z.kanaal_fout)}</span>`:`wordt bij de volgende sync doorgegeven aan ${esc(b.kanaal)}`)}</div></td></tr>`).join('')}</table></div>`;
+}
+function margeBlok(b){
+  const m=b.marge;if(!m||!b.betaald_op)return '';
+  return `<div class="blok"><h3>marge</h3><table>
+    <tr><td>omzet excl. btw${Number(b.terugbetaald)?' (na terugbetaling)':''}</td><td class="r">${euro(m.omzet_ex_btw)}</td></tr>
+    <tr><td>verwachte productiekosten <span class="mini">(kostprijs bij bestellen)</span></td><td class="r">${m.kosten_geschat==null?'<span class="mini">onbekend</span>':euro(m.kosten_geschat)}</td></tr>
+    <tr><td>werkelijke kosten <span class="mini">(Prodigi-factuur${m.herdrukken?`, incl. ${m.herdrukken} herdruk`:''})</span></td><td class="r">${m.kosten_werkelijk==null?'<span class="mini">nog niet gefactureerd</span>':euro(m.kosten_werkelijk)}</td></tr>
+    <tr><td><b>resultaat na productie</b> <span class="mini">${m.bron==='schatting'?'(geschat)':m.bron==='onbekend'?'':'(werkelijk)'}</span></td><td class="r"><b>${m.marge==null?'—':euro(m.marge)}</b></td></tr></table>
+    <p class="mini" style="margin-top:4px">Zonder betaalkosten en kanaalcommissie.</p></div>`;
+}
+const SVSOORT={annulering:'annulering',schade:'schade',retour:'retour',klacht:'klacht'},SVOPL={herdruk:'herdruk',terugbetaling:'terugbetaling',annulering:'geannuleerd',retour_ontvangen:'retour ontvangen',geen:'geen actie nodig'};
+function serviceBlok(b){
+  const naam=id=>{const r=(b.bestelregels||[]).find(x=>String(x.id)===String(id));return r?`${r.poster_naam} ${r.formaat_label||''}`:id;};
+  return `<div class="blok"><h3>service</h3>
+    ${(b.service||[]).map(v=>`<div class="sv" data-sv="${v.id}"><b>${esc(SVSOORT[v.soort])}</b> · <span class="${['open','in_behandeling'].includes(v.status)?'nok':'ok'}">${esc(v.status.replace('_',' '))}</span>${v.oplossing?` · ${esc(SVOPL[v.oplossing])}`:''} <span class="mini">${datum(v.aangemaakt_op)} · ${esc(v.door)}</span>
+      <p style="margin-top:4px">${esc(v.omschrijving)}</p>${Array.isArray(v.regels)&&v.regels.length?`<p class="mini">betreft: ${v.regels.map(naam).map(esc).join(', ')}</p>`:''}
+      ${v.oplossing_notitie?`<p class="mini">${esc(v.oplossing_notitie)}</p>`:''}
+      ${(v.foto_links||[]).length?`<div class="fotos">${v.foto_links.filter(Boolean).map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt="foto bij ${esc(v.soort)}"></a>`).join('')}</div>`:''}
+      ${['open','in_behandeling'].includes(v.status)?`<div class="acties" style="margin-top:6px"><button data-svfoto="${v.id}">foto toevoegen</button>
+        ${v.status==='open'?`<button data-svzet="${v.id}|in_behandeling">in behandeling</button>`:''}
+        <select data-svopl="${v.id}"><option value="">opgelost met…</option>${Object.entries(SVOPL).map(([k,l])=>`<option value="${k}">${l}</option>`).join('')}</select>
+        <button data-svzet="${v.id}|opgelost">opgelost</button><button data-svzet="${v.id}|afgewezen">afwijzen</button></div>
+        <p class="mini" style="margin-top:4px">Voer de oplossing eerst zelf uit (terugbetalen, herdruk bij Prodigi, annuleren); daarna hier afsluiten.</p>`:''}
+    </div>`).join('')}
+    <details${(b.service||[]).length?'':' open'}><summary class="mini" style="cursor:pointer">nieuw verzoek registreren</summary>
+      <div class="acties" style="margin-top:6px"><select id="svSoort">${Object.entries(SVSOORT).map(([k,l])=>`<option value="${k}">${l}</option>`).join('')}</select>
+      <input id="svTekst" placeholder="wat is er aan de hand? (bv. hoek beschadigd, foto per mail)"><button data-svnieuw>registreren</button></div>
+      ${(b.bestelregels||[]).length>1?`<div class="splits mini">betreft: ${(b.bestelregels||[]).map(r=>`<label><input type="checkbox" data-svregel="${esc(r.id)}"> ${esc(r.poster_naam)} ${esc(r.formaat_label||'')}</label>`).join('')}</div>`:''}
+    </details></div>`;
+}
 function tekenPaneel(b){
-  const druk=r=>r.druk?`<a href="${esc(r.druk.link)}" target="_blank" rel="noopener" class="${r.druk.status==='afwijkend'?'nok':'ok'}">drukbestand ↓${r.druk.status==='afwijkend'?' (maat wijkt af)':''}</a>`:`<span class="nok">drukbestand ontbreekt</span> · <a href="#posters" data-naarposters>uploaden</a>`;
-  const regels=(b.bestelregels||[]).map(r=>`<tr><td>${r.aantal}× ${esc(r.poster_naam)} <span style="opacity:.6">${esc(r.formaat_label)}</span><div class="mini">${druk(r)}</div></td><td class="r">${euro(r.prijs*r.aantal)}</td></tr>`).join('');
+  const druk=r=>r.druk?`<a href="${esc(r.druk.link)}" target="_blank" rel="noopener" class="${r.druk.status==='afgekeurd'?'nok':'ok'}">drukbestand v${esc(r.druk.versie)} ↓${r.druk.status==='afgekeurd'?' (afgekeurd)':''}</a>`:`<span class="nok">drukbestand ontbreekt</span> · <a href="#product/${esc(r.poster_id)}" data-naarproduct="${esc(r.poster_id)}">naar product</a>`;
+  const regels=(b.bestelregels||[]).map(r=>`<tr><td>${r.aantal}× ${esc(r.poster_naam)} <span style="opacity:.6">${esc(r.formaat_label)}${r.papier_label?` · ${esc(r.papier_label)}`:''}</span><div class="mini">${r.variant_sku?`${esc(r.variant_sku)} · `:''}${druk(r)}</div></td><td class="r">${euro(r.prijs*r.aantal)}</td></tr>`).join('');
   const kan=s=>({
     betaald:['open','mislukt'].includes(b.status),
     productie:b.status==='betaald',
-    verzenden:['betaald','in_productie'].includes(b.status),
+    verzenden:['betaald','in_productie','deels_verzonden'].includes(b.status),
     geleverd:b.status==='verzonden',
     annuleren:['open','mislukt','betaald','in_productie'].includes(b.status),
+    herdruk:!!b.betaald_op&&['in_productie','deels_verzonden','verzonden','geleverd','terugbetaald'].includes(b.status),
     terug:b.kanaal==='webshop'&&!!b.betaald_op&&Number(b.terugbetaald)<Number(b.totaal),
   })[s];
   $('#vak').innerHTML=`
   <div style="display:flex;justify-content:space-between;align-items:center"><h2>${esc(b.nummer)} ${st(b.status)}</h2><button data-a="sluit">sluiten</button></div>
   ${b.kanaal!=='webshop'?`<p style="margin-top:6px"><span class="kb ${esc(b.kanaal)}">${esc(b.kanaal)}</span> ordernummer ${esc(b.extern_id)}${b.extern_verzonden_op?` · track-and-trace doorgegeven ${datum(b.extern_verzonden_op)}`:b.track_trace?' · track-and-trace wordt bij de volgende sync doorgegeven':''}${b.extern_meta?.verzend_fout?` · <span class="nok">fout: ${esc(b.extern_meta.verzend_fout)}</span>`:''}</p>`:''}
+  ${drieStatussen(b)}
   <p style="opacity:.6;margin-top:4px">besteld ${datum(b.aangemaakt_op)}${b.betaald_op?` · betaald ${datum(b.betaald_op)}${b.mollie_methode?' via '+esc(b.mollie_methode):''}`:''}</p>
 
   <div class="blok"><h3>acties</h3><div class="acties">
-    ${kan('verzenden')?`<select id="vervoerder">${['postnl','dhl','dpd','ups','gls','bpost'].map(v=>`<option ${v===(b.vervoerder||'postnl')?'selected':''}>${v}</option>`).join('')}</select><input id="tt" placeholder="track-and-trace (code${b.kanaal==='webshop'?' of link':''})" value="${esc(b.track_trace||'')}"><button class="vol" data-a="verzonden">markeer verzonden${b.kanaal==='webshop'?' + mail':` + door naar ${esc(b.kanaal)}`}</button>`:''}
+    ${kan('verzenden')?`<select id="vervoerder">${['postnl','dhl','dpd','ups','gls','bpost'].map(v=>`<option ${v===(b.vervoerder||'postnl')?'selected':''}>${v}</option>`).join('')}</select><input id="tt" placeholder="track-and-trace (code${b.kanaal==='webshop'?' of link':''})" value="${esc(b.track_trace||'')}"><button class="vol" data-a="verzonden">${b.status==='deels_verzonden'?'nog een zending':'markeer verzonden'}${b.kanaal==='webshop'?' + mail':` + door naar ${esc(b.kanaal)}`}</button>
+      ${(b.bestelregels||[]).length>1?`<div class="splits mini">in dit pakket: ${(b.bestelregels||[]).map(r=>`<label><input type="checkbox" data-regel="${esc(r.id)}" ${verzondenRegels(b).has(String(r.id))?'':'checked'}> ${r.aantal}× ${esc(r.poster_naam)} ${esc(r.formaat_label||'')}</label>`).join('')}</div>`:''}`:''}
     ${kan('productie')?`<button data-a="in_productie">in productie</button>`:''}
-    ${b.betaald_op&&b.drukker&&!['verzonden','geleverd','geannuleerd','terugbetaald'].includes(b.status)?`<button data-a="drukker">drukopdracht ${(b.log||[]).some(l=>l.soort==='drukker')?'opnieuw ':''}naar drukker</button>`:''}
+    ${b.betaald_op&&b.drukker&&!b.fulfilment&&!['verzonden','geleverd','geannuleerd','terugbetaald'].includes(b.status)?`<button data-a="drukker">drukopdracht ${(b.log||[]).some(l=>l.soort==='drukker')?'opnieuw ':''}naar drukker</button>`:''}
     ${kan('geleverd')?`<button data-a="geleverd">geleverd</button>`:''}
     ${kan('betaald')?`<button data-a="betaald">markeer betaald (overboeking)</button>`:''}
     ${b.mollie_id?`<button data-a="ververs">ververs betaalstatus</button>`:''}
@@ -259,6 +375,10 @@ function tekenPaneel(b){
   ${kan('terug')?`<div class="acties" style="margin-top:10px"><input id="terugBedrag" placeholder="bedrag (leeg = alles: ${euro(b.totaal-b.terugbetaald)})" inputmode="decimal"><button data-a="terugbetalen">terugbetalen${b.mollie_id?' via Mollie':''}</button></div>`:''}
   </div>
 
+  ${prodigiBlok(b)}
+  ${zendingenBlok(b)}
+  ${serviceBlok(b)}
+  ${margeBlok(b)}
   <div class="blok"><h3>bestelling</h3><table>${regels}
     <tr><td>verzending</td><td class="r">${Number(b.verzending)?euro(b.verzending):'gratis'}</td></tr>
     <tr><td><b>totaal</b> (waarvan btw ${euro(b.totaal-b.totaal/1.21)})</td><td class="r"><b>${euro(b.totaal)}</b></td></tr>
@@ -275,6 +395,36 @@ function tekenPaneel(b){
 }
 
 $('#vak').addEventListener('click',async e=>{
+  const pk=e.target.closest('button[data-p]');
+  if(pk&&huidig){const a=pk.dataset.p,id=huidig.id;
+    const vraag={annuleer:'Niet (meer) laten drukken door Prodigi?','reset-sandbox':'Proeforder loskoppelen? De bestelling gaat daarna live naar Prodigi.',aanmelden:'Deze bestelling naar Prodigi sturen?'}[a];
+    if(vraag&&!confirm(vraag))return;
+    const extra={};
+    if(a==='vrijgeven'){extra.reden=prompt('Waarom mag deze opdracht toch naar Prodigi? (komt in het logboek)');if(!extra.reden)return;}
+    if(a==='herdruk'){extra.reden=prompt('Reden van de herdruk (bv. beschadigd aangekomen, foto ontvangen):');if(!extra.reden)return;
+      if(!confirm('Er wordt een NIEUWE, betaalde productieopdracht bij Prodigi geplaatst. Doorgaan?'))return;extra.bevestigd=true;}
+    pk.disabled=true;
+    try{const r=await papi(a,{id,...extra});meld(r.melding||(r.resultaat?`Prodigi: verstuurd ${r.resultaat.verstuurd}, geblokkeerd ${r.resultaat.geblokkeerd}, fout ${r.resultaat.fout}`:'Opgeslagen'));await open(id);laadLijst();}
+    catch(x){if(x.message!=='uit')meld(x.message,true);pk.disabled=false;}
+    return;}
+  const sv=e.target.closest('button[data-svnieuw],button[data-svzet],button[data-svfoto]');
+  if(sv&&huidig){const id=huidig.id;sv.disabled=true;
+    try{
+      if(sv.dataset.svnieuw!==undefined){const regels=[...document.querySelectorAll('#vak [data-svregel]:checked')].map(i=>i.dataset.svregel);
+        const r=await api('service-nieuw',{method:'POST',body:{bestelling_id:id,soort:$('#svSoort').value,omschrijving:$('#svTekst').value,regels}});meld(r.melding);}
+      else if(sv.dataset.svzet){const [vid,status]=sv.dataset.svzet.split('|');const oplossing=document.querySelector(`#vak [data-svopl="${vid}"]`)?.value||undefined;
+        let notitie;if(status==='afgewezen'){notitie=prompt('Waarom afgewezen?');if(!notitie){sv.disabled=false;return;}}
+        else if(status==='opgelost'){if(!oplossing){meld('Kies eerst hoe het is opgelost',true);sv.disabled=false;return;}notitie=prompt('Notitie (optioneel):')??undefined;}
+        const r=await api('service-zet',{method:'POST',body:{id:Number(vid),status,oplossing,notitie}});meld(r.melding);}
+      else if(sv.dataset.svfoto){const vid=Number(sv.dataset.svfoto);
+        const f=await new Promise(ok=>{const i=document.createElement('input');i.type='file';i.accept='image/*';i.onchange=()=>ok(i.files[0]);i.click();});
+        if(!f){sv.disabled=false;return;}
+        const u=await api('service-foto-upload',{method:'POST',body:{id:vid,bestandsnaam:f.name,bytes:f.size}});
+        const put=await fetch(u.url,{method:'PUT',headers:{'content-type':u.mime,'x-upsert':'true'},body:f});if(!put.ok)throw new Error(`Upload mislukt (${put.status})`);
+        const r=await api('service-foto-bevestig',{method:'POST',body:{id:vid,pad:u.pad}});meld(r.melding||'Foto toegevoegd');}
+      await open(id);
+    }catch(x){if(x.message!=='uit')meld(x.message,true);sv.disabled=false;}
+    return;}
   const k=e.target.closest('button[data-a]');if(!k||!huidig)return;const a=k.dataset.a,id=huidig.id;
   if(a==='sluit')return sluit();
   const bevestig={geannuleerd:'Bestelling annuleren? De klant krijgt een mail.',terugbetalen:'Geld terugstorten naar de klant?',betaald:'Markeren als betaald? Er wordt een factuurnummer toegekend en de klant krijgt de bevestiging.'};
@@ -282,27 +432,30 @@ $('#vak').addEventListener('click',async e=>{
   k.disabled=true;
   try{
     let res;
-    if(['verzonden','in_productie','geleverd','geannuleerd'].includes(a))res=await api('status',{method:'POST',body:{id,status:a,track_trace:$('#tt')?.value,vervoerder:$('#vervoerder')?.value}});
+    if(['verzonden','in_productie','geleverd','geannuleerd'].includes(a)){const alle=[...document.querySelectorAll('#vak [data-regel]')],gekozen=alle.filter(i=>i.checked).map(i=>i.dataset.regel);
+      if(a==='verzonden'&&alle.length&&!gekozen.length){meld('Kies minstens één regel voor dit pakket',true);k.disabled=false;return;}
+      res=await api('status',{method:'POST',body:{id,status:a,track_trace:$('#tt')?.value,vervoerder:$('#vervoerder')?.value,regels:a==='verzonden'&&gekozen.length<alle.length?gekozen:undefined}});}
     else if(a==='betaald')res=await api('betaald',{method:'POST',body:{id}});
     else if(a==='terugbetalen')res=await api('terugbetalen',{method:'POST',body:{id,bedrag:$('#terugBedrag').value}});
     else if(a==='ververs')res=await api('ververs',{method:'POST',body:{id}});
     else if(a==='notitie')res=await api('notitie',{method:'POST',body:{id,tekst:$('#notitie').value}});
     else if(a.startsWith('mail-'))res=await api('mail',{method:'POST',body:{id,soort:a.slice(5)}});
     else if(a==='drukker'){res=await mapi('drukker',{id});meld(res.melding);await open(id);return;}
-    meld(res.gemaild?'Opgeslagen, klant gemaild':res.mollie?`Mollie: ${res.mollie}`:res.kanaal?`Opgeslagen; gaat bij de volgende sync naar ${res.kanaal}`:'Opgeslagen');
+    meld(res.deels?'Zending vastgelegd (deels verzonden)'+(res.gemaild?', klant gemaild':''):res.gemaild?'Opgeslagen, klant gemaild':res.mollie?`Mollie: ${res.mollie}`:res.kanaal?`Opgeslagen; gaat bij de volgende sync naar ${res.kanaal}`:'Opgeslagen');
     await open(id);laadOverzicht();laadLijst();
   }catch(err){if(err.message!=='uit')meld(err.message,true);k.disabled=false;}
 });
 /* ---------- Kanalen ---------- */
-const KNAAM={bol:'bol.com',etsy:'Etsy',amazon:'Amazon'};
+const KNAAM={bol:'bol.com',etsy:'Etsy',amazon:'Amazon',tiktok:'TikTok Shop'};
 const VELDEN={
   bol:[['opslag_pct','opslag t.o.v. webshop (%)'],['voorraad','voorraad tonen (stuks)'],['levertijd_min','levertijd min. (dagen)'],['levertijd_max','levertijd max. (dagen)']],
   etsy:[['opslag_pct','opslag t.o.v. webshop (%)'],['voorraad','voorraad tonen (stuks)'],['verzendprofiel_id','verzendprofiel-id'],['verwerkingsprofiel_id','verwerkingsprofiel-id'],['retourbeleid_id','retourbeleid-id (optioneel)'],['taxonomy_id','categorie (taxonomy-id)']],
+  tiktok:[['voorraad','voorraad tonen (stuks)'],['categorie_id','categorie-id (blad-categorie)'],['magazijn_id','magazijn-id (warehouse)'],['gewicht_kg','pakketgewicht (kg)'],['lengte_cm','koker lengte (cm)'],['breedte_cm','koker breedte (cm)'],['hoogte_cm','koker hoogte (cm)']],
   amazon:[['opslag_pct','opslag t.o.v. webshop (%)'],['voorraad','voorraad tonen (stuks)'],['verwerkingsdagen','verwerkingstijd (dagen)'],['producttype','producttype'],['merk','merk'],['marketplace_id','marketplace-id']],
 };
 function toonView(v){document.querySelectorAll('.nav button').forEach(b=>b.setAttribute('aria-current',String(b.dataset.view===v)));
-  $('#viewBestellingen').classList.toggle('verberg',v!=='bestellingen');$('#viewKanalen').classList.toggle('verberg',v!=='kanalen');$('#viewPosters').classList.toggle('verberg',v!=='posters');
-  if(v==='kanalen'){laadKanalen();laadAssort();}if(v==='posters')laadMedia();history.replaceState(null,'',v==='bestellingen'?location.pathname:'#'+v);}
+  $('#viewBestellingen').classList.toggle('verberg',v!=='bestellingen');$('#viewKanalen').classList.toggle('verberg',v!=='kanalen');$('#viewProducten').classList.toggle('verberg',v!=='producten');$('#viewVerkoop').classList.toggle('verberg',v!=='verkoop');if(v==='verkoop')Verkoop.open();$('#viewDashboard').classList.toggle('verberg',v!=='dashboard');if(v==='dashboard')Dashboard.open();$('#viewSocial').classList.toggle('verberg',v!=='social');if(v==='social')Social.open();
+  if(v==='kanalen'){laadKanalen();laadAssort();Feeds.open();}if(v==='producten')Producten.open();if(v!=='producten')history.replaceState(null,'',v==='bestellingen'?location.pathname:'#'+v);}
 document.querySelector('.nav').addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(b)toonView(b.dataset.view);});
 async function kapi(actie,{method='GET',body,params}={}){
   const q=new URLSearchParams({actie,...(params||{})});
@@ -312,21 +465,74 @@ async function kapi(actie,{method='GET',body,params}={}){
   if(!j.ok&&j.melding)throw new Error(j.melding);return j;
 }
 function logTekst(l){return (l||[]).map(x=>`<div class="${x.ok?'':'nok'}">${esc(x.stap)}: ${esc(x.info)}</div>`).join('');}
+async function laadProdigi(){
+  try{const o=await papi('overzicht'),s=o.instellingen,t=o.tellers||{},omg=s.sandbox?'sandbox':'live',br=s.branding||[];
+    const merk=k=>br.find(x=>x.type===k)||{};
+    $('#prodigiKaart').innerHTML=`<div class="kanaal" style="grid-column:1/-1" id="prodigi">
+      <h3>Prodigi (printen, verpakken en verzenden) <span class="${s.aan?'ok':''}">${s.aan?(s.sandbox?'aan · proefomgeving':'aan · live (betaalde productie)'):'uit'}</span></h3>
+      <p class="mini">sleutels: sandbox ${o.sleutels.sandbox?'<span class="ok">aanwezig</span>':'<span class="nok">ontbreekt (PRODIGI_SANDBOX_API_KEY)</span>'} · live ${o.sleutels.live?'<span class="ok">aanwezig</span>':'<span class="nok">ontbreekt (PRODIGI_API_KEY)</span>'}</p>
+      <p class="mini" style="margin-bottom:8px">Elke betaalde bestelling (webshop en kanalen) gaat na de wachttijd hooguit één keer naar Prodigi; dit is de enige route naar productie. Nu: ${['wacht','opnieuw','onzeker','verstuurd','in_productie','verzonden','geblokkeerd','fout'].map(k=>`${FSTATUS[k]} ${t[k]||0}`).join(' · ')}</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:4px 24px">
+        <div class="rij"><label>betaalde productie via Prodigi aan</label><input type="checkbox" class="schakel" data-pv="aan" ${s.aan?'checked':''}></div>
+        <div class="rij"><label>proefomgeving (sandbox: er wordt niets gedrukt of betaald)</label><input type="checkbox" class="schakel" data-pv="sandbox" ${s.sandbox?'checked':''}></div>
+        <div class="rij"><label>wachttijd na betaling (minuten; zo lang kun je nog wijzigen)</label><input data-pv="wachttijd_min" value="${esc(s.wachttijd_min)}"></div>
+        <div class="rij"><label>standaard verzendmethode</label><select data-pv="verzendmethode">${o.verzendmethoden.map(v=>`<option ${v===s.verzendmethode?'selected':''}>${v}</option>`).join('')}</select></div>
+      </div>
+      <h3 style="margin-top:14px;font-size:12px">SKIFFA-merktoevoegingen</h3>
+      <p class="mini">Je voorkeur. Of Prodigi een toevoeging kan leveren hangt af van product en bestemming; dat wordt per zending gecontroleerd (offerte) en per variant getoond bij "kosten ophalen".</p>
+      ${Object.entries(o.inserts).map(([k,l])=>`<div class="merkrij" data-merk="${k}"><label class="mini">${esc(l)}</label><div class="acties" style="flex-wrap:nowrap"><input data-mv="url" value="${esc(merk(k).url||'')}" placeholder="https://… (ontwerp, png/jpg)"><button data-pa="merk-upload">upload</button></div><label class="mini"><input type="checkbox" data-mv="verplicht" ${merk(k).verplicht?'checked':''}> verplicht</label></div>`).join('')}
+      <div class="rij" style="max-width:640px"><label>als een verplichte toevoeging niet kan</label><select data-pv="branding_beleid">
+        <option value="blokkeren" ${s.branding_beleid==='blokkeren'?'selected':''}>bestelling blokkeren voor beoordeling</option>
+        <option value="alternatief" ${s.branding_beleid==='alternatief'?'selected':''}>verzenden met het goedgekeurde alternatief</option>
+        <option value="zonder" ${s.branding_beleid==='zonder'?'selected':''}>zonder toevoeging verzenden (expliciet toegestaan)</option></select></div>
+      <div class="rij" style="max-width:640px"><label>goedgekeurd alternatief</label><select data-pv="branding_alternatief"><option value="">—</option>${Object.entries(o.inserts).map(([k,l])=>`<option value="${k}" ${s.branding_alternatief===k?'selected':''}>${esc(l)}</option>`).join('')}</select></div>
+      <div class="acties" style="margin-top:10px"><button class="vol" data-pa="opslaan">opslaan</button><button data-pa="ping">test verbinding (${omg})</button><button data-pa="verwerk">nu verwerken wat klaarstaat</button></div>
+      <p class="mini" style="margin-top:6px">Het Prodigi-product koppel en controleer je per variant bij Beheer → producten (daar ook kosten en proefbestellingen). Statusmeldingen komen binnen op ${esc(o.callbackUrl)} (gaat automatisch mee met elke opdracht).</p>
+      ${(o.aandacht||[]).length?`<div class="waarschuw" style="margin:10px 0 0">Aandacht nodig: ${o.aandacht.map(a=>`<a href="#${esc(a.bestellingen?.nummer||'')}" data-open="${esc(a.bestelling_id)}">${esc(a.bestellingen?.nummer||a.bestelling_id.slice(0,8))}</a>${a.herdruk_nr?` (herdruk ${a.herdruk_nr})`:''} (${esc(FSTATUS[a.status])}: ${esc((a.laatste_fout||'').slice(0,140))})`).join(' · ')}</div>`:''}
+      ${(o.proef||[]).length?`<p class="mini" style="margin-top:8px"><b>Proefbestellingen</b>: ${o.proef.map(x=>`${datum(x.aangemaakt_op)} ${esc(x.omgeving)} · ${esc(x.status)}${x.extern_id?` (${esc(x.extern_id)})`:''}${x.offerte?.totaal!=null?` · ${euro(x.offerte.totaal)}`:''}`).join(' · ')}</p>`:''}
+      <div class="mini" id="uit-prodigi" style="margin-top:8px"></div></div>`;
+  }catch(e){if(e.message!=='uit')$('#prodigiKaart').innerHTML=`<div class="waarschuw" style="grid-column:1/-1;margin:0">Prodigi: ${esc(e.message)}</div>`;}
+}
+$('#prodigiKaart').addEventListener('click',async e=>{
+  const ln=e.target.closest('[data-open]');if(ln){e.preventDefault();toonView('bestellingen');open(ln.dataset.open);return;}
+  const b=e.target.closest('[data-pa]');if(!b)return;const uit=$('#uit-prodigi'),a=b.dataset.pa;
+  if(a==='merk-upload'){const rij=b.closest('[data-merk]'),i=document.createElement('input');i.type='file';i.accept='image/png,image/jpeg';
+    i.onchange=async()=>{const f=i.files[0];if(!f)return;try{const u=await fetch('/api/media?actie=merk-upload',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({type:rij.dataset.merk,bytes:f.size,bestandsnaam:f.name})}).then(r=>r.json());if(!u.ok)throw new Error(u.melding);
+      await new Promise((ok,nok)=>{const x=new XMLHttpRequest();x.open('PUT',u.url);x.setRequestHeader('content-type',f.type);x.setRequestHeader('x-upsert','true');x.onload=()=>x.status<300?ok():nok(new Error('upload mislukt'));x.onerror=()=>nok(new Error('upload mislukt'));x.send(f);});
+      const v=await fetch('/api/media?actie=merk-bevestig',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({pad:u.pad})}).then(r=>r.json());if(!v.ok)throw new Error(v.melding);
+      rij.querySelector('[data-mv=url]').value=v.url;meld('Ontwerp geüpload; klik op opslaan');}catch(x){meld(x.message,true);}};i.click();return;}
+  b.disabled=true;
+  try{
+    if(a==='opslaan'){const w={};document.querySelectorAll('#prodigi [data-pv]').forEach(i=>w[i.dataset.pv]=i.type==='checkbox'?i.checked:i.value);
+      w.branding=[...document.querySelectorAll('#prodigi [data-merk]')].map(r=>({type:r.dataset.merk,url:r.querySelector('[data-mv=url]').value.trim(),verplicht:r.querySelector('[data-mv=verplicht]').checked})).filter(x=>x.url);
+      if(w.aan&&!w.sandbox&&!confirm('Betaalde productie via Prodigi live zetten? Betaalde bestellingen worden dan echt gedrukt en verzonden (op jouw kosten bij Prodigi).')){b.disabled=false;return;}
+      await papi('instellingen',{waarden:w});meld('Prodigi-instellingen opgeslagen');await laadProdigi();return;}
+    if(a==='ping'){const r=await fetch('/api/prodigi?actie=ping',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({omgeving:document.querySelector('#prodigi [data-pv=sandbox]').checked?'sandbox':'live'})}).then(r=>r.json());
+      uit.innerHTML=`<span class="${r.ok?'ok':'nok'}">${esc(r.info||r.melding)}</span>`;}
+    if(a==='verwerk'){const r=await papi('verwerk',{});const v=r.verwerk;
+      uit.innerHTML=v.uit?'Prodigi staat uit.':`verstuurd ${v.verstuurd} · geblokkeerd ${v.geblokkeerd} · fout ${v.fout} · opnieuw later ${v.opnieuw} · onzeker ${v.onzeker} · status bijgewerkt ${r.statussen.bijgewerkt}`;laadOverzicht();laadLijst();}
+  }catch(x){if(x.message!=='uit'){uit.innerHTML=`<span class="nok">${esc(x.message)}</span>`;}}
+  b.disabled=false;
+});
 async function laadKanalen(){
+  laadProdigi();
   try{const {kanalen,cron}=await kapi('overzicht');
-    $('#kanaalKaarten').innerHTML=['bol','etsy','amazon'].map(k=>{const c=kanalen[k],s=c.instellingen,l=c.listings,laatste=c.laatste[0];
+    $('#kanaalKaarten').innerHTML=['bol','etsy','amazon','tiktok'].map(k=>{const c=kanalen[k],s=c.instellingen,l=c.listings,laatste=c.laatste[0];
       return `<div class="kanaal" data-k="${k}">
       <h3>${KNAAM[k]} <span class="${s.aan?'ok':''}">${s.aan?(s.proef?'aan · proefmodus':'aan · live'):'uit'}</span></h3>
-      <p class="mini">${c.sleutels?'<span class="ok">sleutels aanwezig</span>':`<span class="nok">nog in Vercel zetten: ${esc(c.sleutelnamen)}</span>`}${k==='etsy'?` · ${c.koppeling?`<span class="ok">gekoppeld met ${esc(c.koppeling.shop_naam||c.koppeling.shop_id)}</span>`:'<span class="nok">nog niet gekoppeld</span>'}`:''}</p>
-      <p class="mini" style="margin-bottom:8px">listings: ${l.aan} aangeboden · ${l.actief} actief · ${l.wacht} in behandeling · ${l.fout} met fout</p>
+      <p class="mini">${c.sleutels?'<span class="ok">sleutels aanwezig</span>':`<span class="nok">nog in Vercel zetten: ${esc(c.sleutelnamen)}</span>`}${k==='etsy'||k==='tiktok'?` · ${c.koppeling?`<span class="ok">gekoppeld met ${esc(c.koppeling.shop_naam||c.koppeling.shop_id||'')}${c.koppeling.regio?` (${esc(c.koppeling.regio)})`:''}</span>`:'<span class="nok">nog niet gekoppeld</span>'}`:''}</p>
+      ${k==='tiktok'?'<p class="mini">Vraagt een TikTok Shop-verkopersaccount (NL sinds juni 2026) en een eigen app in TikTok Partner Center. Orders worden pas geïmporteerd als ze klaar zijn voor verzending; annuleringsverzoeken komen op de actielijst.</p>':''}
+      ${k==='etsy'||k==='tiktok'?'':`<p class="mini" style="margin-bottom:8px">listings: ${l.aan} aangeboden · ${l.actief} actief · ${l.wacht} in behandeling · ${l.fout} met fout</p>`}
       <div class="rij"><label>kanaal aan</label><input type="checkbox" class="schakel" data-v="aan" ${s.aan?'checked':''}></div>
       <div class="rij"><label>proefmodus (niets naar ${KNAAM[k]} sturen)</label><input type="checkbox" class="schakel" data-v="proef" ${s.proef?'checked':''}></div>
+      ${k==='etsy'?`<div class="rij"><label>automatisch publiceren (anders alleen via "publiceer" op Verkoopkanalen)</label><input type="checkbox" class="schakel" data-v="auto_publiceren" ${s.auto_publiceren?'checked':''}></div>`:''}
       ${VELDEN[k].map(([v,lab])=>`<div class="rij"><label>${lab}</label><input data-v="${v}" value="${esc(s[v]??'')}"></div>`).join('')}
       <div class="acties" style="margin-top:10px">
         <button class="vol" data-ka="opslaan">opslaan</button><button data-ka="ping">test verbinding</button><button data-ka="sync">nu synchroniseren</button>
         ${k==='etsy'?`<button data-ka="koppel">${c.koppeling?'opnieuw koppelen':'koppel Etsy'}</button>${c.koppeling?'<button data-ka="profielen">profielen ophalen</button>':''}`:''}
+        ${k==='tiktok'?`<button data-ka="koppel">${c.koppeling?'opnieuw koppelen':'koppel TikTok Shop'}</button>`:''}
       </div>
-      ${k==='etsy'?`<p class="mini" style="margin-top:6px">Callback-URL voor je Etsy-app: ${esc(c.terugUrl)}</p>`:''}
+      ${k==='etsy'||k==='tiktok'?`<p class="mini" style="margin-top:6px">Callback-URL voor je ${KNAAM[k]}-app: ${esc(c.terugUrl)}</p>`:''}
       <div class="mini" id="uit-${k}" style="margin-top:8px">${laatste?`laatste run ${datum(laatste.op)} (${esc(laatste.actie)}${laatste.proef?', proef':''}): ${logTekst(laatste.log)}`:'nog niet gesynchroniseerd'}</div>
       </div>`;}).join('')+(cron?'':`<div class="waarschuw" style="grid-column:1/-1">Automatisch synchroniseren staat nog uit: zet CRON_SECRET (min. 16 tekens) in Vercel én als GitHub-secret (zie README). Tot die tijd: "nu synchroniseren".</div>`);
   }catch(e){if(e.message!=='uit')meld(e.message,true);}
@@ -340,7 +546,7 @@ $('#kanaalKaarten').addEventListener('click',async e=>{
     if(a==='ping'){const r=await kapi('ping',{method:'POST',body:{kanaal:k}});uit.innerHTML=`<span class="${r.ok?'ok':'nok'}">verbinding ${r.ok?'in orde':'mislukt'}: ${esc(r.info||r.status)}</span>`;}
     if(a==='sync'){uit.textContent='bezig…';const r=await kapi('sync',{method:'POST',body:{kanaal:k}});
       uit.innerHTML=`${r.proef?'proefmodus · ':''}${logTekst(r.log)}${r.proef_schrijfacties?.length?`<div>zou versturen: ${r.proef_schrijfacties.slice(0,8).map(esc).join(', ')}${r.proef_schrijfacties.length>8?' …':''}</div>`:''}`;laadAssort();laadOverzicht();laadLijst();}
-    if(a==='koppel'){const r=await kapi('etsy-koppel');location.href=r.url;}
+    if(a==='koppel'){const r=await kapi(k==='tiktok'?'tiktok-koppel':'etsy-koppel');location.href=r.url;}
     if(a==='profielen'){const r=await kapi('etsy-profielen');
       uit.innerHTML=['verzendprofielen','verwerkingsprofielen','retourbeleid'].map(x=>`<div><b>${x}:</b> ${(r[x]||[]).map(p=>`${esc(p.id)} (${esc(p.naam)})`).join(', ')||'geen'}</div>`).join('');}
   }catch(err){if(err.message!=='uit'){uit.innerHTML=`<span class="nok">${esc(err.message)}</span>`;meld(err.message,true);}}
@@ -367,143 +573,13 @@ $('#assortLijst').addEventListener('change',async e=>{
 for(const [id,aan] of [['#allesAan',true],['#allesUit',false]])$(id).addEventListener('click',async()=>{const k=$('#assortKanaal').value;
   if(!confirm(aan?`Alle posters op ${KNAAM[k]} aanbieden?`:`Alle posters op ${KNAAM[k]} pauzeren?`))return;
   try{await kapi('alles',{method:'POST',body:{kanaal:k,aan}});laadAssort();}catch(e){if(e.message!=='uit')meld(e.message,true);}});
-/* ---------- Posters: drukbestanden en visuals ---------- */
-let media=null;
-async function mapi(actie,body,params){
-  const q=new URLSearchParams({actie,...(params||{})});
-  const r=await fetch('/api/media?'+q,{method:body?'POST':'GET',headers:body?{'content-type':'application/json'}:{},body:body?JSON.stringify(body):undefined});
-  const j=await r.json().catch(()=>({ok:false,melding:'Onverwacht antwoord'}));
-  if(r.status===401){toonLogin();throw new Error('uit');}
-  if(!j.ok)throw new Error(j.melding||'Mislukt');return j;
-}
-const mb=b=>b>=1e9?(b/1e9).toFixed(1).replace('.',',')+' GB':(b/1e6).toFixed(b<1e7?1:0).replace('.',',')+' MB';
-async function laadMedia(){
-  try{media=await mapi('overzicht');tekenMedia();}
-  catch(e){if(e.message!=='uit')$('#posterKaarten').innerHTML=`<div class="leeg">${esc(e.message)}</div>`;}
-}
-function tekenMedia(){
-  const t=media.tellers;
-  $('#mediaTellers').innerHTML=[['drukbestanden (te koop)',`${t.druk} / ${t.drukNodig}`],['maat wijkt af',t.afwijkend],['visuals',`${t.visuals} / ${t.visualsNodig}`],['drukopdracht per mail',media.drukker?'aan':'uit']]
-    .map(([k,v])=>`<div class="kaart"><small>${k}</small><b class="${k==='maat wijkt af'&&v?'nok':''}">${v}</b></div>`).join('')
-    +(media.drukker?'':`<div class="waarschuw" style="grid-column:1/-1;margin:0">Zet DRUKKER_EMAIL in Vercel om na elke betaling automatisch een drukopdracht (verzendadres + drukbestanden) naar je drukker te sturen.</div>`);
-  $('#posterKaarten').innerHTML=media.posters.map(p=>{
-    const n=media.formaten.filter(f=>f.actief&&p.druk[f.id]).length,na=media.formaten.filter(f=>f.actief).length;
-    return `<div class="pk" data-p="${esc(p.id)}"><h3><span>${esc(p.naam)}</span><span class="mini ${n===na&&p.visuals.length===media.aantalVisuals?'ok':''}">druk ${n}/${na} · visuals ${p.visuals.length}/${media.aantalVisuals}</span></h3>
-      <div class="sub">drukbestanden (pdf, hoge resolutie)</div><div class="druklijst">${media.formaten.map(f=>{const d=p.druk[f.id];
-        return `<div class="drukrij ${f.actief?'':'later'}" data-f="${f.id}"><span>${esc(f.label)}${f.actief?'':' <span class="kb">later</span>'}</span>
-        <span>${d?`<span class="${d.status==='ok'?'ok':d.status==='afwijkend'?'nok':''}">${d.status==='ok'?'✓ maat klopt':d.status==='afwijkend'?`⚠ ${d.breedte} × ${d.hoogte} mm`:'maat onbekend'}</span> <span class="mini">${d.afloop?`${String(d.afloop).replace('.',',')} mm afloop · `:''}${d.bytes?mb(d.bytes):''}</span>`:`<span class="mini">nog geen bestand · ${f.mm.map(x=>String(x).replace('.',',')).join(' × ')} mm</span>`}</span>
-        <span class="acties">${d?`<a href="/api/media?actie=druk&p=${encodeURIComponent(p.id)}&f=${encodeURIComponent(f.id)}" target="_blank" rel="noopener"><button>↓</button></a>`:''}<button data-m="kies-druk">${d?'vervang':'upload'}</button>${d?'<button data-m="weg-druk" aria-label="verwijder">×</button>':''}</span></div>`;}).join('')}</div>
-      <div class="sub">visuals voor de webshop (1 = eerste beeld)</div><div class="vis">${[1,2,3,4,5,6].map(i=>{const v=p.visuals.find(x=>x.positie===i);
-        return `<div class="slot" data-pos="${i}" tabindex="0" role="button" aria-label="visual ${i} ${v?'vervangen':'uploaden'}">${v?`<img src="${esc(v.klein)}" alt="${esc(v.alt)}" loading="lazy"><span class="nr">${i}</span><button class="x" data-m="weg-visual" aria-label="verwijder visual ${i}">×</button>`:`+ ${i}`}</div>`;}).join('')}</div>
-    </div>`;}).join('');
-}
-
-// PDF-maat uitlezen in de browser (MediaBox/TrimBox van de eerste pagina, in mm). Leest in stukken,
-// dus ook bestanden van honderden MB. Staat de maat in gecomprimeerde objecten, dan blijft hij onbekend.
-async function meetPdf(file){
-  const box=n=>new RegExp('/'+n+'\\s*\\[\\s*(-?[\\d.]+)\\s+(-?[\\d.]+)\\s+(-?[\\d.]+)\\s+(-?[\\d.]+)\\s*\\]');
-  const mm=m=>m?[(m[3]-m[1])*25.4/72,(m[4]-m[2])*25.4/72].map(x=>Math.abs(Math.round(x*10)/10)):null;
-  const kop=new TextDecoder('latin1').decode(await file.slice(0,8).arrayBuffer());
-  if(!kop.startsWith('%PDF-'))throw new Error(`${file.name} is geen pdf`);
-  let media=null,trim=null,paginas=0,rest='';const STUK=8*1024*1024;
-  for(let i=0;i<file.size;i+=STUK){
-    const t=rest+new TextDecoder('latin1').decode(await file.slice(i,i+STUK).arrayBuffer());
-    if(!media){const m=t.match(box('MediaBox'));if(m)media=mm(m);}
-    if(!trim){const m=t.match(box('TrimBox'));if(m)trim=mm(m);}
-    paginas+=(t.slice(rest.length?200:0).match(/\/Type\s*\/Page(?![a-zA-Z])/g)||[]).length;
-    rest=t.slice(-200);
-  }
-  return {media,trim,paginas:paginas||null};
-}
-function verklein(file,max){return createImageBitmap(file).then(bmp=>{
-  const s=Math.min(1,max/Math.max(bmp.width,bmp.height)),w=Math.round(bmp.width*s),h=Math.round(bmp.height*s);
-  const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,w,h);x.drawImage(bmp,0,0,w,h);
-  return new Promise(r=>c.toBlob(b=>r({blob:b,w,h}),'image/jpeg',.86));});}
-function put(url,body,type,voortgang){return new Promise((ok,nok)=>{const x=new XMLHttpRequest();x.open('PUT',url);x.setRequestHeader('content-type',type);x.setRequestHeader('x-upsert','true');
-  x.upload.onprogress=e=>{if(e.lengthComputable&&voortgang)voortgang(e.loaded/e.total);};
-  x.onload=()=>x.status<300?ok():nok(new Error(x.status===413?'Bestand te groot voor de uploadlimiet van je Supabase-project (Storage → Settings).':`Upload mislukt (${x.status})`));
-  x.onerror=()=>nok(new Error('Upload mislukt (verbinding)'));x.send(body);});}
-
-async function uploadBestand(file,doel,voortgang){
-  if(doel.soort==='druk'){
-    const meting=await meetPdf(file);
-    const u=await mapi('upload',{soort:'druk',poster_id:doel.poster_id,formaat:doel.formaat,bytes:file.size});
-    await put(u.url,file,'application/pdf',voortgang);
-    return mapi('bevestig',{soort:'druk',poster_id:doel.poster_id,formaat:doel.formaat,...meting,bestandsnaam:file.name});
-  }
-  if(!/^image\/(jpeg|png|webp)$/.test(file.type))throw new Error(`${file.name}: alleen jpg, png of webp`);
-  const [groot,klein]=await Promise.all([verklein(file,2000),verklein(file,900)]);
-  const u=await mapi('upload',{soort:'visual',poster_id:doel.poster_id,positie:doel.positie,bytes:groot.blob.size});
-  await put(u.url,groot.blob,'image/jpeg',f=>voortgang&&voortgang(f*.85));
-  await put(u.url_klein,klein.blob,'image/jpeg');voortgang&&voortgang(1);
-  return mapi('bevestig',{soort:'visual',poster_id:doel.poster_id,positie:doel.positie,pad:u.pad,pad_klein:u.pad_klein,breedte:groot.w,hoogte:groot.h});
-}
-const naamVan=id=>media?.posters.find(p=>p.id===id)?.naam||id;
-const labelVan=id=>media?.formaten.find(f=>f.id===id)?.label||id;
-
-// Eén bestand op een vaste plek (knop of slepen op een rij/vakje).
-async function losseUpload(file,doel,el){
-  el?.classList.add('sleep');meld('Bezig met uploaden…');
-  try{const r=await uploadBestand(file,doel,f=>{if(el)el.style.background=`linear-gradient(90deg,var(--zee) ${f*100}%,transparent ${f*100}%)`;});meld(r.melding||'Opgeslagen',r.status==='afwijkend');}
-  catch(e){if(e.message!=='uit')meld(e.message,true);}
-  await laadMedia();
-}
-function kiesBestand(accept,fn){const i=document.createElement('input');i.type='file';i.accept=accept;i.onchange=()=>i.files[0]&&fn(i.files[0]);i.click();}
-$('#posterKaarten').addEventListener('click',async e=>{
-  const pk=e.target.closest('.pk');if(!pk)return;const p=pk.dataset.p,m=e.target.closest('[data-m]')?.dataset.m,rij=e.target.closest('.drukrij'),slot=e.target.closest('.slot');
-  if(m==='kies-druk')return kiesBestand('.pdf,application/pdf',f=>losseUpload(f,{soort:'druk',poster_id:p,formaat:rij.dataset.f},rij));
-  if(m==='weg-druk'){if(!confirm(`Drukbestand ${naamVan(p)} ${labelVan(rij.dataset.f)} verwijderen?`))return;try{await mapi('verwijder',{soort:'druk',poster_id:p,formaat:rij.dataset.f});meld('Verwijderd');}catch(x){if(x.message!=='uit')meld(x.message,true);}return laadMedia();}
-  if(m==='weg-visual'){e.stopPropagation();if(!confirm(`Visual ${slot.dataset.pos} van ${naamVan(p)} verwijderen?`))return;try{await mapi('verwijder',{soort:'visual',poster_id:p,positie:+slot.dataset.pos});meld('Verwijderd');}catch(x){if(x.message!=='uit')meld(x.message,true);}return laadMedia();}
-  if(slot)return kiesBestand('image/jpeg,image/png,image/webp',f=>losseUpload(f,{soort:'visual',poster_id:p,positie:+slot.dataset.pos},slot));
-});
-$('#posterKaarten').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('slot')){e.preventDefault();e.target.click();}});
-for(const t of ['dragover','dragleave','drop'])$('#posterKaarten').addEventListener(t,e=>{
-  const doelEl=e.target.closest('.drukrij,.slot');if(!doelEl)return;e.preventDefault();e.stopPropagation();
-  doelEl.classList.toggle('sleep',t==='dragover');
-  if(t==='drop'&&e.dataTransfer.files[0]){const p=doelEl.closest('.pk').dataset.p;
-    losseUpload(e.dataTransfer.files[0],doelEl.classList.contains('slot')?{soort:'visual',poster_id:p,positie:+doelEl.dataset.pos}:{soort:'druk',poster_id:p,formaat:doelEl.dataset.f},doelEl);}
-});
-
-// Alles tegelijk: namen herkennen → wachtrij → één voor één uploaden.
-let wachtrij=[];
-async function nieuweBestanden(files){
-  files=[...files];if(!files.length)return;
-  try{const {bestanden}=await mapi('herken',{namen:files.map(f=>f.name)});
-    wachtrij=bestanden.map((b,i)=>({...b,file:files[i],klaar:false}));tekenWachtrij();}
-  catch(e){if(e.message!=='uit')meld(e.message,true);}
-}
-function tekenWachtrij(){
-  if(!wachtrij.length){$('#wachtrij').innerHTML='';return;}
-  const opties=(lijst,w)=>lijst.map(([v,l])=>`<option value="${esc(v)}" ${String(v)===String(w)?'selected':''}>${esc(l)}</option>`).join('');
-  const goed=wachtrij.filter(b=>b.poster_id&&(b.formaat||b.positie)&&!b.klaar).length;
-  $('#wachtrij').innerHTML=`<table><thead><tr><th>bestand</th><th>poster</th><th>formaat / positie</th><th>status</th></tr></thead><tbody>${wachtrij.map((b,i)=>`<tr data-i="${i}">
-    <td>${esc(b.naam)}<div class="mini">${mb(b.file.size)}</div></td>
-    <td>${b.soort?`<select data-w="poster_id"><option value="">kies…</option>${opties(media.posters.map(p=>[p.id,p.naam]),b.poster_id)}</select>`:''}</td>
-    <td>${b.soort==='druk'?`<select data-w="formaat"><option value="">kies…</option>${opties(media.formaten.map(f=>[f.id,f.label]),b.formaat)}</select>`:b.soort==='visual'?`<select data-w="positie"><option value="">kies…</option>${opties([1,2,3,4,5,6].map(n=>[n,'visual '+n]),b.positie)}</select>`:''}</td>
-    <td class="mini ${b.fout&&!b.poster_id?'nok':''}">${b.status||(b.poster_id&&(b.formaat||b.positie)?'klaar om te uploaden':esc(b.fout||'kies poster'))}<div class="balkje"><i style="width:${(b.voortgang||0)*100}%"></i></div></td></tr>`).join('')}</tbody></table>
-    <div class="acties" style="margin:-4px 0 18px"><button class="vol" id="uploadAlles" ${goed?'':'disabled'}>koppel en upload ${goed} bestand${goed===1?'':'en'}</button><button id="wisWachtrij">wis lijst</button><span class="mini">Bestaande bestanden op dezelfde plek worden vervangen. Houd deze pagina open tot alles klaar is.</span></div>`;
-}
-$('#wachtrij').addEventListener('change',e=>{const s=e.target.closest('select[data-w]');if(!s)return;const b=wachtrij[+s.closest('tr').dataset.i];b[s.dataset.w]=s.dataset.w==='positie'?Number(s.value)||null:s.value||null;b.fout=null;tekenWachtrij();});
-$('#wachtrij').addEventListener('click',async e=>{
-  if(e.target.id==='wisWachtrij'){wachtrij=[];return tekenWachtrij();}
-  if(e.target.id!=='uploadAlles')return;e.target.disabled=true;
-  const zet=(i,velden)=>{Object.assign(wachtrij[i],velden);const tr=$(`#wachtrij tr[data-i="${i}"]`);if(tr){tr.querySelector('td:last-child').firstChild.textContent=wachtrij[i].status;tr.querySelector('.balkje i').style.width=(wachtrij[i].voortgang||0)*100+'%';}};
-  let ok=0,mis=0;
-  for(const [i,b] of wachtrij.entries()){
-    if(b.klaar||!b.poster_id||!(b.formaat||b.positie))continue;
-    zet(i,{status:'bezig…',voortgang:0});
-    try{const r=await uploadBestand(b.file,b,f=>zet(i,{voortgang:f}));zet(i,{status:r.status==='afwijkend'?'⚠ '+r.melding:'✓ '+(r.melding||'opgeslagen'),voortgang:1,klaar:true});ok++;}
-    catch(x){if(x.message==='uit')return;zet(i,{status:'✗ '+x.message});mis++;}
-  }
-  meld(`${ok} bestand${ok===1?'':'en'} gekoppeld${mis?`, ${mis} mislukt`:''}`,!!mis);await laadMedia();tekenWachtrij();
-});
-const drop=$('#drop');
-drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('over');});
-drop.addEventListener('dragleave',()=>drop.classList.remove('over'));
-drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('over');nieuweBestanden(e.dataTransfer.files);});
-$('#dropInput').addEventListener('change',e=>{nieuweBestanden(e.target.files);e.target.value='';});
 {const m=new URLSearchParams(location.search).get('melding');if(m){setTimeout(()=>meld(m,/mislukt/.test(m)),600);history.replaceState(null,'',location.pathname+location.hash);}}
-start().then(()=>{if(['#kanalen','#posters'].includes(location.hash))toonView(location.hash.slice(1));});
+start().then(()=>{const h=location.hash.slice(1);if(h==='kanalen'||h==='producten'||h==='verkoop'||h==='dashboard'||h==='social'||h.startsWith('product/'))toonView(h.startsWith('product/')?'producten':h);});
 </script>
+<script src="/beheer/producten.js"></script>
+<script src="/beheer/verkoopkanalen.js"></script>
+<script src="/beheer/dashboard.js"></script>
+<script src="/beheer/social.js"></script>
+<script src="/beheer/feeds.js"></script>
 </body>
 </html>
