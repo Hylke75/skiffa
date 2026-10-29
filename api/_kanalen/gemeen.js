@@ -1,7 +1,7 @@
 // Gedeelde, pure logica voor de verkoopkanalen (bol, Etsy, Amazon). Zelfde opzet als Luna Azul
 // (dreamer-collectives/supabase/functions/_shared/bol.ts), vertaald naar posters op bestelling:
 // geen fysieke voorraad, wel een vaste "voorraad" die we aan het kanaal doorgeven.
-import { POSTERS, ALLE_POSTERS, FORMATEN, ALLE_FORMATEN, VARIANTEN, STANDAARD_PAPIER, sku as variantSku } from '../_catalogus.js';
+import { POSTERS, ALLE_POSTERS, FORMATEN, ALLE_FORMATEN, VARIANTEN, STANDAARD_PAPIER, PAPIER, sku as variantSku } from '../_catalogus.js';
 import { TEKSTEN as POSTERTEKSTEN } from '../_catalogus.js';
 import { bedrijf } from '../_bedrijf.js';
 
@@ -55,13 +55,17 @@ export function kanaalPrijs(winkelprijs, opslagPct) {
 export const titel = (v) => `Poster ${v.poster_naam} – Scheveningen – ${v.formaat_label}`;
 export const titelEn = (poster_naam) => `Scheveningen poster ${poster_naam} – Dutch North Sea surf culture print`;
 
+// Papier uit de catalogus (geen vaste claims in de tekst: die moeten kloppen met wat Prodigi drukt).
+const papierGsm = () => PAPIER[STANDAARD_PAPIER]?.gsm || null;
+export const papierZin = () => { const p = PAPIER[STANDAARD_PAPIER]; return p ? `Op bestelling gedrukt op ${p.naam.toLowerCase()}${p.gsm ? ` (${p.gsm} g/m²)` : ''}.` : 'Op bestelling gedrukt.'; };
+
 export function omschrijving(poster_id, taal = 'nl') {
   const t = POSTERTEKSTEN[poster_id] || {};
   if (taal === 'en')
     return `${t.naam || poster_id} — a poster from Skiffa, a small studio from Scheveningen (The Hague, Netherlands) about the surf culture of its own beach.\n\n` +
-      'Giclée print on 250 gsm matte fine-art paper, printed in The Hague. Standard frame sizes. Shipped rolled in a sturdy tube, frame not included.\n\n' +
+      `Printed to order on matte art paper${papierGsm() ? ` (${papierGsm()} gsm)` : ''}. Shipped rolled in a sturdy tube, frame not included.\n\n` +
       `Sizes: ${Object.values(FORMATEN).map((f) => f.label).join(', ')}.`;
-  return `${t.zin || ''}\n\n${t.sub ? `Stijl: ${t.sub}. ` : ''}Giclée op 250 grams mat fine-art papier, gedrukt in Den Haag. Standaard lijstmaten. Opgerold verstuurd in een stevige koker, zonder lijst.`.trim();
+  return `${t.zin || ''}\n\n${t.sub ? `Stijl: ${t.sub}. ` : ''}${papierZin()} Stevig verpakt verstuurd, zonder lijst.`.trim();
 }
 
 

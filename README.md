@@ -16,8 +16,9 @@ een scène die met de tijd in Scheveningen meebeweegt (uitsneden uit de posters)
   Het productvenster toont de poster, de poster in een houten lijst en in een zwarte lijst met passe-partout.
 - **Catalogus**: `posters` en `formaten` in `index.html` (teksten, beelden), en `api/_catalogus.js`
   (ids en prijzen; de server rekent altijd zelf). Check: `node scripts/check-catalogus.mjs`.
-- **Formaten** (standaard lijstmaten): **50 × 70 cm** (€ 45, hoofdproduct en standaard geselecteerd), 30 × 40 cm
-  (€ 29, instap/cadeau), 70 × 100 cm (€ 69, grote uitvoering). Klaargezet voor Noord-Amerika, nog niet te koop:
+- **Papier**: alle prints op **Hahnemühle German Etching** (310 g/m², fluweelachtige structuur). Geen lijsten, geen hangers.
+- **Formaten** (standaard lijstmaten): **50 × 70 cm** (€ 69, hoofdproduct en standaard geselecteerd), 30 × 40 cm
+  (€ 49, instap/cadeau), 70 × 100 cm (€ 119, grote uitvoering). Klaargezet voor Noord-Amerika, nog niet te koop:
   18 × 24 inch en 24 × 36 inch (`actief: false` in `api/_catalogus.js`; prijzen voorlopig). Verzending € 6,95
   (BE € 9,95), gratis vanaf € 75.
 - **Nieuwe poster toevoegen**: met database in /admin → producten (zie hieronder). Zonder database:
@@ -44,7 +45,7 @@ Een poster voer je één keer in bij **/admin → producten**; webshop, kanalen 
   papiersoort; de webshop wisselt ze mee bij de keuze.
 - **Vaste kopie bij bestelling**: elke bestelregel bewaart SKU, papier, prijs, drukbestandversie, Prodigi-product,
   opties en kostprijs. Latere wijzigingen veranderen een bestaande bestelling niet.
-- Zonder database (of met lege tabellen) geldt de catalogus in de code: elke poster in elk formaat op mat papier.
+- Zonder database (of met lege tabellen) geldt de catalogus in de code: elke poster in elk formaat op Hahnemühle German Etching.
   **Let op**: na het koppelen van Supabase toont de winkel alleen wat bestelbaar is; regel per variant eerst het
   drukbestand en de leverbaarheid.
 
@@ -59,12 +60,26 @@ Een poster voer je één keer in bij **/admin → producten**; webshop, kanalen 
 - Er wordt nooit stilzwijgend bijgesneden of vervormd: per variant kies je "passend" (witte rand) of "vullend" (bijsnijden,
   alleen met uitzondering). "Toon uitsnede op het papier" laat precies zien wat er op het papier komt.
 - Meerdere bestanden tegelijk: sleep ze naar het vak in /admin → producten; de naam koppelt (`golf-50x70.png`,
-  `golf-50x70-mat.pdf`, `golf-1.jpg` voor beelden).
+  `golf-50x70.pdf`, `golf-1.jpg` voor beelden).
 - `python3 scripts/maak-drukbestanden.py <bron> <poster-id>` maakt jpg's op ware grootte voor alle formaten (bijgesneden vanuit
   het midden, of `--passend` met wit; `--pdf` voor pdf met afloop). Formaten 30×40 (3:4), 50×70 (5:7) en 70×100 (7:10)
   hebben elk een andere verhouding dan de 2:3-posters: een eigen ontwerp per formaat is beter.
 
 ## Prodigi: printen, verpakken en verzenden
+
+**Catalogus: Hahnemühle German Etching** (opgezocht 29 oktober 2026 in de live-API, migratie
+`20261029090000_german_etching.sql`; de eerdere EMA-producten uit `20261029080000` gaan uit de verkoop):
+
+| formaat | Prodigi-artikel | echte maat (pdf-paginagrootte) | drukbestand | kostprijs NL (excl. btw, incl. verzending) | prijs incl. btw | marge excl. btw |
+|---|---|---|---|---|---|---|
+| 30 × 40 cm | `GLOBAL-HGE-12X16` | 304,8 × 406,4 mm (12 × 16 inch) | 3600 × 4800 px | € 20,05 | € 49 | € 20,45 |
+| 50 × 70 cm | `GLOBAL-HGE-20X28` | 508 × 711,2 mm (20 × 28 inch) | 6000 × 8400 px | € 31,05 | € 69 | € 25,97 |
+| 70 × 100 cm | `GLOBAL-HGE-28X40` | 711,2 × 1016 mm (28 × 40 inch) | 8400 × 12000 px | € 59,30 | € 119 | € 39,05 |
+
+Opties bij Prodigi: `paperType` HGE, `substrateWeight` 310gsm. Prodigi levert opgerold of plat ("ready to frame"),
+gedrukt in Nederland. German Etching bestaat in 86 formaten (o.a. A5–A0, 30 × 45, 50 × 75, 70 × 105 cm en de
+Noord-Amerikaanse 18 × 24 en 24 × 36 inch: `GLOBAL-HGE-18X24`, `GLOBAL-HGE-24X36`). De posterhanger van Prodigi kan
+alleen op EMA-papier en wordt daarom niet verkocht.
 
 Eén route naar productie: elke betaalde bestelling (webshop of kanaal) gaat vanuit SKIFFA **hooguit één keer** naar
 Prodigi (`api/_prodigi.js`, `api/prodigi.js`, migratie `20261029040000_prodigi.sql`). Instellingen in **/admin → kanalen →
@@ -219,7 +234,9 @@ Eén product, één keer ingevoerd; per kanaal vink je aan of het daar verschijn
   (terugbetalen, herdruk, annuleren) is altijd een aparte, bevestigde actie.
 - **Klant**: op de statuspagina kan een webshopklant annulering *aanvragen* zolang de bestelling betaald of in
   productie is. Dat wordt een serviceverzoek en een mail aan de winkel, geen automatische annulering. Tracking
-  verschijnt pas als er een code is, per zending. Schadefoto's stuurt de klant (nog) per mail; jij voegt ze toe.
+  verschijnt pas als er een code is, per zending. Na verzending kan de klant een probleem melden (beschadigd,
+  verkeerde poster, iets anders) met maximaal 5 foto's; dat wordt een serviceverzoek op de actielijst (max. 3 per
+  bestelling), de foto's staan privé en zijn alleen via de beheeromgeving te zien.
   Tabellen: `serviceverzoeken`, `actie_afgehandeld` (`supabase/migrations/20261029060000_service.sql`).
 
 ## Social via Buffer (Beheer → social)

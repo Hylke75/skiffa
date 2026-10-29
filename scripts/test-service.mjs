@@ -41,7 +41,7 @@ const nieuw = (status, extra = {}) => {
   const b = { id: crypto.randomUUID(), nummer: 'SK-T' + Math.random().toString(36).slice(2, 8).toUpperCase(), token: 'a'.repeat(36), status, kanaal: 'webshop', totaal: 60.5, terugbetaald: 0, verzending: 0, ...klant,
     betaald_op: new Date(Date.now() - 2 * 864e5).toISOString(), aangemaakt_op: new Date(Date.now() - 2 * 864e5).toISOString(), extern_meta: {}, ...extra };
   T.bestellingen.push(b);
-  T.bestelregels.push({ id: Math.floor(Math.random() * 1e9), bestelling_id: b.id, poster_id: 'golf', poster_naam: 'Golf', formaat: '50x70', formaat_label: '50 × 70 cm', papier_label: 'Mat fine-art papier', aantal: 1, prijs: 60.5, kostprijs: 20 });
+  T.bestelregels.push({ id: Math.floor(Math.random() * 1e9), bestelling_id: b.id, poster_id: 'golf', poster_naam: 'Golf', formaat: '50x70', formaat_label: '50 × 70 cm', papier_label: 'Hahnemühle German Etching', aantal: 1, prijs: 60.5, kostprijs: 20 });
   return b;
 };
 const b1 = nieuw('verzonden'), b2 = nieuw('betaald', { kanaal: 'etsy', totaal: 121 }), b3 = nieuw('open', { betaald_op: null });
@@ -49,7 +49,7 @@ T.fulfilments.push({ id: 900, bestelling_id: b1.id, herdruk_nr: 0, status: 'verz
 r = await A('dashboard');
 ok(r.j.totaal.bestellingen === 2 && r.j.totaal.met_werkelijke_kosten === 1 && r.j.totaal.met_schatting === 1, 'dashboard: alleen betaalde bestellingen, werkelijk vs geschat geteld');
 ok(r.j.perKanaal.webshop.omzet_ex_btw === 50 && r.j.perKanaal.etsy.omzet_ex_btw === 100 && r.j.totaal.marge === 108, 'dashboard: omzet excl. btw en resultaat per kanaal');
-ok(r.j.populair.ontwerpen[0].naam === 'Golf' && r.j.populair.ontwerpen[0].stuks === 2 && r.j.populair.papieren[0].naam === 'Mat fine-art papier', 'dashboard: populair uit echte regels');
+ok(r.j.populair.ontwerpen[0].naam === 'Golf' && r.j.populair.ontwerpen[0].stuks === 2 && r.j.populair.papieren[0].naam === 'Hahnemühle German Etching', 'dashboard: populair uit echte regels');
 
 // ---- order-detail met marge ----
 r = await A('bestelling', null, `&id=${b1.id}`);
@@ -142,3 +142,36 @@ await A('dashboard');
 ok(T.audit_log.length === voorAudit, 'audit: lezen en klantverzoeken vullen het beheerlog niet');
 r = await A('audit');
 ok(r.c === 200 && r.j.log.length === voorAudit && r.j.log[0].op >= r.j.log.at(-1).op, 'audit: laatste acties op te vragen');
+
+// ---- klant: probleem melden met foto's ----
+const mb = nieuw('verzonden', { token: 'e'.repeat(36) });
+const M = (body) => call(bestel, { method: 'POST', body: { nr: mb.nummer, t: mb.token, ...body } });
+r = await call(bestel, { method: 'POST', body: { actie: 'melding', nr: mb.nummer, t: 'f'.repeat(36), soort: 'schade', omschrijving: 'Hoek is geknakt' } });
+ok(r.c === 404, 'melding: verkeerde link geweigerd');
+r = await call(bestel, { method: 'POST', body: { actie: 'melding', nr: kb.nummer, t: kb.token, soort: 'schade', omschrijving: 'Hoek is geknakt' } });
+ok(r.c === 400 && /onderweg/.test(r.j.melding), 'melding: pas als de bestelling onderweg is');
+r = await M({ actie: 'melding', soort: 'schade', omschrijving: 'kap' });
+ok(r.c === 400, 'melding: te korte beschrijving geweigerd');
+r = await M({ actie: 'melding', soort: 'diefstal', omschrijving: 'Koker is open' });
+ok(r.c === 400, 'melding: onbekende soort geweigerd');
+const voorMail = mails.length;
+r = await M({ actie: 'melding', soort: 'schade', omschrijving: 'Koker geknakt, poster <b>gekreukt</b>' });
+const km = T.serviceverzoeken.find((x) => x.id === r.j.id);
+ok(r.c === 200 && km.door === 'klant' && km.soort === 'schade' && !km.omschrijving.includes('<') && mails.length === voorMail + 1 && /Melding van een klant/.test(mails.at(-1).onderwerp), 'melding: schade vastgelegd (geen html), winkel gemaild');
+ok(T.bestellingen.find((x) => x.id === mb.id).status === 'verzonden' && !T.fulfilments.some((f) => f.bestelling_id === mb.id && f.herdruk_nr > 0), 'melding: geen automatische herdruk of terugbetaling');
+r = await M({ actie: 'melding-foto', id: km.id, bestandsnaam: 'koker.jpg', bytes: 3e6 });
+ok(r.c === 200 && r.j.pad.startsWith(`service/${mb.id}/${km.id}-`), 'melding: foto-upload naar de privé opslag');
+S.drukbestanden[r.j.pad] = { size: 3e6, type: 'image/jpeg', data: Buffer.alloc(10) };
+r = await M({ actie: 'melding-foto-klaar', id: km.id, pad: r.j.pad });
+ok(r.c === 200 && km.fotos.length === 1, 'melding: foto gekoppeld');
+r = await call(bestel, { method: 'POST', body: { actie: 'melding-foto', nr: mb.nummer, t: mb.token, id: sv.id, bestandsnaam: 'x.jpg', bytes: 10 } });
+ok(r.c === 404, "melding: geen foto's bij het verzoek van een andere bestelling");
+r = await M({ actie: 'melding-foto', id: km.id, bestandsnaam: 'virus.exe', bytes: 10 });
+ok(r.c === 400, "melding: alleen foto's");
+await M({ actie: 'melding', soort: 'anders', omschrijving: 'Kleur wijkt af van de site' });
+await M({ actie: 'melding', soort: 'verkeerd', omschrijving: '30x40 in plaats van 50x70' });
+r = await M({ actie: 'melding', soort: 'schade', omschrijving: 'Nog een keer proberen' });
+ok(r.c === 400 && T.serviceverzoeken.filter((x) => x.bestelling_id === mb.id && x.door === 'klant').length === 3, 'melding: maximaal 3 meldingen per bestelling');
+ok(T.serviceverzoeken.some((x) => x.bestelling_id === mb.id && x.soort === 'klacht' && x.omschrijving.startsWith('Verkeerde poster')), 'melding: verkeerde poster als klacht met duidelijke omschrijving');
+r = await call(bestel, { method: 'GET', url: `/api/bestel?nr=${mb.nummer}&t=${mb.token}` });
+ok(r.j.melden_mogelijk === true && r.j.regel_ids.length === 1, 'statuspagina: melden mogelijk na verzending');

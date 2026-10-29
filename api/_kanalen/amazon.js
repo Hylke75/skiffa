@@ -5,7 +5,7 @@
 //   orders        gewijzigde FBM-orders importeren (Orders API 2026-01-01), annuleringen verwerken
 //   verzendingen  verzending bevestigen met track-and-trace (Orders v0 confirmShipment)
 // Secrets (Vercel): AMAZON_LWA_CLIENT_ID, AMAZON_LWA_CLIENT_SECRET, AMAZON_REFRESH_TOKEN, AMAZON_SELLER_ID.
-import { MAX_SCHRIJFACTIES, MAX_VERZENDPOGINGEN, foutTekst, isGeldigeEan, kanaalPrijs, sku, titel, omschrijving, vervoerderCode, varianten } from './gemeen.js';
+import { MAX_SCHRIJFACTIES, MAX_VERZENDPOGINGEN, foutTekst, isGeldigeEan, kanaalPrijs, sku, titel, omschrijving, papierZin, vervoerderCode, varianten } from './gemeen.js';
 import { kanaalBeelden } from '../_media.js';
 import { listings, zetListing, eans, bekendeOrders, regel, importeer, teMelden, gemeld, meldenMislukt, annuleerVanKanaal, zetInstellingen } from './opslag.js';
 
@@ -82,7 +82,7 @@ async function stapListings(sp, s, log) {
           item_name: [nl(titel(variant).slice(0, 200))], brand: [nl(s.merk)],
           externally_assigned_product_identifier: [{ type: 'ean', value: code, marketplace_id: mid }],
           product_description: [nl(omschrijving(l.poster_id).slice(0, 2000))],
-          bullet_point: ['Giclée op 250 grams mat fine-art papier, gedrukt in Den Haag', `Formaat ${variant.formaat_label}: een standaard lijstmaat`, 'Opgerold verstuurd in een stevige koker, zonder lijst', 'Ontworpen in Scheveningen: de surfcultuur van de Noordzee'].map(nl),
+          bullet_point: [papierZin().replace(/\.$/, ''), `Formaat ${variant.formaat_label}`, 'Stevig verpakt verstuurd (opgerold of plat), zonder lijst', 'Ontworpen in Scheveningen: de surfcultuur van de Noordzee'].map(nl),
           ...beeldAttributen(await kanaalBeelden(l.poster_id), mid),
           ...aanbod(s, prijs, s.voorraad),
         },

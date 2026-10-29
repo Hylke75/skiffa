@@ -14,7 +14,7 @@ export function factuurHtml(r) {
   const o = vanRij(r), b = bedrijf();
   const excl = (v) => euro(v - btwDeel(v));
   const regels = o.regels.map((x) => `<tr><td>Poster ${esc(x.naam)}, ${esc(x.formaatLabel)}</td><td class="r">${x.aantal}</td><td class="r">${euro(x.prijs)}</td><td class="r">${euro(x.prijs * x.aantal)}</td></tr>`).join('') +
-    (o.verzending ? `<tr><td>Verzending in koker</td><td class="r">1</td><td class="r">${euro(o.verzending)}</td><td class="r">${euro(o.verzending)}</td></tr>` : '');
+    (o.verzending ? `<tr><td>Verzending</td><td class="r">1</td><td class="r">${euro(o.verzending)}</td><td class="r">${euro(o.verzending)}</td></tr>` : '');
   const terug = Number(r.terugbetaald || 0);
   return `<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex"><title>Factuur ${esc(r.factuurnummer)} — ${esc(b.naam)}</title>
@@ -72,7 +72,7 @@ export function factuurPdf(r) {
   t(460, y, 'PRIJS', { grootte: 8, vet: true, rechts: true }); t(545, y, 'BEDRAG', { grootte: 8, vet: true, rechts: true });
   L.push({ x1: 50, y1: y + 6, x2: 545, y2: y + 6 });
   const rijen = o.regels.map((x) => [`Poster ${x.naam}, ${x.formaatLabel}`, x.aantal, x.prijs]);
-  if (o.verzending) rijen.push(['Verzending in koker', 1, o.verzending]);
+  if (o.verzending) rijen.push(['Verzending', 1, o.verzending]);
   for (const [oms, n, p] of rijen) { y += 20; t(50, y, oms); t(380, y, n, { rechts: true }); t(460, y, euro(p), { rechts: true }); t(545, y, euro(p * n), { rechts: true }); }
   y += 34; const btw = btwDeel(o.totaal, Number(r.btw_tarief || 21));
   t(400, y, 'totaal excl. btw'); t(545, y, euro(o.totaal - btw), { rechts: true });

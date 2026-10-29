@@ -63,7 +63,7 @@ export default async function handler(req, res) {
       to: [b.klant.email],
       reply_to: winkelMail(),
       subject: `Je Skiffa-bestelling ${b.nummer} is betaald`,
-      html: `<p>Dank je, ${esc(b.klant.naam)}. Je betaling is binnen; je poster gaat opgerold in een koker op de post.</p>${overzicht}`,
+      html: `<p>Dank je, ${esc(b.klant.naam)}. Je betaling is binnen; je poster gaat stevig verpakt op de post.</p>${overzicht}`,
     });
   } catch { /* bijzaak */ }
   res.status(200).end();

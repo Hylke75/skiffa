@@ -102,7 +102,7 @@ const Producten = (() => {
         <span style="flex:1"></span><button data-p="instellingen">formaten en papier</button><button class="vol" data-p="nieuw">+ nieuwe poster</button></div>
       <label class="drop" id="pDrop"><input type="file" id="pDropInput" multiple accept=".pdf,application/pdf,image/jpeg,image/png,image/webp" hidden>
         <b>Sleep drukbestanden en beelden van meerdere posters tegelijk hierheen.</b> De bestandsnaam bepaalt de koppeling:
-        <span class="mini" style="display:block;margin-top:4px">drukbestand: <code>golf-50x70.png</code> · <code>golf-50x70-mat.pdf</code> &nbsp;—&nbsp; beeld: <code>golf-1.jpg</code>, <code>golf-2.jpg</code> …</span></label>
+        <span class="mini" style="display:block;margin-top:4px">drukbestand: <code>golf-50x70.png</code> · <code>golf-50x70.pdf</code> &nbsp;—&nbsp; beeld: <code>golf-1.jpg</code>, <code>golf-2.jpg</code> …</span></label>
       <div id="pWachtrij"></div>
       ${rijen.length ? `<table class="ptabel"><thead><tr><th></th><th>poster</th><th>code</th><th>status</th><th class="vb">collectie</th><th>varianten klaar</th></tr></thead><tbody>${rijen.map((p) => `
         <tr data-id="${esc(p.id)}"><td>${p.klein ? `<img src="${esc(p.klein)}" alt="" class="duim">` : '<span class="duim leegbeeld"></span>'}</td>

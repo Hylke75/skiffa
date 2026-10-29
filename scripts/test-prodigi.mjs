@@ -9,8 +9,8 @@ const R = fileURLToPath(new URL('../api/', import.meta.url));
 const mails = [];
 const P = { orders: {}, posts: [], quotes: [], faal: 0, faalNaAanmaken: 0, faal429: 0, lijstFaalt: 0, faal400: 0, merkLeverbaar: ['postcard', 'packing_slip_bw'], annuleerUitkomst: 'cancelled' };
 const PRODUCTEN = {
-  'GLOBAL-FAP-50X70': { sku: 'GLOBAL-FAP-50X70', description: 'Fine art print 50x70', productDimensions: { width: 50, height: 70, units: 'cm' }, attributes: {}, printAreas: { default: { required: true } }, variants: [{ attributes: {}, shipsTo: ['NL', 'BE', 'DE'], printAreaSizes: { default: { horizontalResolution: 5906, verticalResolution: 8268 } } }] },
-  'GLOBAL-PAPER-30X40': { sku: 'GLOBAL-PAPER-30X40', description: 'Print 30x40', productDimensions: { width: 30, height: 40, units: 'cm' }, attributes: { paperType: ['EMA', 'HPR'] }, printAreas: { default: { required: true } }, variants: [{ attributes: { paperType: 'EMA' }, shipsTo: ['NL', 'BE'], printAreaSizes: { default: { horizontalResolution: 3543, verticalResolution: 4724 } } }, { attributes: { paperType: 'HPR' }, shipsTo: ['GB'], printAreaSizes: { default: { horizontalResolution: 3543, verticalResolution: 4724 } } }] },
+  'GLOBAL-FAP-50X70': { sku: 'GLOBAL-FAP-50X70', description: 'EMA, Enhanced Matte Art Paper, 200gsm, 50x70cm / 20x28"', productDimensions: { width: 20, height: 28, units: 'in' }, attributes: {}, printAreas: { default: { required: true } }, variants: [{ attributes: {}, shipsTo: ['NL', 'BE', 'DE'], printAreaSizes: { default: { horizontalResolution: 6000, verticalResolution: 8400 } } }] },
+  'GLOBAL-PAPER-30X40': { sku: 'GLOBAL-PAPER-30X40', description: 'Print 30x40cm / 12x16"', productDimensions: { width: 12, height: 16, units: 'in' }, attributes: { paperType: ['EMA', 'HPR'] }, printAreas: { default: { required: true } }, variants: [{ attributes: { paperType: 'EMA' }, shipsTo: ['NL', 'BE'], printAreaSizes: { default: { horizontalResolution: 3600, verticalResolution: 4800 } } }, { attributes: { paperType: 'HPR' }, shipsTo: ['GB'], printAreaSizes: { default: { horizontalResolution: 3600, verticalResolution: 4800 } } }] },
   'GLOBAL-FAP-20X28': { sku: 'GLOBAL-FAP-20X28', description: 'Fine art print 20x28 inch', productDimensions: { width: 20, height: 28, units: 'in' }, attributes: {}, printAreas: { default: { required: true } }, variants: [{ attributes: {}, shipsTo: ['NL', 'BE'], printAreaSizes: { default: { horizontalResolution: 6000, verticalResolution: 8400 } } }] },
 };
 const quote = (b) => {
@@ -88,10 +88,10 @@ await cat.laadCatalogus({ vers: true });
 // ================= productcontrole =================
 let r = (await Pr('product-controle', { sku: 'SKF-GOLF-50X70' })).j; ok(!r.ok && /artikelcode/.test(r.melding), 'zonder artikelcode: eerst invullen');
 await C('variant', { sku: 'SKF-GOLF-50X70', prodigi_sku: 'GLOBAL-FAP-50X70' });
-const d = await drukUpload('SKF-GOLF-50X70', 5906, 8268);
+const d = await drukUpload('SKF-GOLF-50X70', 6000, 8400);
 r = (await Pr('product-controle', { sku: 'SKF-GOLF-50X70' })).j;
 let v = T.varianten.find((x) => x.sku === 'SKF-GOLF-50X70');
-ok(r.ok && r.status === 'bevestigd' && v.prodigi_status === 'bevestigd' && v.prodigi_product.px.b === 5906 && v.prodigi_product.mm[0] === 500 && v.prodigi_product.landen.includes('NL'), 'Prodigi-product bevestigd: productiemaat, pixeleis en landen opgeslagen');
+ok(r.ok && r.status === 'bevestigd' && v.prodigi_status === 'bevestigd' && v.prodigi_product.px.b === 6000 && v.prodigi_product.mm[0] === 508 && v.prodigi_product.landen.includes('NL'), 'Prodigi-product bevestigd: productiemaat, pixeleis en landen opgeslagen');
 ok(T.drukbestand_versies.find((x) => x.id === d.versie_id).status === 'ok' && T.drukbestand_versies.find((x) => x.id === d.versie_id).controles.find((c) => c.code === 'prodigi').ernst === 'ok', 'drukbestand daarna getoetst aan de eisen van het product (nu goedgekeurd)');
 await C('variant', { sku: 'SKF-GOLF-30X40', prodigi_sku: 'GLOBAL-PAPER-30X40' });
 r = (await Pr('product-controle', { sku: 'SKF-GOLF-30X40' })).j; ok(r.status === 'ongeldig' && /paperType/.test(r.melding), 'product met opties: zonder keuze niet bevestigd');
@@ -129,7 +129,7 @@ r = (await Pr('proef-plaatsen', { id: po.id, bevestigd: true })).j; ok(!r.ok && 
 // ================= productieroute: Prodigi aan =================
 await Pr('instellingen', { waarden: { aan: true, sandbox: true, wachttijd_min: 0, branding: [], branding_beleid: 'blokkeren' } });
 await C('variant', { sku: 'SKF-GOLF-30X40', handmatig_leverbaar: true, handmatig_reden: 'eigen drukker' });
-await drukUpload('SKF-GOLF-30X40', 3543, 4724);
+await drukUpload('SKF-GOLF-30X40', 3600, 4800);
 await cat.laadCatalogus({ vers: true });
 ok(cat.VARIANTEN['SKF-GOLF-50X70'].bestelbaar && cat.VARIANTEN['SKF-GOLF-30X40'].bestelbaar && !cat.VARIANTEN['SKF-GOLF-70X100'].bestelbaar, 'met Prodigi aan: alleen varianten met bevestigd Prodigi-product zijn bestelbaar');
 
@@ -146,7 +146,7 @@ ok(posts(b1).length === 1 && T.fulfilments.filter((f) => f.bestelling_id === b1.
 await Pr('instellingen', { waarden: { wachttijd_min: 30 } });
 const b2 = maak([['SKF-GOLF-50X70']]); await betaald(b2, 'ideal');
 ok(F(b2).status === 'wacht' && !posts(b2).length && new Date(F(b2).vanaf) > new Date(Date.now() + 29 * 60000), 'wachttijd: nog niet verstuurd; tot wanneer wijzigen kan staat vast');
-const dNieuw = await drukUpload('SKF-GOLF-50X70', 5906, 8268);
+const dNieuw = await drukUpload('SKF-GOLF-50X70', 6000, 8400);
 verloop(F(b2)); await Promise.all(Array.from({ length: 5 }, () => prodigi.verwerk()));
 ok(posts(b2).length === 1 && posts(b2)[0].items[0].assets[0].url.includes('/v1-') && !posts(b2)[0].items[0].assets[0].url.includes('/v2-') && dNieuw.versie === 2, 'na de wachttijd één opdracht, met de drukbestandversie van het moment van bestellen');
 

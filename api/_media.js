@@ -236,7 +236,7 @@ export async function naarDrukker(o, { door = 'systeem', kanaal } = {}) {
     subject: `Drukopdracht Skiffa ${o.nummer}${kanaal && kanaal !== 'webshop' ? ` (${kanaal})` : ''}`,
     html: `<!doctype html><html><body style="font-family:Helvetica,Arial,sans-serif;color:#111;line-height:1.6;max-width:620px;margin:0 auto;padding:24px">
 <p style="letter-spacing:.3em;font-weight:700">SKIFFA</p><h1 style="font-size:17px">Drukopdracht ${esc(o.nummer)}</h1>
-<p>Opgerold in een koker, zonder lijst. De drukbestanden zijn op ware grootte; de links zijn ${DRUKLINK_DAGEN} dagen geldig.</p>
+<p>Stevig verpakt (opgerold of plat), zonder lijst. De drukbestanden zijn op ware grootte; de links zijn ${DRUKLINK_DAGEN} dagen geldig.</p>
 ${drukLijstHtml(regels)}
 <p style="margin-top:20px"><b>Verzenden naar</b><br>${esc(o.naam)}<br>${esc(o.straat)}<br>${esc(o.postcode)} ${esc(o.plaats)}<br>${LANDEN[o.land] || esc(o.land)}</p>
 ${o.opmerking ? `<p>Opmerking klant: ${esc(o.opmerking)}</p>` : ''}

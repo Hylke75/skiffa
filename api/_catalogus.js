@@ -29,9 +29,9 @@ export const POSTERS = {
 // uploaden, maar het formaat is nog nergens te koop. Aanzetten: actief op true en het formaat ook
 // toevoegen aan `formaten` in index.html.
 export const ALLE_FORMATEN = {
-  '30x40': { label: '30 × 40 cm', prijs: 29, mm: [300, 400], actief: true },     // instap, cadeau
-  '50x70': { label: '50 × 70 cm', prijs: 45, mm: [500, 700], actief: true },     // hoofdproduct
-  '70x100': { label: '70 × 100 cm', prijs: 69, mm: [700, 1000], actief: true },  // grote uitvoering
+  '30x40': { label: '30 × 40 cm', prijs: 49, mm: [304.8, 406.4], actief: true },     // instap, cadeau
+  '50x70': { label: '50 × 70 cm', prijs: 69, mm: [508, 711.2], actief: true },     // hoofdproduct
+  '70x100': { label: '70 × 100 cm', prijs: 119, mm: [711.2, 1016], actief: true },  // grote uitvoering
   '18x24in': { label: '18 × 24 inch', prijs: 39, mm: [457.2, 609.6], actief: false },
   '24x36in': { label: '24 × 36 inch', prijs: 59, mm: [609.6, 914.4], actief: false },
 };
@@ -50,7 +50,7 @@ export function verzendkosten(subtotaal, land) {
 // Centrale catalogus met varianten (supabase/migrations/20261029030000_catalogus.sql, beheer in
 // /admin → producten). Staat de catalogus in de database, dan is die leidend: laadCatalogus() vult de
 // objecten in dit bestand in place, zodat alle bestaande imports meteen meedoen. Zonder database (of met
-// lege tabellen) geldt de catalogus hierboven: elke poster in elk actief formaat op mat papier.
+// lege tabellen) geldt de catalogus hierboven: elke poster in elk actief formaat op Hahnemühle German Etching.
 //
 // Een variant is in de database pas `bestelbaar` als: product actief, variant/formaat/papier actief,
 // prijs > 0, leverbaar bevestigd (Prodigi-product gecontroleerd; zonder Prodigi: handmatig met reden) en
@@ -60,8 +60,9 @@ export function verzendkosten(subtotaal, land) {
 import { dbAan, db } from './_db.js';
 import { POSTERTEKSTEN } from './_posterteksten.js';
 
-export const STANDAARD_PAPIER = 'mat';
-export const PAPIER = { mat: { naam: 'Mat fine-art papier', uitleg: 'Dik, mat papier zonder glans: kleuren blijven rustig en er is geen spiegeling van lampen of ramen.', gsm: 250, actief: true } };
+// Alle prints op Hahnemühle German Etching (Prodigi GLOBAL-HGE-*, 310 g/m²).
+export const STANDAARD_PAPIER = 'german-etching';
+export const PAPIER = { 'german-etching': { naam: 'Hahnemühle German Etching', uitleg: 'Fine-art papier van Hahnemühle, 310 g/m², met een fluweelachtige structuur. Mat, dus geen spiegeling van lampen of ramen; kleuren blijven diep en rustig.', gsm: 310, actief: true } };
 export const sku = (poster, formaat, papier = STANDAARD_PAPIER) => `SKF-${poster}-${formaat}${papier === STANDAARD_PAPIER ? '' : `-${papier}`}`.toUpperCase();
 
 /** Alle producten (ook niet-actieve, voor beheer en oude orders). POSTERS = alleen wat te koop is. */

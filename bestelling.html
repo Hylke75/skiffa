@@ -41,9 +41,9 @@ const TEKST={
   open:['We wachten op je betaling.','Dit duurt meestal een paar seconden. Deze pagina ververst vanzelf.'],
   mislukt:['De betaling is niet gelukt.','Er is niets afgeschreven. Je mandje staat nog klaar in de winkel.'],
   betaald:['Dank je. Je betaling is binnen.','We gaan je poster drukken en sturen je een mail zodra hij onderweg is.'],
-  in_productie:['Je poster wordt gedrukt.','Binnenkort gaat hij opgerold in een koker op de post.'],
+  in_productie:['Je poster wordt gedrukt.','Binnenkort gaat hij stevig verpakt op de post.'],
   deels_verzonden:['Een deel van je bestelling is onderweg.','De rest volgt in een aparte zending; je krijgt daar ook een mail van.'],
-  verzonden:['Je poster is onderweg.','Opgerold in een stevige koker.'],
+  verzonden:['Je poster is onderweg.','Stevig verpakt, zonder lijst.'],
   geleverd:['Je poster is bezorgd.','Veel plezier ermee aan de muur.'],
   geannuleerd:['Deze bestelling is geannuleerd.','Vragen? Mail naar hallo@skiffa.nl.'],
   terugbetaald:['Deze bestelling is terugbetaald.','Het geld staat binnen een paar werkdagen op je rekening.'],
@@ -69,10 +69,36 @@ async function laad(){
     ${j.annuleren_mogelijk?`<details style="margin-top:22px"><summary class="sub" style="cursor:pointer">annulering aanvragen</summary>
       <p class="sub" style="margin:8px 0">Je poster wordt op bestelling gedrukt en kan al in productie zijn. We laten je weten of annuleren nog kan.</p>
       <textarea id="reden" rows="3" style="width:100%;font:inherit;padding:8px" placeholder="reden (optioneel)"></textarea>
-      <button class="knop lijn" id="annuleer" type="button">verzoek versturen</button><p class="sub" id="annUit"></p></details>`:j.annulering_aangevraagd?'<p class="sub" style="margin-top:18px">Je annuleringsverzoek is ontvangen; we nemen contact met je op.</p>':''}`;
+      <button class="knop lijn" id="annuleer" type="button">verzoek versturen</button><p class="sub" id="annUit"></p></details>`:j.annulering_aangevraagd?'<p class="sub" style="margin-top:18px">Je annuleringsverzoek is ontvangen; we nemen contact met je op.</p>':''}
+    ${j.melden_mogelijk?`<details style="margin-top:22px" id="melden"><summary class="sub" style="cursor:pointer">probleem melden (beschadigd, verkeerde poster)</summary>
+      <p class="sub" style="margin:8px 0">Vervelend als er iets mis is. Stuur een paar foto's mee (van de poster én de verpakking); dan lossen we het zo snel mogelijk op.</p>
+      <select id="mSoort" style="font:inherit;padding:6px;margin-bottom:8px"><option value="schade">beschadigd aangekomen</option><option value="verkeerd">verkeerde poster of formaat</option><option value="anders">iets anders</option></select>
+      ${j.regels.length>1?`<div class="sub" style="margin-bottom:8px">${j.regels.map((r,i)=>`<label style="display:block"><input type="checkbox" class="mRegel" value="${esc(j.regel_ids[i])}"> ${esc(r.naam)} ${esc(r.formaatLabel)}</label>`).join('')}</div>`:''}
+      <textarea id="mTekst" rows="3" style="width:100%;font:inherit;padding:8px" placeholder="wat is er aan de hand?"></textarea>
+      <label class="sub" style="display:block;margin-top:8px">foto's (max. 5) <input type="file" id="mFotos" accept="image/jpeg,image/png,image/webp,image/heic" multiple></label>
+      <button class="knop lijn" id="meld" type="button">melding versturen</button><p class="sub" id="mUit"></p></details>`:''}`;
   document.getElementById('annuleer')?.addEventListener('click',async e=>{e.target.disabled=true;
     let r=null;try{r=await fetch('/api/bestel',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({actie:'annuleringsverzoek',nr,t,reden:document.getElementById('reden').value})}).then(x=>x.json());}catch(_){}
     document.getElementById('annUit').textContent=r?.melding||'Versturen lukte niet. Mail ons gerust.';if(!r?.ok)e.target.disabled=false;});
+  document.getElementById('meld')?.addEventListener('click',async e=>{
+    const uit=document.getElementById('mUit'),fotos=[...document.getElementById('mFotos').files];
+    if(fotos.length>5){uit.textContent='Maximaal 5 foto\'s.';return;}
+    e.target.disabled=true;uit.textContent='Versturen…';
+    const post=b=>fetch('/api/bestel',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({nr,t,...b})}).then(x=>x.json()).catch(()=>({ok:false}));
+    const m=await post({actie:'melding',soort:document.getElementById('mSoort').value,omschrijving:document.getElementById('mTekst').value,regels:[...document.querySelectorAll('.mRegel:checked')].map(x=>x.value)});
+    if(!m.ok){uit.textContent=m.melding||'Versturen lukte niet. Mail ons gerust.';e.target.disabled=false;return;}
+    let mis=0;
+    for(const [i,f] of fotos.entries()){
+      uit.textContent=`Foto ${i+1} van ${fotos.length} uploaden…`;
+      const u=await post({actie:'melding-foto',id:m.id,bestandsnaam:f.name,bytes:f.size});
+      if(!u.ok){mis++;continue;}
+      const put=await fetch(u.url,{method:'PUT',headers:{'content-type':u.mime,'x-upsert':'true'},body:f}).catch(()=>null);
+      if(!put||!put.ok){mis++;continue;}
+      const k=await post({actie:'melding-foto-klaar',id:m.id,pad:u.pad});if(!k.ok)mis++;
+    }
+    uit.textContent=mis?`Je melding is ontvangen, maar ${mis} foto${mis>1?'\'s':''} kwam${mis>1?'en':''} niet aan. Mail die gerust na.`:'Je melding is ontvangen. We nemen zo snel mogelijk contact met je op.';
+    document.getElementById('mTekst').disabled=true;
+  });
   if(j.status==='open'&&pogingen++<12)setTimeout(laad,2500);
 }
 function fout(){document.getElementById('inhoud').innerHTML='<h1 class="fout">We konden deze bestelling niet vinden.</h1><p class="sub">Gebruik de link uit je bevestigingsmail, of mail naar hallo@skiffa.nl.</p><a class="knop lijn" href="/">terug naar de winkel</a>';}
