@@ -69,7 +69,7 @@ r = await call(bestel, { method: 'POST', body: { klant, regels: [{ id: 'golf', f
 ok(r.c === 400, 'niet-bestelbare variant kan niet besteld worden');
 
 // ---- bestandsnamen ----
-ok(herken('golf-50x70.png').sku === 'SKF-GOLF-50X70' && herken('Golf 50 x 70 cm-mat.pdf').sku === 'SKF-GOLF-50X70' && herken('golf-3.jpg').soort === 'beeld' && herken('golf-3.jpg').positie === 3 && herken('golf-50x70-hahnemuhle.png').fout, 'bestandsnamen → variant (drukbestand) of beeld; onbekende papiersoort niet gekoppeld');
+ok(herken('golf-50x70.png').sku === 'SKF-GOLF-50X70' && herken('Golf 50 x 70 cm-german-etching.pdf').sku === 'SKF-GOLF-50X70' && herken('golf-3.jpg').soort === 'beeld' && herken('golf-3.jpg').positie === 3 && herken('golf-50x70-hahnemuhle.png').fout, 'bestandsnamen → variant (drukbestand) of beeld; onbekende papiersoort niet gekoppeld');
 
 // ---- drukbestand uploaden: controle op wat er echt staat ----
 r = await call(media, { method: 'POST', url: '/api/media?actie=druk-upload', body: { sku: 'SKF-GOLF-50X70', bytes: 10, bestandsnaam: 'x.png' } }); ok(r.c === 401, 'drukbestand uploaden zonder inlog geweigerd');
@@ -89,7 +89,7 @@ r = await call(catalogus, { url: '/api/catalogus' });
 ok(r.j.producten.length === 1 && r.j.producten[0].varianten.length === 1 && r.j.producten[0].varianten[0].sku === 'SKF-GOLF-50X70' && r.j.papiersoorten[0].uitleg && r.j.formaten.length === 1, 'webshop: alleen golf in 50×70, met papieruitleg');
 r = await call(bestel, { method: 'POST', body: { klant, regels: [{ id: 'golf', sku: 'SKF-GOLF-50X70', aantal: 1 }], akkoord: true, t: 5000 } });
 const b1 = T.bestellingen.at(-1), rg = T.bestelregels.find((x) => x.bestelling_id === b1.id);
-ok(r.j.ok && rg.variant_sku === 'SKF-GOLF-50X70' && rg.drukbestand_versie_id === d1.versie_id && rg.papier_label === 'Mat art-papier' && Number(b1.subtotaal) === 45, 'bestelling met vaste kopie: SKU, drukbestandversie, papier, prijs');
+ok(r.j.ok && rg.variant_sku === 'SKF-GOLF-50X70' && rg.drukbestand_versie_id === d1.versie_id && rg.papier_label === 'Hahnemühle German Etching' && Number(b1.subtotaal) === 45, 'bestelling met vaste kopie: SKU, drukbestandversie, papier, prijs');
 r = await call(bestel, { method: 'POST', body: { klant, regels: [{ id: 'golf', formaat: '70x100', aantal: 1 }], akkoord: true, t: 5000 } }); ok(r.c === 400, 'niet-bestelbare variant (70×100) geweigerd');
 
 // ---- nieuwe versie: bestaande bestelling houdt zijn versie ----
@@ -128,9 +128,9 @@ r = (await C('product', { id: 'strandtent-b', titel: 'Strandtent', code: 'SKF-00
 r = (await C('product', { id: 'strandtent-b', titel: 'Strandtent', status: 'actief' })).j; ok(!r.ok && /productbeeld/.test(r.melding), 'actief zonder productbeeld kan niet');
 r = (await C('papier', { nieuw: true, naam: 'Hahnemühle Photo Rag', uitleg: 'Katoen, zacht, 308 g/m².', gewicht_gsm: 308 })).j; ok(r.ok && r.id === 'hahnemuhle-photo-rag', 'papiersoort toegevoegd');
 await cat.laadCatalogus({ vers: true });
-r = (await C('varianten-genereren', { product_id: 'strandtent-b', formaten: ['30x40', '50x70'], papieren: ['mat', 'hahnemuhle-photo-rag'], prijzen: { '30x40': '29', '50x70': '49,95' } })).j;
+r = (await C('varianten-genereren', { product_id: 'strandtent-b', formaten: ['30x40', '50x70'], papieren: ['german-etching', 'hahnemuhle-photo-rag'], prijzen: { '30x40': '29', '50x70': '49,95' } })).j;
 ok(r.ok && T.varianten.filter((v) => v.product_id === 'strandtent-b').length === 4 && T.varianten.find((v) => v.sku === 'SKF-STRANDTENT-B-50X70-HAHNEMUHLE-PHOTO-RAG').prijs === 49.95, 'varianten per formaat × papier gegenereerd met eigen SKU en prijs');
-r = (await C('variant', { nieuw: true, product_id: 'strandtent-b', formaat_id: '30x40', papier_id: 'mat', prijs: 30 })).j; ok(!r.ok && /bestaat al/.test(r.melding), 'dubbele combinatie geweigerd');
+r = (await C('variant', { nieuw: true, product_id: 'strandtent-b', formaat_id: '30x40', papier_id: 'german-etching', prijs: 30 })).j; ok(!r.ok && /bestaat al/.test(r.melding), 'dubbele combinatie geweigerd');
 r = (await C('variant', { sku: 'SKF-STRANDTENT-B-30X40', prodigi_sku: 'global-fap-12x16', prodigi_attributen: { paperType: 'EMA' } })).j;
 ok(r.ok && T.varianten.find((v) => v.sku === 'SKF-STRANDTENT-B-30X40').prodigi_sku === 'GLOBAL-FAP-12X16' && /opnieuw/.test(r.melding), 'Prodigi-product koppelen: opnieuw te controleren');
 r = await C('product', null, '&id=strandtent-b');
@@ -143,23 +143,6 @@ r = (await M('beeld-bevestig', { poster_id: 'golf', positie: 1, pad: u.pad, pad_
 ok(r.ok && T.poster_visuals[0].soort === 'mockup' && T.poster_visuals[0].formaat_id === '50x70', 'interieur-mock-up bij 50×70 opgeslagen');
 r = await call(catalogus, { url: '/api/catalogus' }); ok(r.j.visuals.golf[0].soort === 'mockup' && r.j.visuals.golf[0].formaat === '50x70', 'webshop krijgt het beeld met formaat (wisselt mee bij de keuze)');
 r = (await M('beeld-upload', { poster_id: 'golf', positie: 31, bytes: 5 })).j; ok(!r.ok, 'maximaal 30 beelden');
-
-// ---- posterhangers (Prodigi): zelfde drukbestand als de poster zonder ophanging ----
-r = (await C('varianten-genereren', { product_id: 'golf', alleen_hangers: true, hangers: { kleuren: ['black'], prijzen: {} } })).j; ok(!r.ok, 'posterhangers: zonder prijs niets aangemaakt');
-r = (await C('varianten-genereren', { product_id: 'golf', alleen_hangers: true, hangers: { kleuren: ['black', 'natural'], prijzen: { '50x70': '65' } } })).j;
-ok(r.ok && T.varianten.filter((v) => v.product_id === 'golf' && v.lijst === 'hanger').length === 2, 'posterhangers: alleen formaten met prijs, één per gekozen kleur');
-const hz = T.varianten.find((v) => v.sku === 'SKF-GOLF-50X70-HANGER-ZWART');
-ok(hz && hz.prodigi_sku === 'POSTER-HANGER-50-20X28-PORT' && hz.prodigi_attributen.color === 'black' && hz.prodigi_attributen.paperType === 'EMA' && !hz.drukbestand_id, 'hanger: Prodigi-product en kleur ingevuld, geen eigen drukbestand');
-r = (await M('druk-upload', { sku: hz.sku, bytes: 1000, bestandsnaam: 'x.png' })).j; ok(!r.ok && /zonder ophanging/.test(r.melding), 'drukbestand uploaden bij een hanger geweigerd (hoort bij de poster zonder ophanging)');
-await C('variant', { sku: hz.sku, handmatig_leverbaar: true, handmatig_reden: 'proef met hanger goedgekeurd' }); await cat.laadCatalogus({ vers: true });
-const vh = cat.VARIANTEN[hz.sku];
-ok(vh.bestelbaar && vh.drukbestand_id && vh.drukbestand_id === cat.VARIANTEN['SKF-GOLF-50X70'].drukbestand_id && vh.basis_sku === 'SKF-GOLF-50X70', 'hanger erft het drukbestand van de poster zonder ophanging en is bestelbaar');
-r = await call(catalogus, { url: '/api/catalogus' }); const pv = r.j.producten.find((p) => p.id === 'golf').varianten.find((v) => v.sku === hz.sku);
-ok(pv && pv.ophanging === 'posterhanger zwart' && pv.lijst_kleur === 'black' && pv.hanger_cm === 52, 'webshop: ophanging, kleur en hangerbreedte');
-r = await call(bestel, { method: 'POST', body: { klant, regels: [{ id: 'golf', sku: hz.sku, aantal: 1 }], akkoord: true, t: 5000 } });
-const rh = T.bestelregels.at(-1);
-ok(r.j.ok && rh.variant_sku === hz.sku && rh.lijst_kleur === 'black' && /posterhanger zwart/.test(rh.formaat_label) && Number(rh.prijs) === 65 && rh.drukbestand_versie_id === vh.drukbestand_id, 'bestelling met posterhanger: label, kleur, prijs en drukbestand vastgelegd');
-r = (await C('uitzondering', { sku: hz.sku, reden: 'lange genoeg reden hier' })).j; ok(!r.ok && /zonder ophanging/.test(r.melding), 'uitzondering hoort bij de poster zonder ophanging');
 
 // ---- archiveren ----
 await C('product', { id: 'golf', titel: 'Golf', status: 'gearchiveerd' }); await cat.laadCatalogus({ vers: true });

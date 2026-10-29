@@ -147,7 +147,7 @@ async function zonderAdministratie(req, res, b) {
     try {
       await mail({
         to: [b.klant.email], reply_to: winkelMail(), subject: `Je Skiffa-bestelling ${nummer}`,
-        html: `<p>Dank je, ${esc(b.klant.naam)}. We hebben je bestelling ontvangen en sturen je binnen één werkdag een betaalverzoek. Na betaling gaat je poster opgerold in een koker op de post.</p>${overzicht}`,
+        html: `<p>Dank je, ${esc(b.klant.naam)}. We hebben je bestelling ontvangen en sturen je binnen één werkdag een betaalverzoek. Na betaling gaat je poster stevig verpakt op de post.</p>${overzicht}`,
       });
     } catch { /* de winkel heeft de bestelling; de bevestiging is bijzaak */ }
     res.status(200).json({ ok: true, modus: 'mail', nummer, bevestigd: true });

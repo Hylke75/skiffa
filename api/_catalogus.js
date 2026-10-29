@@ -29,9 +29,9 @@ export const POSTERS = {
 // uploaden, maar het formaat is nog nergens te koop. Aanzetten: actief op true en het formaat ook
 // toevoegen aan `formaten` in index.html.
 export const ALLE_FORMATEN = {
-  '30x40': { label: '30 × 40 cm', prijs: 29, mm: [304.8, 406.4], actief: true },     // instap, cadeau
-  '50x70': { label: '50 × 70 cm', prijs: 45, mm: [508, 711.2], actief: true },     // hoofdproduct
-  '70x100': { label: '70 × 100 cm', prijs: 69, mm: [711.2, 1016], actief: true },  // grote uitvoering
+  '30x40': { label: '30 × 40 cm', prijs: 39, mm: [304.8, 406.4], actief: true },     // instap, cadeau
+  '50x70': { label: '50 × 70 cm', prijs: 59, mm: [508, 711.2], actief: true },     // hoofdproduct
+  '70x100': { label: '70 × 100 cm', prijs: 99, mm: [711.2, 1016], actief: true },  // grote uitvoering
   '18x24in': { label: '18 × 24 inch', prijs: 39, mm: [457.2, 609.6], actief: false },
   '24x36in': { label: '24 × 36 inch', prijs: 59, mm: [609.6, 914.4], actief: false },
 };
@@ -50,7 +50,7 @@ export function verzendkosten(subtotaal, land) {
 // Centrale catalogus met varianten (supabase/migrations/20261029030000_catalogus.sql, beheer in
 // /admin → producten). Staat de catalogus in de database, dan is die leidend: laadCatalogus() vult de
 // objecten in dit bestand in place, zodat alle bestaande imports meteen meedoen. Zonder database (of met
-// lege tabellen) geldt de catalogus hierboven: elke poster in elk actief formaat op mat papier.
+// lege tabellen) geldt de catalogus hierboven: elke poster in elk actief formaat op Hahnemühle German Etching.
 //
 // Een variant is in de database pas `bestelbaar` als: product actief, variant/formaat/papier actief,
 // prijs > 0, leverbaar bevestigd (Prodigi-product gecontroleerd; zonder Prodigi: handmatig met reden) en
@@ -60,8 +60,9 @@ export function verzendkosten(subtotaal, land) {
 import { dbAan, db } from './_db.js';
 import { POSTERTEKSTEN } from './_posterteksten.js';
 
-export const STANDAARD_PAPIER = 'mat';
-export const PAPIER = { mat: { naam: 'Mat art-papier', uitleg: 'Enhanced Matte Art Paper van 200 g/m²: mat, zonder glans, dus geen spiegeling van lampen of ramen. Kleuren blijven rustig en diep.', gsm: 200, actief: true } };
+// Alle prints op Hahnemühle German Etching (Prodigi GLOBAL-HGE-*, 310 g/m²).
+export const STANDAARD_PAPIER = 'german-etching';
+export const PAPIER = { 'german-etching': { naam: 'Hahnemühle German Etching', uitleg: 'Fine-art papier van Hahnemühle, 310 g/m², met een fluweelachtige structuur. Mat, dus geen spiegeling van lampen of ramen; kleuren blijven diep en rustig.', gsm: 310, actief: true } };
 export const sku = (poster, formaat, papier = STANDAARD_PAPIER) => `SKF-${poster}-${formaat}${papier === STANDAARD_PAPIER ? '' : `-${papier}`}`.toUpperCase();
 
 /** Alle producten (ook niet-actieve, voor beheer en oude orders). POSTERS = alleen wat te koop is. */
@@ -75,23 +76,6 @@ export const BEELDEN = {};
 /** Producten waarvan het beeld als bestand in /posters/ staat (meegeleverd met de site). */
 export const VASTE_BEELDEN = new Set(Object.keys(POSTERS));
 export const CODE_FORMATEN = JSON.parse(JSON.stringify(ALLE_FORMATEN));
-// Ophangen: SKIFFA verkoopt geen lijsten, wel posterhangers van Prodigi: latten van massief hout boven en onder,
-// met magneetsluiting en een ophangkoord in dezelfde kleur. Een variant met `lijst = 'hanger'` en `lijst_kleur`
-// (Prodigi-kleur) is de poster mét hanger; hij gebruikt hetzelfde drukbestand als de poster zonder hanger.
-export const OPHANGING = {
-  hanger: {
-    naam: 'posterhanger',
-    kleuren: { black: 'zwart', natural: 'naturel', white: 'wit' },
-    prodigi: { '30x40': 'POSTER-HANGER-30-12X16-PORT', '50x70': 'POSTER-HANGER-50-20X28-PORT', '70x100': 'POSTER-HANGER-80-28X40-PORT' },
-    breedte_cm: { '30x40': 32, '50x70': 52, '70x100': 86 },
-    afdekking_mm: 15,   // de latten bedekken boven en onder tot 1,5 cm van de poster
-    papier: 'mat',      // Prodigi drukt de poster bij een hanger op Enhanced Matte Art (EMA, 200 g/m²)
-    attributen: { paperType: 'EMA', substrateWeight: '200gsm' },
-  },
-};
-export const ophangLabel = (lijst, kleur) => (lijst === 'hanger' ? `posterhanger ${OPHANGING.hanger.kleuren[kleur] || kleur || ''}`.trim() : null);
-export const hangerSku = (basisSku, kleur) => `${basisSku}-HANGER-${(OPHANGING.hanger.kleuren[kleur] || kleur).toUpperCase()}`;
-
 /** Alle varianten, op SKU. */
 export const VARIANTEN = {};
 
@@ -160,17 +144,11 @@ export async function laadCatalogus({ vers = false } = {}) {
     const productieRoute = ins?.[0]?.waarden?.aan ? 'prodigi' : 'eigen';
     const fOp = Object.fromEntries(f.map((x) => [x.id, x])), paOp = Object.fromEntries(pa.map((x) => [x.id, x])), pOp = Object.fromEntries(p.map((x) => [x.id, x]));
 
-    // Drukbestand: een variant met ophanging gebruikt het bestand (en een eventuele uitzondering) van dezelfde
-    // poster zonder ophanging, in hetzelfde formaat en op hetzelfde papier.
-    const basisVan = (x) => (x.lijst ? v.find((y) => !y.lijst && y.product_id === x.product_id && y.formaat_id === x.formaat_id && y.papier_id === x.papier_id) || null : null);
     const varianten = {};
-    for (const rij of v) {
-      const b = basisVan(rij);
-      const x = b ? { ...rij, drukbestand_id: b.drukbestand_id, qc_uitzondering: b.qc_uitzondering } : rij;
+    for (const x of v) {
       const ontbreekt = ontbreektVoor(x, { product: pOp[x.product_id], formaat: fOp[x.formaat_id], papier: paOp[x.papier_id], druk: drukOp.get(x.drukbestand_id), productieRoute });
-      if (rij.lijst && !b) ontbreekt.push('geen poster zonder ophanging in dit formaat en papier (daar hoort het drukbestand bij)');
       varianten[x.sku] = {
-        sku: x.sku, product_id: x.product_id, formaat: x.formaat_id, papier: x.papier_id, lijst: x.lijst, lijst_kleur: x.lijst_kleur, basis_sku: b?.sku || null,
+        sku: x.sku, product_id: x.product_id, formaat: x.formaat_id, papier: x.papier_id, lijst: x.lijst, lijst_kleur: x.lijst_kleur,
         prijs: Number(x.prijs), kostprijs: x.kostprijs == null ? null : Number(x.kostprijs), bestelbaar: !ontbreekt.length, ontbreekt,
         prodigi_sku: x.prodigi_sku, prodigi_attributen: x.prodigi_attributen || {}, sizing: x.sizing, prodigi_status: x.prodigi_status,
         drukbestand_id: x.drukbestand_id, drukbestand_status: drukOp.get(x.drukbestand_id)?.status || null, qc_uitzondering: x.qc_uitzondering || null, ean: x.ean,

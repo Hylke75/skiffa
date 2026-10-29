@@ -41,7 +41,7 @@ const nieuw = (status, extra = {}) => {
   const b = { id: crypto.randomUUID(), nummer: 'SK-T' + Math.random().toString(36).slice(2, 8).toUpperCase(), token: 'a'.repeat(36), status, kanaal: 'webshop', totaal: 60.5, terugbetaald: 0, verzending: 0, ...klant,
     betaald_op: new Date(Date.now() - 2 * 864e5).toISOString(), aangemaakt_op: new Date(Date.now() - 2 * 864e5).toISOString(), extern_meta: {}, ...extra };
   T.bestellingen.push(b);
-  T.bestelregels.push({ id: Math.floor(Math.random() * 1e9), bestelling_id: b.id, poster_id: 'golf', poster_naam: 'Golf', formaat: '50x70', formaat_label: '50 × 70 cm', papier_label: 'Mat art-papier', aantal: 1, prijs: 60.5, kostprijs: 20 });
+  T.bestelregels.push({ id: Math.floor(Math.random() * 1e9), bestelling_id: b.id, poster_id: 'golf', poster_naam: 'Golf', formaat: '50x70', formaat_label: '50 × 70 cm', papier_label: 'Hahnemühle German Etching', aantal: 1, prijs: 60.5, kostprijs: 20 });
   return b;
 };
 const b1 = nieuw('verzonden'), b2 = nieuw('betaald', { kanaal: 'etsy', totaal: 121 }), b3 = nieuw('open', { betaald_op: null });
@@ -49,7 +49,7 @@ T.fulfilments.push({ id: 900, bestelling_id: b1.id, herdruk_nr: 0, status: 'verz
 r = await A('dashboard');
 ok(r.j.totaal.bestellingen === 2 && r.j.totaal.met_werkelijke_kosten === 1 && r.j.totaal.met_schatting === 1, 'dashboard: alleen betaalde bestellingen, werkelijk vs geschat geteld');
 ok(r.j.perKanaal.webshop.omzet_ex_btw === 50 && r.j.perKanaal.etsy.omzet_ex_btw === 100 && r.j.totaal.marge === 108, 'dashboard: omzet excl. btw en resultaat per kanaal');
-ok(r.j.populair.ontwerpen[0].naam === 'Golf' && r.j.populair.ontwerpen[0].stuks === 2 && r.j.populair.papieren[0].naam === 'Mat art-papier', 'dashboard: populair uit echte regels');
+ok(r.j.populair.ontwerpen[0].naam === 'Golf' && r.j.populair.ontwerpen[0].stuks === 2 && r.j.populair.papieren[0].naam === 'Hahnemühle German Etching', 'dashboard: populair uit echte regels');
 
 // ---- order-detail met marge ----
 r = await A('bestelling', null, `&id=${b1.id}`);

@@ -13,12 +13,12 @@ een scène die met de tijd in Scheveningen meebeweegt (uitsneden uit de posters)
 
 - **Beelden**: `posters/<id>.webp` (productbeeld, 1333 × 2000) en `posters/<id>-klein.webp` (600 × 900).
   `sfeer/` bevat uitsneden uit de posters: de drie scènes (ochtend/middag/avond) en het beeld bij contact.
-  Het productvenster toont de poster en de poster aan een posterhanger (de gekozen kleur, of naturel en zwart als voorbeeld).
-  SKIFFA verkoopt geen lijsten.
+  Het productvenster toont de poster, de poster in een houten lijst en in een zwarte lijst met passe-partout.
 - **Catalogus**: `posters` en `formaten` in `index.html` (teksten, beelden), en `api/_catalogus.js`
   (ids en prijzen; de server rekent altijd zelf). Check: `node scripts/check-catalogus.mjs`.
-- **Formaten**: **50 × 70 cm** (€ 45, hoofdproduct en standaard geselecteerd), 30 × 40 cm
-  (€ 29, instap/cadeau), 70 × 100 cm (€ 69, grote uitvoering). Klaargezet voor Noord-Amerika, nog niet te koop:
+- **Papier**: alle prints op **Hahnemühle German Etching** (310 g/m², fluweelachtige structuur). Geen lijsten, geen hangers.
+- **Formaten** (standaard lijstmaten): **50 × 70 cm** (€ 59, hoofdproduct en standaard geselecteerd), 30 × 40 cm
+  (€ 39, instap/cadeau), 70 × 100 cm (€ 99, grote uitvoering). Klaargezet voor Noord-Amerika, nog niet te koop:
   18 × 24 inch en 24 × 36 inch (`actief: false` in `api/_catalogus.js`; prijzen voorlopig). Verzending € 6,95
   (BE € 9,95), gratis vanaf € 75.
 - **Nieuwe poster toevoegen**: met database in /admin → producten (zie hieronder). Zonder database:
@@ -34,7 +34,7 @@ Een poster voer je één keer in bij **/admin → producten**; webshop, kanalen 
 - **Product**: interne naam, productcode (`SKF-001` …), verkooptitel, beschrijving, stijlregel, collectie, onderwerp,
   kleuren, zoekwoorden, SEO-titel en -beschrijving, URL (`/#<id>`, staat vast) en status: concept → gereed voor
   publicatie → actief → gearchiveerd. Gereed/actief kan pas als minstens één variant klaar is voor verkoop.
-- **Varianten**: formaat × papiersoort, los of met posterhanger (zie [Posterhangers](#posterhangers)). Elke variant heeft een eigen SKU, verkoopprijs, kostprijs,
+- **Varianten**: formaat × papiersoort (later ook lijst). Elke variant heeft een eigen SKU, verkoopprijs, kostprijs,
   levertijd, drukbestand en gekoppeld Prodigi-product. Formaten en papiersoorten (met uitleg voor de klant) beheer
   je onder "formaten en papier".
 - **Bestelbaar** is een variant pas als: poster actief, variant/formaat/papier actief, prijs ingevuld, leverbaar
@@ -45,7 +45,7 @@ Een poster voer je één keer in bij **/admin → producten**; webshop, kanalen 
   papiersoort; de webshop wisselt ze mee bij de keuze.
 - **Vaste kopie bij bestelling**: elke bestelregel bewaart SKU, papier, prijs, drukbestandversie, Prodigi-product,
   opties en kostprijs. Latere wijzigingen veranderen een bestaande bestelling niet.
-- Zonder database (of met lege tabellen) geldt de catalogus in de code: elke poster in elk formaat op mat papier.
+- Zonder database (of met lege tabellen) geldt de catalogus in de code: elke poster in elk formaat op Hahnemühle German Etching.
   **Let op**: na het koppelen van Supabase toont de winkel alleen wat bestelbaar is; regel per variant eerst het
   drukbestand en de leverbaarheid.
 
@@ -60,46 +60,26 @@ Een poster voer je één keer in bij **/admin → producten**; webshop, kanalen 
 - Er wordt nooit stilzwijgend bijgesneden of vervormd: per variant kies je "passend" (witte rand) of "vullend" (bijsnijden,
   alleen met uitzondering). "Toon uitsnede op het papier" laat precies zien wat er op het papier komt.
 - Meerdere bestanden tegelijk: sleep ze naar het vak in /admin → producten; de naam koppelt (`golf-50x70.png`,
-  `golf-50x70-mat.pdf`, `golf-1.jpg` voor beelden).
+  `golf-50x70.pdf`, `golf-1.jpg` voor beelden).
 - `python3 scripts/maak-drukbestanden.py <bron> <poster-id>` maakt jpg's op ware grootte voor alle formaten (bijgesneden vanuit
   het midden, of `--passend` met wit; `--pdf` voor pdf met afloop). Formaten 30×40 (3:4), 50×70 (5:7) en 70×100 (7:10)
   hebben elk een andere verhouding dan de 2:3-posters: een eigen ontwerp per formaat is beter.
 
 ## Prodigi: printen, verpakken en verzenden
 
-**Startcatalogus (opgezocht 29 oktober 2026 in de live-API, migratie `20261029080000_prodigi_producten.sql`):**
+**Catalogus: Hahnemühle German Etching** (opgezocht 29 oktober 2026 in de live-API, migratie
+`20261029090000_german_etching.sql`; de eerdere EMA-producten uit `20261029080000` gaan uit de verkoop):
 
-| formaat | Prodigi-artikel | echte maat | drukbestand | kostprijs NL (excl. btw, incl. verzending) |
-|---|---|---|---|---|
-| 30 × 40 cm | `GLOBAL-FAP-12X16` | 30,5 × 40,6 cm (12 × 16 inch) | 3600 × 4800 px | € 15,05 |
-| 50 × 70 cm | `GLOBAL-FAP-20X28` | 50,8 × 71,1 cm (20 × 28 inch) | 6000 × 8400 px | € 20,05 |
-| 70 × 100 cm | `GLOBAL-FAP-28X40` | 71,1 × 101,6 cm (28 × 40 inch) | 8400 × 12000 px | € 33,30 |
+| formaat | Prodigi-artikel | echte maat (pdf-paginagrootte) | drukbestand | kostprijs NL (excl. btw, incl. verzending) | prijs incl. btw | marge excl. btw |
+|---|---|---|---|---|---|---|
+| 30 × 40 cm | `GLOBAL-HGE-12X16` | 304,8 × 406,4 mm (12 × 16 inch) | 3600 × 4800 px | € 20,05 | € 39 | € 12,18 |
+| 50 × 70 cm | `GLOBAL-HGE-20X28` | 508 × 711,2 mm (20 × 28 inch) | 6000 × 8400 px | € 31,05 | € 59 | € 17,71 |
+| 70 × 100 cm | `GLOBAL-HGE-28X40` | 711,2 × 1016 mm (28 × 40 inch) | 8400 × 12000 px | € 59,30 | € 99 | € 22,52 |
 
-Papier: EMA, Enhanced Matte Art Paper, 200 g/m², gedrukt in Nederland. Hahnemühle Photo Rag (308 g/m²) en
-German Etching (310 g/m²) bestaan in dezelfde maten, maar kosten fors meer (70 × 100 Photo Rag: € 59,30 excl. btw).
-
-### Posterhangers
-
-SKIFFA verkoopt geen lijsten, wel de **posterhanger** van Prodigi: latten van massief hout boven en onder, met
-magneetsluiting en een ophangkoord in dezelfde kleur (zwart, naturel of wit). De latten bedekken boven en onder tot
-1,5 cm van de poster. Opgezocht 29 oktober 2026 in de live-API (migratie `20261029090000_posterhangers.sql`):
-
-| formaat | Prodigi-artikel | breedte hanger | kostprijs NL (excl. btw, incl. verzending) | voorstel verkoopprijs (incl. btw) | marge (excl. btw) |
-|---|---|---|---|---|---|
-| 30 × 40 cm | `POSTER-HANGER-30-12X16-PORT` | 32 cm | € 21,60 | € 45 | € 15,59 |
-| 50 × 70 cm | `POSTER-HANGER-50-20X28-PORT` | 52 cm | € 28,60 | € 65 | € 25,12 |
-| 70 × 100 cm | `POSTER-HANGER-80-28X40-PORT` | 86 cm | € 44,60 | € 99 | € 37,22 |
-
-- Opties bij Prodigi: `color` (black/natural/white), `paperType` EMA, `substrateWeight` 200gsm. De kleur verandert de
-  prijs niet. Er bestaat geen 70 cm-hanger voor 28 × 40 inch: bij 70 × 100 steekt de 86 cm-lat aan beide kanten
-  zo'n 7,5 cm uit; de webshop zegt dat er eerlijk bij.
-- Een hanger is een eigen variant (`lijst = 'hanger'`, `lijst_kleur` = Prodigi-kleur, SKU `<basis>-HANGER-ZWART|NATUREL|WIT`)
-  en gebruikt het **drukbestand (en een eventuele QC-uitzondering) van dezelfde poster zonder ophanging**; uploaden en
-  uitzonderingen gaan daar. Houd boven en onder 1,5 cm vrij van tekst.
-- Beheer → producten → poster → "posterhangers toevoegen": kies kleuren en een prijs per formaat (leeg = dat formaat
-  niet); daarna per variant "controleer bij Prodigi".
-- Webshop: keuze "los / hanger zwart / naturel / wit" met meerprijs; mandje, bestelling, mails en factuur noemen de
-  hanger; de Meta-feed geeft hem als variant met `color`. Bol, Etsy, Amazon en TikTok krijgen (nog) alleen de losse poster.
+Opties bij Prodigi: `paperType` HGE, `substrateWeight` 310gsm. Prodigi levert opgerold of plat ("ready to frame"),
+gedrukt in Nederland. German Etching bestaat in 86 formaten (o.a. A5–A0, 30 × 45, 50 × 75, 70 × 105 cm en de
+Noord-Amerikaanse 18 × 24 en 24 × 36 inch: `GLOBAL-HGE-18X24`, `GLOBAL-HGE-24X36`). De posterhanger van Prodigi kan
+alleen op EMA-papier en wordt daarom niet verkocht.
 
 Eén route naar productie: elke betaalde bestelling (webshop of kanaal) gaat vanuit SKIFFA **hooguit één keer** naar
 Prodigi (`api/_prodigi.js`, `api/prodigi.js`, migratie `20261029040000_prodigi.sql`). Instellingen in **/admin → kanalen →

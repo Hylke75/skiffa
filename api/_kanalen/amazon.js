@@ -82,7 +82,7 @@ async function stapListings(sp, s, log) {
           item_name: [nl(titel(variant).slice(0, 200))], brand: [nl(s.merk)],
           externally_assigned_product_identifier: [{ type: 'ean', value: code, marketplace_id: mid }],
           product_description: [nl(omschrijving(l.poster_id).slice(0, 2000))],
-          bullet_point: [papierZin().replace(/\.$/, ''), `Formaat ${variant.formaat_label}`, 'Opgerold verstuurd in een stevige koker, zonder lijst', 'Ontworpen in Scheveningen: de surfcultuur van de Noordzee'].map(nl),
+          bullet_point: [papierZin().replace(/\.$/, ''), `Formaat ${variant.formaat_label}`, 'Stevig verpakt verstuurd (opgerold of plat), zonder lijst', 'Ontworpen in Scheveningen: de surfcultuur van de Noordzee'].map(nl),
           ...beeldAttributen(await kanaalBeelden(l.poster_id), mid),
           ...aanbod(s, prijs, s.voorraad),
         },

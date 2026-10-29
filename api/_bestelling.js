@@ -1,6 +1,6 @@
 // Gedeelde logica voor bestellen: valideren, prijzen uit de catalogus, mails.
 // (Bestanden met een _ in /api worden door Vercel niet als route gepubliceerd.)
-import { POSTERS, ALLE_FORMATEN, PAPIER, VARIANTEN, STANDAARD_PAPIER, variantVoor, verzendkosten, ophangLabel } from './_catalogus.js';
+import { POSTERS, ALLE_FORMATEN, PAPIER, VARIANTEN, STANDAARD_PAPIER, variantVoor, verzendkosten } from './_catalogus.js';
 
 export const LANDEN = { NL: 'Nederland', BE: 'België' };
 const tekst = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
@@ -17,12 +17,10 @@ export function prijs(regelsIn, land) {
     const v = r?.sku ? VARIANTEN[r.sku] : variantVoor(r?.id, r?.formaat, r?.papier || STANDAARD_PAPIER);
     const aantal = Number(r?.aantal);
     if (!v || !v.bestelbaar || (r?.id && v.product_id !== r.id) || !POSTERS[v.product_id] || !Number.isInteger(aantal) || aantal < 1 || aantal > 10) return null;
-    // De ophanging staat in het label, zodat factuur, mails en statuspagina laten zien wat er verkocht is.
-    const ophanging = ophangLabel(v.lijst, v.lijst_kleur);
     regels.push({
-      id: v.product_id, naam: POSTERS[v.product_id], formaat: v.formaat, formaatLabel: `${ALLE_FORMATEN[v.formaat]?.label || v.formaat}${ophanging ? `, met ${ophanging}` : ''}`, ophanging,
+      id: v.product_id, naam: POSTERS[v.product_id], formaat: v.formaat, formaatLabel: ALLE_FORMATEN[v.formaat]?.label || v.formaat,
       papier: v.papier, papierLabel: PAPIER[v.papier]?.naam || v.papier, sku: v.sku, prijs: v.prijs, aantal,
-      snapshot: { lijst: v.lijst, lijst_kleur: v.lijst_kleur || null, drukbestand_versie_id: v.drukbestand_id, prodigi_sku: v.prodigi_sku, prodigi_attributen: v.prodigi_attributen, sizing: v.sizing, kostprijs: v.kostprijs },
+      snapshot: { lijst: v.lijst, drukbestand_versie_id: v.drukbestand_id, prodigi_sku: v.prodigi_sku, prodigi_attributen: v.prodigi_attributen, sizing: v.sizing, kostprijs: v.kostprijs },
     });
   }
   const subtotaal = regels.reduce((t, r) => t + r.prijs * r.aantal, 0);
@@ -34,7 +32,7 @@ export function prijs(regelsIn, land) {
 export const regelRij = (bestellingId, r) => ({
   bestelling_id: bestellingId, poster_id: r.id, poster_naam: r.naam, formaat: r.formaat, formaat_label: r.formaatLabel, prijs: r.prijs, aantal: r.aantal,
   variant_sku: r.sku || null, papier_id: r.papier || null, papier_label: r.papierLabel || null,
-  ...(r.snapshot ? { lijst: r.snapshot.lijst, lijst_kleur: r.snapshot.lijst_kleur || null, drukbestand_versie_id: r.snapshot.drukbestand_versie_id, prodigi_sku: r.snapshot.prodigi_sku, prodigi_attributen: r.snapshot.prodigi_attributen, sizing: r.snapshot.sizing, kostprijs: r.snapshot.kostprijs } : {}),
+  ...(r.snapshot ? { lijst: r.snapshot.lijst, drukbestand_versie_id: r.snapshot.drukbestand_versie_id, prodigi_sku: r.snapshot.prodigi_sku, prodigi_attributen: r.snapshot.prodigi_attributen, sizing: r.snapshot.sizing, kostprijs: r.snapshot.kostprijs } : {}),
 });
 
 export function valideer(body) {

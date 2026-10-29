@@ -65,7 +65,7 @@ export function omschrijving(poster_id, taal = 'nl') {
     return `${t.naam || poster_id} — a poster from Skiffa, a small studio from Scheveningen (The Hague, Netherlands) about the surf culture of its own beach.\n\n` +
       `Printed to order on matte art paper${papierGsm() ? ` (${papierGsm()} gsm)` : ''}. Shipped rolled in a sturdy tube, frame not included.\n\n` +
       `Sizes: ${Object.values(FORMATEN).map((f) => f.label).join(', ')}.`;
-  return `${t.zin || ''}\n\n${t.sub ? `Stijl: ${t.sub}. ` : ''}${papierZin()} Opgerold verstuurd in een stevige koker, zonder lijst.`.trim();
+  return `${t.zin || ''}\n\n${t.sub ? `Stijl: ${t.sub}. ` : ''}${papierZin()} Stevig verpakt verstuurd, zonder lijst.`.trim();
 }
 
 

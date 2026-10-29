@@ -51,17 +51,17 @@ async function stuur(aan, onderwerp, html, replyTo) {
 export const mails = {
   // Na een geslaagde betaling (of handmatig betaald gezet): bevestiging + factuur.
   bevestiging: (o) => stuur(o.email, `Bedankt voor je bestelling ${o.nummer}`, opmaak(`Bedankt, ${esc(o.naam.split(' ')[0])}. Je betaling is binnen.`,
-    `<p>We gaan je poster${o.regels.reduce((t, r) => t + r.aantal, 0) > 1 ? 's' : ''} drukken. Binnen twee werkdagen gaat je bestelling opgerold in een koker op de post; je krijgt dan een mail met de track-and-trace.</p>
+    `<p>We gaan je poster${o.regels.reduce((t, r) => t + r.aantal, 0) > 1 ? 's' : ''} drukken. Binnen twee werkdagen gaat je bestelling stevig verpakt op de post; je krijgt dan een mail met de track-and-trace.</p>
 <p style="font-size:12px;opacity:.7">Bestelnummer <b>${esc(o.nummer)}</b>${o.factuurnummer ? ` · factuur ${esc(o.factuurnummer)}` : ''}</p>${overzicht(o)}
 <p style="margin-top:20px">Verzendadres:<br>${adres(o)}</p>${knop(factuurLink(o), 'bekijk je factuur')}${o.token ? `<p style="font-size:12px">Je bestelling volgen: <a href="${statusLink(o)}">${statusLink(o)}</a></p>` : ''}
 <p style="font-size:12px;opacity:.7">Je hebt 14 dagen bedenktijd vanaf ontvangst. Retourneren of een vraag? Beantwoord deze mail.</p>`), winkelMail()),
 
   // Zonder Mollie: bestelling ontvangen, betaalverzoek volgt.
   ontvangen: (o) => stuur(o.email, `We hebben je bestelling ${o.nummer} ontvangen`, opmaak(`Dank je, ${esc(o.naam.split(' ')[0])}. Je bestelling is binnen.`,
-    `<p>Je ontvangt binnen één werkdag een betaalverzoek. Na betaling gaat je poster opgerold in een koker op de post.</p>${overzicht(o)}<p style="margin-top:20px">Verzendadres:<br>${adres(o)}</p>`), winkelMail()),
+    `<p>Je ontvangt binnen één werkdag een betaalverzoek. Na betaling gaat je poster stevig verpakt op de post.</p>${overzicht(o)}<p style="margin-top:20px">Verzendadres:<br>${adres(o)}</p>`), winkelMail()),
 
   verzonden: (o, { deel = false } = {}) => stuur(o.email, `Je Skiffa-bestelling ${o.nummer} is onderweg${deel ? ' (deelzending)' : ''}`, opmaak(deel ? 'Een deel van je bestelling is onderweg.' : 'Je poster is onderweg.',
-    `<p>${deel ? `Een deel van je bestelling ${esc(o.nummer)} is verstuurd; de rest volgt in een aparte zending, met een eigen mail.` : `Je bestelling ${esc(o.nummer)} is verstuurd, opgerold in een stevige koker.`}</p>
+    `<p>${deel ? `Een deel van je bestelling ${esc(o.nummer)} is verstuurd; de rest volgt in een aparte zending, met een eigen mail.` : `Je bestelling ${esc(o.nummer)} is verstuurd, stevig verpakt.`}</p>
 ${o.track_trace ? `<p>Track-and-trace: ${/^https?:\/\//.test(o.track_trace) ? `<a href="${esc(o.track_trace)}">${esc(o.track_trace)}</a>` : `<b>${esc(o.track_trace)}</b>`}</p>` : ''}
 <p>Tip: leg de poster na het uitpakken een nacht plat onder een paar boeken, dan ligt hij weer recht.</p>${knop(statusLink(o), 'bekijk je bestelling')}`), winkelMail()),
 
