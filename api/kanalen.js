@@ -15,6 +15,7 @@ import { laadCatalogus } from './_catalogus.js';
 import crypto from 'node:crypto';
 import { dbAan, db } from './_db.js';
 import { isAdmin } from './_auth.js';
+import * as social from './_social.js';
 import { POSTERS, FORMATEN, prijsVan } from './_catalogus.js';
 import { bedrijf } from './_bedrijf.js';
 import { KANALEN, STANDAARD, isGeldigeEan, kanaalPrijs } from './_kanalen/gemeen.js';
@@ -92,6 +93,12 @@ export default async function handler(req, res) {
       if (v.uit) resultaat.prodigi = 'uit';
       else { const st = await prodigi.statussen(); resultaat.prodigi = `verstuurd ${v.verstuurd}, geblokkeerd ${v.geblokkeerd}, fout ${v.fout}, opnieuw ${v.opnieuw}; status bijgewerkt ${st.bijgewerkt}`; }
     } catch (e) { resultaat.prodigi = `fout: ${e.message}`; }
+    // Social (Buffer): wachtende berichten versturen, onzekere opzoeken, statussen bijwerken.
+    try {
+      const v = await social.verwerk();
+      if (v.uit) resultaat.social = 'BUFFER_API_KEY ontbreekt';
+      else { const st = await social.statussen(); resultaat.social = `verstuurd ${v.verstuurd}, fout ${v.fout}, onzeker ${v.onzeker}, teruggevonden ${v.gevonden}; status bijgewerkt ${st.bijgewerkt}`; }
+    } catch (e) { resultaat.social = `fout: ${e.message}`; }
     return res.status(200).json({ ok: true, resultaat });
   }
 

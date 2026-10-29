@@ -130,6 +130,15 @@ table.kaal{border:0}table.kaal td,table.kaal th{padding:6px 8px}table.kaal input
 .fotos{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.fotos img{width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid var(--lijn)}
 .sv{border:1px solid var(--lijn);border-radius:10px;padding:8px 10px;margin-bottom:8px;background:var(--papier)}
 @media (max-width:620px){.dactie{flex-direction:column;align-items:flex-start}.dactie .acties{justify-content:flex-start}}
+.skal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}.skdag{background:var(--papier);border:1px solid var(--lijn);border-radius:8px;padding:6px;display:grid;gap:4px;align-content:start;min-height:90px}
+.skitem{text-align:left;font-size:10px;padding:4px 6px;border-radius:6px;line-height:1.4;background:#fff}.skitem .pchip{white-space:normal}.skitem span{opacity:.7}
+.smedia{display:flex;flex-wrap:wrap;gap:8px}.sm{width:130px;border:1px solid var(--lijn);border-radius:8px;overflow:hidden;background:#fff;display:grid;gap:4px;padding-bottom:4px}.sm img,.sm video{width:100%;height:110px;object-fit:cover;display:block}.sm input{font-size:10px;padding:3px 5px;margin:0 4px}.sm .acties{padding:0 4px;gap:4px}.sm .acties button{padding:1px 7px;font-size:10px}
+.sm.nieuw{display:grid;place-items:center;height:150px;border-style:dashed;color:#777;font-size:11px;padding:0}
+.sdoel{border:1px solid var(--lijn);border-radius:10px;padding:10px;margin-bottom:8px;background:#fff;display:grid;gap:6px}.sdoel{min-width:0}.sdoel .pcel{flex-wrap:wrap}.sdoel .pchip,.svb .pchip{white-space:normal}.svbtekst{overflow-wrap:anywhere}.svb .mini{overflow-wrap:anywhere}
+.svb{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:10px;margin-top:12px}.svbtekst{white-space:pre-wrap;font:inherit;font-size:12px;background:var(--papier);padding:8px;border-radius:6px;margin:6px 0}
+button.link{background:none;border:0;padding:0;text-decoration:underline;font-weight:600;cursor:pointer}
+@media (min-width:900px){.sbreed{grid-column:span 2}}.sbreed table td{word-break:break-word}
+@media (max-width:760px){.skal{grid-template-columns:1fr}}
 .pcel{display:flex;align-items:center;gap:8px}.ptabel tr.open{background:var(--zee)}.ptabel tr.pdetail td{padding:0 8px 12px}
 @media (max-width:900px){.pgrid{grid-template-columns:1fr}.vgrid{grid-template-columns:1fr}}
 @media (max-width:760px){.drukrij{grid-template-columns:80px 1fr}.drukrij .acties{grid-column:1/-1}.vb{display:none}main{padding:14px}.log div{grid-template-columns:1fr}}
@@ -147,7 +156,7 @@ table.kaal{border:0}table.kaal td,table.kaal th{padding:6px 8px}table.kaal input
 <div id="app" class="verberg">
   <header>
     <b>SKIFFA</b>
-    <div class="nav"><button data-view="dashboard">dashboard</button><button data-view="bestellingen" aria-current="true">bestellingen</button><button data-view="producten">producten</button><button data-view="verkoop">verkoopkanalen</button><button data-view="kanalen">koppelingen</button></div>
+    <div class="nav"><button data-view="dashboard">dashboard</button><button data-view="bestellingen" aria-current="true">bestellingen</button><button data-view="producten">producten</button><button data-view="verkoop">verkoopkanalen</button><button data-view="social">social</button><button data-view="kanalen">koppelingen</button></div>
     <span style="flex:1"></span>
     <a href="/" target="_blank" rel="noopener">winkel ↗</a>
     <button id="uitloggen">uitloggen</button>
@@ -168,6 +177,7 @@ table.kaal{border:0}table.kaal td,table.kaal th{padding:6px 8px}table.kaal input
     <section id="viewProducten" class="verberg"><div id="producten"></div></section>
     <section id="viewVerkoop" class="verberg"><div id="verkoop"></div></section>
     <section id="viewDashboard" class="verberg"><div id="dashboard"></div></section>
+    <section id="viewSocial" class="verberg"><div id="social"></div></section>
     <section id="viewBestellingen">
     <div class="kaarten" id="kaarten"></div>
     <div class="balk" id="filters">
@@ -441,7 +451,7 @@ const VELDEN={
   amazon:[['opslag_pct','opslag t.o.v. webshop (%)'],['voorraad','voorraad tonen (stuks)'],['verwerkingsdagen','verwerkingstijd (dagen)'],['producttype','producttype'],['merk','merk'],['marketplace_id','marketplace-id']],
 };
 function toonView(v){document.querySelectorAll('.nav button').forEach(b=>b.setAttribute('aria-current',String(b.dataset.view===v)));
-  $('#viewBestellingen').classList.toggle('verberg',v!=='bestellingen');$('#viewKanalen').classList.toggle('verberg',v!=='kanalen');$('#viewProducten').classList.toggle('verberg',v!=='producten');$('#viewVerkoop').classList.toggle('verberg',v!=='verkoop');if(v==='verkoop')Verkoop.open();$('#viewDashboard').classList.toggle('verberg',v!=='dashboard');if(v==='dashboard')Dashboard.open();
+  $('#viewBestellingen').classList.toggle('verberg',v!=='bestellingen');$('#viewKanalen').classList.toggle('verberg',v!=='kanalen');$('#viewProducten').classList.toggle('verberg',v!=='producten');$('#viewVerkoop').classList.toggle('verberg',v!=='verkoop');if(v==='verkoop')Verkoop.open();$('#viewDashboard').classList.toggle('verberg',v!=='dashboard');if(v==='dashboard')Dashboard.open();$('#viewSocial').classList.toggle('verberg',v!=='social');if(v==='social')Social.open();
   if(v==='kanalen'){laadKanalen();laadAssort();}if(v==='producten')Producten.open();if(v!=='producten')history.replaceState(null,'',v==='bestellingen'?location.pathname:'#'+v);}
 document.querySelector('.nav').addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(b)toonView(b.dataset.view);});
 async function kapi(actie,{method='GET',body,params}={}){
@@ -559,10 +569,11 @@ for(const [id,aan] of [['#allesAan',true],['#allesUit',false]])$(id).addEventLis
   if(!confirm(aan?`Alle posters op ${KNAAM[k]} aanbieden?`:`Alle posters op ${KNAAM[k]} pauzeren?`))return;
   try{await kapi('alles',{method:'POST',body:{kanaal:k,aan}});laadAssort();}catch(e){if(e.message!=='uit')meld(e.message,true);}});
 {const m=new URLSearchParams(location.search).get('melding');if(m){setTimeout(()=>meld(m,/mislukt/.test(m)),600);history.replaceState(null,'',location.pathname+location.hash);}}
-start().then(()=>{const h=location.hash.slice(1);if(h==='kanalen'||h==='producten'||h==='verkoop'||h==='dashboard'||h.startsWith('product/'))toonView(h.startsWith('product/')?'producten':h);});
+start().then(()=>{const h=location.hash.slice(1);if(h==='kanalen'||h==='producten'||h==='verkoop'||h==='dashboard'||h==='social'||h.startsWith('product/'))toonView(h.startsWith('product/')?'producten':h);});
 </script>
 <script src="/beheer/producten.js"></script>
 <script src="/beheer/verkoopkanalen.js"></script>
 <script src="/beheer/dashboard.js"></script>
+<script src="/beheer/social.js"></script>
 </body>
 </html>

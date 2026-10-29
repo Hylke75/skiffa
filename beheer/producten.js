@@ -196,7 +196,7 @@ const Producten = (() => {
             <label>volgorde<input data-g="volgorde" value="${esc(p.volgorde)}" class="kort"></label>
             <label>status<select data-g="status">${Object.entries(STATUS).map(([k, l]) => `<option value="${k}" ${k === p.status ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
           </div>
-          <div class="acties" style="margin-top:10px"><button class="vol" data-p="product-opslaan">opslaan</button><span class="mini">Gereed of actief kan pas als minstens één variant klaar is voor verkoop.</span></div>
+          <div class="acties" style="margin-top:10px"><button class="vol" data-p="product-opslaan">opslaan</button><button data-p="social">maak socialmediabericht</button><span class="mini">Gereed of actief kan pas als minstens één variant klaar is voor verkoop.</span></div>
         </div>
         <div class="blok"><h3>productbeeld</h3>
           <div class="pbeeld" data-p="hoofdbeeld" title="productbeeld vervangen">${p.klein ? `<img src="${esc(p.klein)}" alt="">` : '<span>+ productbeeld</span>'}</div>
@@ -318,6 +318,7 @@ const Producten = (() => {
         const w = { id: p.id }; doos().querySelectorAll('[data-g]').forEach((i) => { w[i.dataset.g] = i.value; });
         b.disabled = true; const r = await capi('product', w); meld(r.melding); return herlaad();
       }
+      if (a === 'social') { b.disabled = true; try { await Social.vanProduct(p.id); } catch (x) { fout(x); b.disabled = false; } return; }
       if (a === 'hoofdbeeld') return kiesBestand('image/jpeg,image/png,image/webp', async (f) => {
         try { const [g, k] = await Promise.all([verklein(f, 2000), verklein(f, 600)]); const u = await capi('beeld-upload', { id: p.id, bytes: g.blob.size }); await put(u.url, g.blob, 'image/jpeg'); await put(u.url_klein, k.blob, 'image/jpeg'); meld((await capi('beeld-bevestig', { id: p.id, pad: u.pad, pad_klein: u.pad_klein })).melding); await herlaad(); } catch (x) { fout(x); }
       });

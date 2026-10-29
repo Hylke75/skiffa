@@ -1,6 +1,6 @@
 // Nagebootste Supabase (PostgREST-subset + de RPC's uit supabase/migrations) voor de tests.
 import crypto from 'node:crypto';
-export const T = { bestellingen: [], bestelregels: [], bestelling_log: [], factuurteller: {}, poster_ean: [], kanaal_instellingen: [], kanaal_listings: [], kanaal_sync_log: [], etsy_koppeling: [], etsy_oauth_states: [], poster_visuals: [], producten: [], formaten: [], papiersoorten: [], varianten: [], drukbestand_versies: [], fulfilments: [], proefbestellingen: [], zendingen: [], kanaal_sjablonen: [], product_kanalen: [], serviceverzoeken: [], actie_afgehandeld: [] };
+export const T = { bestellingen: [], bestelregels: [], bestelling_log: [], factuurteller: {}, poster_ean: [], kanaal_instellingen: [], kanaal_listings: [], kanaal_sync_log: [], etsy_koppeling: [], etsy_oauth_states: [], poster_visuals: [], producten: [], formaten: [], papiersoorten: [], varianten: [], drukbestand_versies: [], fulfilments: [], proefbestellingen: [], zendingen: [], kanaal_sjablonen: [], product_kanalen: [], serviceverzoeken: [], actie_afgehandeld: [], social_connections: [], social_posts: [], social_assets: [], social_post_targets: [], publishing_jobs: [], catalog_channels: [], campaign_links: [] };
 // Nagebootste Supabase Storage: S[bucket][pad] = { size, type }
 export const S = { drukbestanden: {}, visuals: {} };
 let seq = 1;
@@ -17,9 +17,16 @@ const STANDAARD = {
   product_kanalen: () => ({ publiceren: false, sjabloon_id: null, afwijkingen: {}, status: 'niet_gepubliceerd', melding: null, extern_id: null, extern_url: null, gepubliceerd_hash: null, poging_hash: null, verwerken_sinds: null, aanmaken_gestart_op: null, laatste_sync_op: null, meta: {}, bijgewerkt_op: nu() }),
   proefbestellingen: () => ({ id: crypto.randomUUID(), status: 'offerte', extern_id: null, laatste_fout: null, aangemaakt_op: new Date().toISOString(), geplaatst_op: null }),
   serviceverzoeken: () => ({ id: seq++, status: 'open', regels: null, fotos: [], oplossing: null, oplossing_notitie: null, fulfilment_id: null, terugbetaald: null, opgelost_op: null, door: 'admin', aangemaakt_op: nu(), bijgewerkt_op: nu() }),
+  social_connections: () => ({ id: seq++, aanbieder: 'buffer', status: 'actief', gebruiken: true, meta: {}, laatste_sync_op: null }),
+  social_posts: () => ({ id: seq++, status: 'concept', tekst: '', campagne: null, product_id: null, door: 'admin', aangemaakt_op: nu(), bijgewerkt_op: nu() }),
+  social_assets: () => ({ id: seq++, volgorde: 0, alt_tekst: null, thumbnail_offset_ms: null, pad: null, aangemaakt_op: nu() }),
+  social_post_targets: () => ({ id: seq++, tekst: null, publicatie: 'automatisch', post_type: 'post', gepland_op: null, metadata: {}, campaign_link_id: null, status: 'concept', extern_id: null, extern_status: null, extern_link: null, melding: null, gepubliceerd_op: null, herinnerd_op: null, handmatig_bevestigd: false, bijgewerkt_op: nu() }),
+  publishing_jobs: () => ({ id: seq++, status: 'wacht', pogingen: 0, volgende_poging_op: new Date(Date.now() - 1000).toISOString(), geclaimd_op: null, laatste_fout: null, resultaat: null, aangemaakt_op: new Date().toISOString(), bijgewerkt_op: nu() }),
+  campaign_links: () => ({ id: seq++, aangemaakt_op: nu() }),
+  catalog_channels: () => ({ opnemen: true, status: 'onbekend', meldingen: [], extern_id: null, laatste_check_op: null, bijgewerkt_op: nu() }),
   fulfilments: () => ({ id: seq++, herdruk_nr: 0, herdruk_reden: null, vrijgegeven_reden: null, branding: null, kosten: null, aanbieder: 'prodigi', status: 'wacht', pogingen: 0, geclaimd_op: null, extern_id: null, extern_status: null, laatste_fout: null, verstuurd_op: null, vanaf: new Date().toISOString(), aangemaakt_op: nu(), bijgewerkt_op: new Date().toISOString() }),
 };
-const UNIEK = { kanaal_listings: ['kanaal', 'poster_id', 'formaat'], poster_ean: ['poster_id', 'formaat'], kanaal_instellingen: ['kanaal'], etsy_koppeling: ['id'], poster_visuals: ['poster_id', 'positie'], producten: ['id'], formaten: ['id'], papiersoorten: ['id'], varianten: ['sku'], fulfilments: ['bestelling_id', 'herdruk_nr'], proefbestellingen: ['id'], zendingen: ['bestelling_id', 'extern_ref'], product_kanalen: ['product_id', 'kanaal'], actie_afgehandeld: ['sleutel'] };
+const UNIEK = { kanaal_listings: ['kanaal', 'poster_id', 'formaat'], poster_ean: ['poster_id', 'formaat'], kanaal_instellingen: ['kanaal'], etsy_koppeling: ['id'], poster_visuals: ['poster_id', 'positie'], producten: ['id'], formaten: ['id'], papiersoorten: ['id'], varianten: ['sku'], fulfilments: ['bestelling_id', 'herdruk_nr'], proefbestellingen: ['id'], zendingen: ['bestelling_id', 'extern_ref'], product_kanalen: ['product_id', 'kanaal'], actie_afgehandeld: ['sleutel'], social_connections: ['aanbieder', 'extern_id'], social_post_targets: ['post_id', 'connection_id'], publishing_jobs: ['sleutel'], catalog_channels: ['kanaal', 'sku'] };
 function voldoet(x, k, v) {
   if (k === 'or') {
     const conds = v.slice(1, -1).split(',').map((c) => { const [f, op, ...r] = c.split('.'); return [f, op, r.join('.')]; });
@@ -31,7 +38,7 @@ function voldoet(x, k, v) {
   if (op === 'neq') return String(xv) !== val;
   if (op === 'in') return val.slice(1, -1).split(',').map((s) => s.replace(/^"|"$/g, '')).includes(String(xv));
   if (op === 'is') return val === 'null' ? xv == null : true;
-  if (op === 'not') return val === 'is.null' ? xv != null : true;
+  if (op === 'not') return val === 'is.null' ? xv != null : !voldoet(x, k, val);
   if (op === 'like') return new RegExp('^' + val.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*') + '$').test(String(xv ?? ''));
   if (op === 'lt') return String(xv) < val;
   if (op === 'lte') return String(xv) <= val;
@@ -97,6 +104,11 @@ export function supabase(url, o) {
   }
   if (pad === 'rpc/skiffa_vrijgeven_fulfilments') { let n = 0; for (const f of T.fulfilments) if (f.status === 'bezig' && f.geclaimd_op < new Date(Date.now() - 600000).toISOString()) { f.status = 'onzeker'; n++; } return n; }
   if (pad === 'rpc/skiffa_claim_onzeker') { const f = T.fulfilments.find((x) => x.id === body.p_id && x.status === 'onzeker'); if (!f) return []; Object.assign(f, { status: 'bezig', geclaimd_op: new Date().toISOString() }); return [{ ...f }]; }
+  if (pad === 'rpc/skiffa_claim_job') {
+    const j = T.publishing_jobs.find((x) => x.id === body.p_id), n = new Date().toISOString();
+    if (!j || !((j.status === 'wacht' && j.volgende_poging_op <= n) || (j.status === 'bezig' && j.geclaimd_op < new Date(Date.now() - 600000).toISOString()))) return [];
+    Object.assign(j, { status: 'bezig', geclaimd_op: n, pogingen: j.pogingen + 1 }); return [{ ...j }];
+  }
   const rows = T[pad]; if (!rows) throw new Error('onbekende tabel ' + pad);
   if (o.method === 'POST') {
     const prefer = o.headers?.prefer || '';

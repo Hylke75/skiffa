@@ -112,6 +112,7 @@ export async function actielijst() {
     if (!l.ok) uit.push({ sleutel: `sync:${l.kanaal}:${l.op}`, ernst: 'middel', soort: 'synchronisatie', titel: `Laatste synchronisatie met ${l.kanaal} mislukt`, tekst: (l.detail?.log || []).filter((x) => !x.ok).map((x) => x.info).join(' · ').slice(0, 240), acties: ['koppelingen', 'afvinken'] }); }
   for (const f of wachtend.filter((x) => Number(bv(x.bestelling_id).terugbetaald) > 0))
     uit.push({ sleutel: `terug:${f.id}`, ernst: 'hoog', soort: 'productie', titel: 'Terugbetaald: beslis over de productie', tekst: 'Toch produceren (vrijgeven) of productie annuleren.', bestelling: { id: f.bestelling_id, nummer: bv(f.bestelling_id).nummer }, acties: ['open'] });
+  try { uit.push(...(await (await import('./_social.js')).actiepunten())); } catch { /* zonder social-tabellen */ }
   const ORDE = { hoog: 0, middel: 1, info: 2, laag: 3 };
   const zicht = uit.filter((x) => !afgevinkt.has(x.sleutel)).sort((a, b) => ORDE[a.ernst] - ORDE[b.ernst]);
   return { acties: zicht, afgevinkt: uit.length - zicht.length };

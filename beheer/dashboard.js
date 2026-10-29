@@ -23,6 +23,7 @@ const Dashboard = (() => {
       'zending-opnieuw': `<button data-dzending="${esc(x.zending_id)}">opnieuw doorgeven</button>`,
       verkoopkanalen: '<button data-dview="verkoop">naar verkoopkanalen</button>',
       koppelingen: '<button data-dview="kanalen">naar koppelingen</button>',
+      social: '<button data-dview="social">naar social</button>',
       afvinken: `<button data-dafvink="${esc(x.sleutel)}">afvinken</button>`,
     })[k] || '').join('');
   }
