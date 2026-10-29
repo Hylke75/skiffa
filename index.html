@@ -773,7 +773,10 @@ bf.addEventListener('submit',async e=>{
 tekenMandje();
 
 /* Link per poster: /#golf opent die poster direct (handig om te delen) */
-(()=>{const id=decodeURIComponent(location.hash.slice(1));const p=vind(id);if(p&&p.actief!==false)setTimeout(()=>openModal(p),rm?0:2800);})();
+const startHash=Date.now();
+function openUitHash(){const id=decodeURIComponent(location.hash.slice(1));const p=vind(id);if(!p||p.actief===false||modal.classList.contains('open'))return false;
+  setTimeout(()=>{if(!modal.classList.contains('open')&&vind(id))openModal(vind(id));},rm?0:Math.max(0,2800-(Date.now()-startHash)));return true;}
+openUitHash();
 
 /* Productgegevens voor zoekmachines (schema.org) */
 (()=>{const s=document.createElement('script');s.type='application/ld+json';s.id='productdata';
@@ -796,7 +799,7 @@ tekenMandje();
         if(p.beeld&&!String(p.beeld).startsWith('/posters/'))eigenBeeld[p.id]={beeld:p.beeld,klein:p.klein||p.beeld};
         return {id:String(p.id),naam:String(p.titel),sub:String(p.stijl||''),zin:String(p.beschrijving||''),kleur:/^#[0-9a-f]{6}$/i.test(p.accentkleur)?p.accentkleur:'#1F4E79',actief:true,punten:oud?.punten||PUNTEN};});
       plaatsHotspots(document.body.dataset.periode||'ochtend');
-      tekenShop();if(overGetekend)tekenOverBlok();tekenMandje();if(huidigePoster)openModal(huidigePoster);return;}
+      tekenShop();if(overGetekend)tekenOverBlok();tekenMandje();if(huidigePoster)openModal(huidigePoster);else openUitHash();return;}
     if(d.bron!=='database'||!Array.isArray(d.producten)||!d.producten.length||!Array.isArray(d.formaten)||!d.formaten.length)return;
     // Alleen wat echt besteld kan worden: producten met bestelbare varianten.
     const met=d.producten.filter(p=>Array.isArray(p.varianten)&&p.varianten.length);if(!met.length)return;
@@ -808,7 +811,7 @@ tekenMandje();
       if(p.beeld&&!String(p.beeld).startsWith('/posters/'))eigenBeeld[p.id]={beeld:p.beeld,klein:p.klein||p.beeld};
       return {id:String(p.id),naam:String(p.titel),sub:String(p.stijl||''),zin:String(p.beschrijving||''),kleur:/^#[0-9a-f]{6}$/i.test(p.accentkleur)?p.accentkleur:'#1F4E79',actief:true,punten:oud?.punten||PUNTEN};});
     regels=regels.filter(x=>vind(x.id)&&variantVan(x));bewaar();
-    tekenShop();if(overGetekend)tekenOverBlok();tekenMandje();plaatsHotspots(document.body.dataset.periode||'ochtend');
+    tekenShop();if(overGetekend)tekenOverBlok();tekenMandje();plaatsHotspots(document.body.dataset.periode||'ochtend');openUitHash();
   }catch(_){/* stil terugvallen op de catalogus in de code */}
 })();
 
