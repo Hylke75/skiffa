@@ -250,6 +250,9 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 #mandje .bestel:disabled{opacity:.35;cursor:default}
 #mandje .label{font-size:8px;letter-spacing:.24em;opacity:.55;margin:10px 0 0}
 #mandje .twee{display:grid;grid-template-columns:1fr 1.4fr;gap:10px}
+#mandje .akkoord{display:flex;gap:10px;align-items:flex-start;font-size:10px;line-height:1.6;letter-spacing:.06em;cursor:pointer}
+#mandje .akkoord input{margin-top:3px;accent-color:#000}
+#mandje .akkoord a{border-bottom:1px solid currentColor}
 #mandje select.veld{appearance:none;font-family:var(--mono)}
 .honing{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
 #mandje .fout{font-size:10px;color:#a3261a;min-height:1em}
@@ -359,6 +362,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
   </div>
   <div class="blok" id="overBlok"></div>
   <p style="padding:0 22px 8px;font-size:8px;letter-spacing:.14em;opacity:.55">Alle beelden op deze site zijn uitsneden uit de Skiffa-posters.</p>
+  <p style="padding:0 22px 8px;font-size:8px;letter-spacing:.14em;opacity:.55"><a href="/voorwaarden.html" style="border-bottom:1px solid currentColor">algemene voorwaarden</a> · <a href="/privacy.html" style="border-bottom:1px solid currentColor">privacy</a></p>
   <p style="padding:0 22px 30px;font-size:8px;letter-spacing:.14em;opacity:.55">Website: <a href="https://www.linkandlead.nl" target="_blank" rel="noopener" style="border-bottom:1px solid currentColor">Link &amp; Lead</a></p>
 </div>
 
@@ -395,7 +399,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
       <div class="vraag"><b>Welk formaat moet ik nemen?</b><p>30 × 45 cm voor boven je bureau, 50 × 75 cm voor een gewone wand, 70 × 105 cm als hij de kamer mag dragen. Alle formaten zijn 2:3 en passen in een standaardlijst.</p></div>
       <div class="vraag"><b>Zit er een lijst bij?</b><p>Nee. De poster komt opgerold in een koker. Leg hem een nacht plat onder een paar boeken, dan ligt hij weer recht.</p></div>
       <div class="vraag"><b>Hoe snel wordt er verzonden?</b><p>Voor 15:00 besteld gaat de volgende werkdag op de post. Verzenden kost € 6,95 (België € 9,95) en is gratis vanaf € 75.</p></div>
-      <div class="vraag"><b>Kan ik retourneren?</b><p>Ja, binnen 14 dagen, onbeschadigd en in de koker. Meld het via dit formulier, dan sturen we een retourlabel.</p></div>
+      <div class="vraag"><b>Kan ik retourneren?</b><p>Ja, je hebt 14 dagen bedenktijd na ontvangst. Meld het via dit formulier en stuur de poster onbeschadigd in de koker terug; het terugsturen is voor eigen rekening. Zie de <a href="/voorwaarden.html" style="border-bottom:1px solid currentColor">voorwaarden</a>.</p></div>
       <div class="vraag"><b>Komen er meer posters?</b><p>Ja, maar alleen als er een verhaal bij hoort. Volg Instagram voor de volgende.</p></div>
     </div>
   </div>
@@ -419,6 +423,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
       <select class="veld" name="land" autocomplete="country" aria-label="Land"><option value="NL">Nederland</option><option value="BE">België</option></select>
       <textarea class="veld" name="opmerking" aria-label="Opmerking (mag leeg)" placeholder="Opmerking (mag leeg)" style="min-height:70px"></textarea>
       <input class="honing" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <label class="akkoord"><input type="checkbox" name="akkoord" required> Ik ga akkoord met de <a href="/voorwaarden.html" target="_blank" rel="noopener">algemene voorwaarden</a> en heb de <a href="/privacy.html" target="_blank" rel="noopener">privacyverklaring</a> gelezen.</label>
       <div class="totaal" id="bestelTotaal"></div>
       <p class="fout" id="bestelFout" role="alert"></p>
       <button class="verzend" type="submit">bestellen en betalen <span>→</span></button>
@@ -703,10 +708,10 @@ bf.addEventListener('submit',async e=>{
   const d=Object.fromEntries(new FormData(bf));const klant={naam:d.naam,email:d.email,straat:d.straat,postcode:d.postcode,plaats:d.plaats,land:d.land,opmerking:d.opmerking};
   const knop=bf.querySelector('.verzend');knop.disabled=true;knop.firstChild.textContent='een moment… ';bfout.textContent='';
   try{
-    const r=await fetch('/api/bestel',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({klant,regels,website:d.website,t:Date.now()-bestelStart})});
+    const r=await fetch('/api/bestel',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({klant,regels,akkoord:!!d.akkoord,website:d.website,t:Date.now()-bestelStart})});
     const j=await r.json().catch(()=>null);
     if(j&&j.ok&&j.url){try{sessionStorage.setItem('skiffa-betaling',JSON.stringify({id:j.id,nr:j.nummer}));}catch(_){}location.href=j.url;return;}
-    if(j&&j.ok){regels=[];bewaar();tekenMandje();bf.reset();toonKlaar(`Bestelling ${j.nummer} is binnen. Je krijgt een bevestiging op ${klant.email}, en binnen één werkdag een betaalverzoek.`);return;}
+    if(j&&j.ok){regels=[];bewaar();tekenMandje();bf.reset();toonKlaar(`Bestelling ${j.nummer} is binnen.${j.bevestigd===false?'':` Je krijgt een bevestiging op ${klant.email}.`} Binnen één werkdag sturen we je een betaalverzoek.`);return;}
     if(j&&j.reden==='ongeldig'){bfout.textContent=j.melding||'Controleer je gegevens.';return;}
   }catch(_){/* geen server (statisch gehost): val terug op mail */}
   finally{knop.disabled=false;knop.firstChild.textContent='bestellen en betalen ';}

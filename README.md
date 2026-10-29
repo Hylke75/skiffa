@@ -20,15 +20,44 @@ een scène die met de tijd in Scheveningen meebeweegt (uitsneden uit de posters)
 - **Nieuwe poster toevoegen**: `python3 scripts/maak-beelden.py <bestand> <id>`, dan in `index.html` bij die
   poster `actief:true` zetten en de id toevoegen aan `api/_catalogus.js`.
 - **Mandje**: wordt in de browser bewaard (`localStorage`).
-- **Afrekenen** (`api/bestel.js`, env-gated):
-  1. `MOLLIE_API_KEY` → Mollie-betaling (iDEAL, Bancontact, kaart). Daarna terug naar `/?bestelling=terug`,
-     waar de site de status opvraagt (`GET /api/bestel?id=tr_…`). Mollie meldt de betaling aan
-     `api/mollie-webhook.js`; bij `paid` gaat de bestelling per mail naar winkel en klant (als Resend is
-     ingesteld). Alle bestellingen staan ook in het Mollie-dashboard (beschrijving `Skiffa SK-…`, gegevens in de metadata).
-  2. anders `RESEND_API_KEY` (+ `RESEND_FROM`, `BESTEL_EMAIL`) → bestelling per mail naar de winkel en een
-     bevestiging naar de klant; de winkel stuurt een betaalverzoek.
-  3. niets ingesteld (of statisch gehost) → de site opent een mail aan hallo@skiffa.nl met de bestelling erin.
-  Spam: honeypot-veld en minimale invultijd.
+- **Afrekenen**: zie [Webshop en administratie](#webshop-en-administratie).
+
+## Webshop en administratie
+
+Volledige bestelstroom, alles env-gated (wat ontbreekt valt netjes terug):
+
+1. **Bestellen** (`api/bestel.js`): de klant vult adres in en vinkt de voorwaarden aan. De server rekent de
+   prijzen zelf (`api/_catalogus.js`), slaat de bestelling op in Supabase (`bestellingen`, `bestelregels`,
+   `bestelling_log`) en start een **Mollie**-betaling (iDEAL, Bancontact, kaart).
+2. **Betaald**: Mollie meldt het aan `api/mollie-webhook.js` (of de statuspagina vraagt het zelf op). De
+   database zet de bestelling op betaald en kent een **doorlopend factuurnummer** toe (`2026-0001`, functie
+   `skiffa_markeer_betaald`, idempotent: dubbele meldingen doen niets). De klant krijgt een
+   **bevestigingsmail met factuur**, de winkel een melding.
+3. **Klant volgt de bestelling** op `/bestelling.html?nr=…&t=…` (geheime link uit de mail): besteld → betaald →
+   in productie → verzonden (met track-and-trace) → bezorgd, plus de factuur.
+4. **Administratie** op `/admin` (wachtwoord `ADMIN_WACHTWOORD`): kerncijfers (omzet maand/jaar, te verzenden),
+   lijst met filters en zoeken, per bestelling: verzonden met track-and-trace (mail aan klant), in productie,
+   geleverd, annuleren (mail), handmatig betaald zetten (overboeking), **terugbetalen via Mollie** (geheel of
+   gedeeltelijk, mail), mails opnieuw sturen, interne notitie en een volledig logboek.
+5. **Boekhouding**: `export csv` per periode met factuurnummer, datum, omzet excl. btw, btw 21%, totaal,
+   verzending, terugbetaald en betaalwijze (puntkomma-gescheiden, opent direct in Excel/Numbers).
+6. **Factuur** (`api/factuur.js`): printbare pagina (afdrukken → pdf) met bedrijfsgegevens uit `BEDRIJF_*`.
+
+Zonder Supabase werkt bestellen nog steeds (Mollie-metadata + mails, zoals voorheen); zonder Mollie wordt het
+een betaalverzoek (bestelling in de administratie, daar op betaald zetten); zonder Resend gaan er geen mails.
+Juridisch: `voorwaarden.html` (incl. herroepingsrecht en modelformulier) en `privacy.html`; vul KvK/btw in.
+
+**Opzetten**
+
+```bash
+supabase link --project-ref <project-ref>
+supabase db push            # past supabase/migrations/20261029000000_webshop.sql toe
+```
+
+Zet daarna in Vercel: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_WACHTWOORD`, `MOLLIE_API_KEY`,
+`RESEND_API_KEY`, `RESEND_FROM` (op een in Resend geverifieerd domein), `BESTEL_EMAIL`, `SITE_URL`, `BEDRIJF_*`.
+
+**Testen**: `npm test` (catalogus + de hele bestelstroom met nagebootste Supabase, Mollie en Resend).
 
 ## Hoe het in elkaar zit
 
@@ -54,16 +83,7 @@ Kort: **geen token → exact het ontwerp. Wél een token → dezelfde site, maar
 
 ## Environment variables
 
-Zet deze pas als er een CMS-site + token voor Skiffa bestaat (`/admin/platform`). Zie `.env.example`.
-
-| Variabele   | Waarde                     |
-|-------------|----------------------------|
-| `CMS_URL`   | `https://linkandlead.nl`   |
-| `CMS_TOKEN` | `cms_...` (48 hex, geheim) |
-| `MOLLIE_API_KEY` | optioneel, voor betalen via Mollie (`live_…` of `test_…`) |
-| `RESEND_API_KEY`, `RESEND_FROM`, `BESTEL_EMAIL` | optioneel, mails bij bestellingen |
-| `SITE_URL` | optioneel, basis-URL voor terugkeer na betalen |
-
+Zie `.env.example` voor alle variabelen met uitleg (CMS, administratie, Mollie, Resend, bedrijfsgegevens).
 Zet ze in Vercel onder **Production + Preview**. Nooit committen (`.env` staat in `.gitignore`).
 
 ## Wat het CMS mag aansturen (huidige mapping)

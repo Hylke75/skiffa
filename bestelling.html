@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Je bestelling — Skiffa</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--papier:#F6F3ED;--mono:"DM Mono",ui-monospace,Menlo,monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--papier);color:#000;font-family:var(--mono);font-size:12px;letter-spacing:.06em;line-height:1.8}
+main{max-width:560px;margin:0 auto;padding:48px 22px 60px}
+.merk{font-size:20px;letter-spacing:.34em;font-weight:500;text-decoration:none;color:#000}
+h1{font-size:14px;font-weight:500;margin:36px 0 6px}
+.sub{opacity:.6}
+.stappen{display:flex;gap:6px;margin:26px 0}
+.stappen div{flex:1;text-align:center;font-size:9px;letter-spacing:.14em;text-transform:uppercase;opacity:.4}
+.stappen div::before{content:"";display:block;height:2px;background:#000;margin-bottom:8px;opacity:.25}
+.stappen div.aan{opacity:1}.stappen div.aan::before{opacity:1}
+table{width:100%;border-collapse:collapse;margin-top:18px}
+td{padding:6px 0;border-bottom:1px solid rgba(0,0,0,.12)}
+.r{text-align:right}
+.knop{display:inline-block;margin:22px 10px 0 0;background:#000;color:#fff;text-decoration:none;border-radius:999px;padding:7px 18px;font-size:11px}
+.knop.lijn{background:none;color:#000;border:1px solid #000}
+.fout{margin-top:30px}
+</style>
+</head>
+<body>
+<main>
+  <a class="merk" href="/">SKIFFA</a>
+  <div id="inhoud"><h1>Je bestelling wordt geladen…</h1></div>
+</main>
+<script>
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const euro=v=>'€ '+Number(v||0).toFixed(2).replace('.',',');
+const q=new URLSearchParams(location.search),nr=q.get('nr'),t=q.get('t');
+const STAP={open:0,mislukt:0,betaald:1,in_productie:2,verzonden:3,geleverd:4};
+const TEKST={
+  open:['We wachten op je betaling.','Dit duurt meestal een paar seconden. Deze pagina ververst vanzelf.'],
+  mislukt:['De betaling is niet gelukt.','Er is niets afgeschreven. Je mandje staat nog klaar in de winkel.'],
+  betaald:['Dank je. Je betaling is binnen.','We gaan je poster drukken en sturen je een mail zodra hij onderweg is.'],
+  in_productie:['Je poster wordt gedrukt.','Binnenkort gaat hij opgerold in een koker op de post.'],
+  verzonden:['Je poster is onderweg.','Opgerold in een stevige koker.'],
+  geleverd:['Je poster is bezorgd.','Veel plezier ermee aan de muur.'],
+  geannuleerd:['Deze bestelling is geannuleerd.','Vragen? Mail naar hallo@skiffa.nl.'],
+  terugbetaald:['Deze bestelling is terugbetaald.','Het geld staat binnen een paar werkdagen op je rekening.'],
+};
+let pogingen=0;
+async function laad(){
+  if(!nr||!t){fout();return;}
+  let j=null;try{j=await fetch(`/api/bestel?nr=${encodeURIComponent(nr)}&t=${encodeURIComponent(t)}`,{cache:'no-store'}).then(r=>r.json());}catch(_){}
+  if(!j||!j.ok){fout();return;}
+  const [kop,sub]=TEKST[j.status]||['Je bestelling',''];
+  if(STAP[j.status]>=1){try{localStorage.removeItem('skiffa-mandje');}catch(_){}}
+  const stap=STAP[j.status];
+  document.getElementById('inhoud').innerHTML=`
+    <h1>${esc(kop)}</h1><p class="sub">${esc(sub)}</p>
+    ${stap!==undefined&&j.status!=='mislukt'?`<div class="stappen">${['besteld','betaald','in productie','verzonden','bezorgd'].map((s,i)=>`<div class="${i<=stap?'aan':''}">${s}</div>`).join('')}</div>`:''}
+    <p style="margin-top:18px">bestelling <b>${esc(j.nummer)}</b></p>
+    <table>${j.regels.map(r=>`<tr><td>${r.aantal}× poster ${esc(r.naam)} <span class="sub">${esc(r.formaatLabel)}</span></td><td class="r">${euro(r.prijs*r.aantal)}</td></tr>`).join('')}
+      <tr><td>verzending</td><td class="r">${j.verzending?euro(j.verzending):'gratis'}</td></tr>
+      <tr><td><b>totaal</b></td><td class="r"><b>${euro(j.totaal)}</b></td></tr></table>
+    ${j.track_trace?`<p style="margin-top:18px">track-and-trace: ${/^https?:\/\//.test(j.track_trace)?`<a href="${esc(j.track_trace)}" target="_blank" rel="noopener">${esc(j.track_trace)}</a>`:`<b>${esc(j.track_trace)}</b>`}</p>`:''}
+    ${j.factuur?`<a class="knop" href="${esc(j.factuur)}" target="_blank" rel="noopener">factuur bekijken</a>`:''}
+    <a class="knop lijn" href="/">terug naar de winkel</a>`;
+  if(j.status==='open'&&pogingen++<12)setTimeout(laad,2500);
+}
+function fout(){document.getElementById('inhoud').innerHTML='<h1 class="fout">We konden deze bestelling niet vinden.</h1><p class="sub">Gebruik de link uit je bevestigingsmail, of mail naar hallo@skiffa.nl.</p><a class="knop lijn" href="/">terug naar de winkel</a>';}
+laad();
+</script>
+</body>
+</html>
