@@ -201,6 +201,27 @@ Eén product, één keer ingevoerd; per kanaal vink je aan of het daar verschijn
 - Het bestelpaneel toont **betaling, productie en verzending los van elkaar**: een terugbetaling stopt de productie
   niet automatisch (annuleer die apart). Herdruk = een nieuwe, expliciet bevestigde productieopdracht met reden.
 
+## Dashboard, actielijst en service (Beheer → dashboard)
+
+- **Actielijst** bovenaan: mislukte of geblokkeerde productie (met "opnieuw proberen"), bestellingen die langer dan
+  7 dagen betaald maar niet verzonden zijn, tracking die niet aan het kanaal is doorgegeven ("opnieuw doorgeven"
+  na 5 mislukte pogingen), publicatiefouten, mislukte synchronisaties, open serviceverzoeken, en terugbetaalde
+  bestellingen waarvan de productie nog op een besluit wacht. Een melding afvinken (met notitie) verbergt haar
+  tot er iets verandert.
+- **Cijfers per periode**: bestellingen, omzet excl. btw, productiekosten, resultaat na productie, per kanaal, per
+  dag, populaire ontwerpen/formaten/papier. Alleen echte, betaalde bestellingen; zonder data staat er "geen
+  bestellingen" en niets verzonnens.
+- **Marge** (ook per bestelling in het paneel): werkelijk = wat Prodigi factureerde (excl. btw, incl. herdrukken);
+  anders een schatting op basis van de kostprijs die bij het bestellen is vastgelegd. Niet meegerekend:
+  Mollie-kosten, kanaalcommissie en eigen verpakking (staat ook op het dashboard).
+- **Serviceverzoeken** (annulering, schade, retour, klacht) per bestelling, met foto's in de privé-bucket
+  (alleen via tijdelijke links). Afsluiten vraagt een oplossing; afwijzen vraagt een reden. De oplossing zelf
+  (terugbetalen, herdruk, annuleren) is altijd een aparte, bevestigde actie.
+- **Klant**: op de statuspagina kan een webshopklant annulering *aanvragen* zolang de bestelling betaald of in
+  productie is. Dat wordt een serviceverzoek en een mail aan de winkel, geen automatische annulering. Tracking
+  verschijnt pas als er een code is, per zending. Schadefoto's stuurt de klant (nog) per mail; jij voegt ze toe.
+  Tabellen: `serviceverzoeken`, `actie_afgehandeld` (`supabase/migrations/20261029060000_service.sql`).
+
 ## Hoe het in elkaar zit
 
 - **`index.html`** — het volledige ontwerp (HTML + CSS + JS, GSAP via CDN). Alle content

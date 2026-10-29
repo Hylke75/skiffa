@@ -123,6 +123,13 @@ table.kaal{border:0}table.kaal td,table.kaal th{padding:6px 8px}table.kaal input
 .drie{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.drie div{background:var(--papier);border:1px solid var(--lijn);border-radius:10px;padding:8px 10px;display:grid;gap:2px}.drie b{font-size:12px;font-weight:500}
 .splits{display:flex;flex-wrap:wrap;gap:4px 12px;width:100%;margin-top:4px}.splits label{display:flex;gap:4px;align-items:center}.acties .splits input{flex:none;min-width:0;width:auto}
 @media (max-width:520px){.drie{grid-template-columns:1fr}}
+.dacties{display:grid;gap:8px}.dactie{display:flex;justify-content:space-between;gap:10px;align-items:center;border:1px solid var(--lijn);border-left:3px solid #bbb;border-radius:8px;padding:8px 10px;background:#fff}
+.dactie.hoog{border-left-color:var(--rood)}.dactie.middel{border-left-color:#c89b00}.dactie .acties{flex:none;justify-content:flex-end}
+.dgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:0 14px}
+.dbalk{height:8px;background:var(--zee);border-radius:4px;overflow:hidden}.dbalk i{display:block;height:100%;background:#111}
+.fotos{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.fotos img{width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid var(--lijn)}
+.sv{border:1px solid var(--lijn);border-radius:10px;padding:8px 10px;margin-bottom:8px;background:var(--papier)}
+@media (max-width:620px){.dactie{flex-direction:column;align-items:flex-start}.dactie .acties{justify-content:flex-start}}
 .pcel{display:flex;align-items:center;gap:8px}.ptabel tr.open{background:var(--zee)}.ptabel tr.pdetail td{padding:0 8px 12px}
 @media (max-width:900px){.pgrid{grid-template-columns:1fr}.vgrid{grid-template-columns:1fr}}
 @media (max-width:760px){.drukrij{grid-template-columns:80px 1fr}.drukrij .acties{grid-column:1/-1}.vb{display:none}main{padding:14px}.log div{grid-template-columns:1fr}}
@@ -140,7 +147,7 @@ table.kaal{border:0}table.kaal td,table.kaal th{padding:6px 8px}table.kaal input
 <div id="app" class="verberg">
   <header>
     <b>SKIFFA</b>
-    <div class="nav"><button data-view="bestellingen" aria-current="true">bestellingen</button><button data-view="producten">producten</button><button data-view="verkoop">verkoopkanalen</button><button data-view="kanalen">koppelingen</button></div>
+    <div class="nav"><button data-view="dashboard">dashboard</button><button data-view="bestellingen" aria-current="true">bestellingen</button><button data-view="producten">producten</button><button data-view="verkoop">verkoopkanalen</button><button data-view="kanalen">koppelingen</button></div>
     <span style="flex:1"></span>
     <a href="/" target="_blank" rel="noopener">winkel ↗</a>
     <button id="uitloggen">uitloggen</button>
@@ -160,6 +167,7 @@ table.kaal{border:0}table.kaal td,table.kaal th{padding:6px 8px}table.kaal input
     </section>
     <section id="viewProducten" class="verberg"><div id="producten"></div></section>
     <section id="viewVerkoop" class="verberg"><div id="verkoop"></div></section>
+    <section id="viewDashboard" class="verberg"><div id="dashboard"></div></section>
     <section id="viewBestellingen">
     <div class="kaarten" id="kaarten"></div>
     <div class="balk" id="filters">
@@ -291,6 +299,35 @@ function zendingenBlok(b){
     · ${Array.isArray(z.regels)&&z.regels.length?z.regels.map(naam).map(esc).join(', '):'hele bestelling'}</div>
     <div class="mini">${b.kanaal==='webshop'?(z.klant_gemaild_op?`klant gemaild ${datum(z.klant_gemaild_op)}`:'klant (nog) niet gemaild'):(z.kanaal_gemeld_op?`doorgegeven aan ${esc(b.kanaal)} ${datum(z.kanaal_gemeld_op)}`:z.kanaal_fout?`<span class="nok">doorgeven aan ${esc(b.kanaal)} mislukt (${z.kanaal_pogingen}×): ${esc(z.kanaal_fout)}</span>`:`wordt bij de volgende sync doorgegeven aan ${esc(b.kanaal)}`)}</div></td></tr>`).join('')}</table></div>`;
 }
+function margeBlok(b){
+  const m=b.marge;if(!m||!b.betaald_op)return '';
+  return `<div class="blok"><h3>marge</h3><table>
+    <tr><td>omzet excl. btw${Number(b.terugbetaald)?' (na terugbetaling)':''}</td><td class="r">${euro(m.omzet_ex_btw)}</td></tr>
+    <tr><td>verwachte productiekosten <span class="mini">(kostprijs bij bestellen)</span></td><td class="r">${m.kosten_geschat==null?'<span class="mini">onbekend</span>':euro(m.kosten_geschat)}</td></tr>
+    <tr><td>werkelijke kosten <span class="mini">(Prodigi-factuur${m.herdrukken?`, incl. ${m.herdrukken} herdruk`:''})</span></td><td class="r">${m.kosten_werkelijk==null?'<span class="mini">nog niet gefactureerd</span>':euro(m.kosten_werkelijk)}</td></tr>
+    <tr><td><b>resultaat na productie</b> <span class="mini">${m.bron==='schatting'?'(geschat)':m.bron==='onbekend'?'':'(werkelijk)'}</span></td><td class="r"><b>${m.marge==null?'—':euro(m.marge)}</b></td></tr></table>
+    <p class="mini" style="margin-top:4px">Zonder betaalkosten en kanaalcommissie.</p></div>`;
+}
+const SVSOORT={annulering:'annulering',schade:'schade',retour:'retour',klacht:'klacht'},SVOPL={herdruk:'herdruk',terugbetaling:'terugbetaling',annulering:'geannuleerd',retour_ontvangen:'retour ontvangen',geen:'geen actie nodig'};
+function serviceBlok(b){
+  const naam=id=>{const r=(b.bestelregels||[]).find(x=>String(x.id)===String(id));return r?`${r.poster_naam} ${r.formaat_label||''}`:id;};
+  return `<div class="blok"><h3>service</h3>
+    ${(b.service||[]).map(v=>`<div class="sv" data-sv="${v.id}"><b>${esc(SVSOORT[v.soort])}</b> · <span class="${['open','in_behandeling'].includes(v.status)?'nok':'ok'}">${esc(v.status.replace('_',' '))}</span>${v.oplossing?` · ${esc(SVOPL[v.oplossing])}`:''} <span class="mini">${datum(v.aangemaakt_op)} · ${esc(v.door)}</span>
+      <p style="margin-top:4px">${esc(v.omschrijving)}</p>${Array.isArray(v.regels)&&v.regels.length?`<p class="mini">betreft: ${v.regels.map(naam).map(esc).join(', ')}</p>`:''}
+      ${v.oplossing_notitie?`<p class="mini">${esc(v.oplossing_notitie)}</p>`:''}
+      ${(v.foto_links||[]).length?`<div class="fotos">${v.foto_links.filter(Boolean).map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt="foto bij ${esc(v.soort)}"></a>`).join('')}</div>`:''}
+      ${['open','in_behandeling'].includes(v.status)?`<div class="acties" style="margin-top:6px"><button data-svfoto="${v.id}">foto toevoegen</button>
+        ${v.status==='open'?`<button data-svzet="${v.id}|in_behandeling">in behandeling</button>`:''}
+        <select data-svopl="${v.id}"><option value="">opgelost met…</option>${Object.entries(SVOPL).map(([k,l])=>`<option value="${k}">${l}</option>`).join('')}</select>
+        <button data-svzet="${v.id}|opgelost">opgelost</button><button data-svzet="${v.id}|afgewezen">afwijzen</button></div>
+        <p class="mini" style="margin-top:4px">Voer de oplossing eerst zelf uit (terugbetalen, herdruk bij Prodigi, annuleren); daarna hier afsluiten.</p>`:''}
+    </div>`).join('')}
+    <details${(b.service||[]).length?'':' open'}><summary class="mini" style="cursor:pointer">nieuw verzoek registreren</summary>
+      <div class="acties" style="margin-top:6px"><select id="svSoort">${Object.entries(SVSOORT).map(([k,l])=>`<option value="${k}">${l}</option>`).join('')}</select>
+      <input id="svTekst" placeholder="wat is er aan de hand? (bv. hoek beschadigd, foto per mail)"><button data-svnieuw>registreren</button></div>
+      ${(b.bestelregels||[]).length>1?`<div class="splits mini">betreft: ${(b.bestelregels||[]).map(r=>`<label><input type="checkbox" data-svregel="${esc(r.id)}"> ${esc(r.poster_naam)} ${esc(r.formaat_label||'')}</label>`).join('')}</div>`:''}
+    </details></div>`;
+}
 function tekenPaneel(b){
   const druk=r=>r.druk?`<a href="${esc(r.druk.link)}" target="_blank" rel="noopener" class="${r.druk.status==='afgekeurd'?'nok':'ok'}">drukbestand v${esc(r.druk.versie)} ↓${r.druk.status==='afgekeurd'?' (afgekeurd)':''}</a>`:`<span class="nok">drukbestand ontbreekt</span> · <a href="#product/${esc(r.poster_id)}" data-naarproduct="${esc(r.poster_id)}">naar product</a>`;
   const regels=(b.bestelregels||[]).map(r=>`<tr><td>${r.aantal}× ${esc(r.poster_naam)} <span style="opacity:.6">${esc(r.formaat_label)}${r.papier_label?` · ${esc(r.papier_label)}`:''}</span><div class="mini">${r.variant_sku?`${esc(r.variant_sku)} · `:''}${druk(r)}</div></td><td class="r">${euro(r.prijs*r.aantal)}</td></tr>`).join('');
@@ -328,6 +365,8 @@ function tekenPaneel(b){
 
   ${prodigiBlok(b)}
   ${zendingenBlok(b)}
+  ${serviceBlok(b)}
+  ${margeBlok(b)}
   <div class="blok"><h3>bestelling</h3><table>${regels}
     <tr><td>verzending</td><td class="r">${Number(b.verzending)?euro(b.verzending):'gratis'}</td></tr>
     <tr><td><b>totaal</b> (waarvan btw ${euro(b.totaal-b.totaal/1.21)})</td><td class="r"><b>${euro(b.totaal)}</b></td></tr>
@@ -355,6 +394,24 @@ $('#vak').addEventListener('click',async e=>{
     pk.disabled=true;
     try{const r=await papi(a,{id,...extra});meld(r.melding||(r.resultaat?`Prodigi: verstuurd ${r.resultaat.verstuurd}, geblokkeerd ${r.resultaat.geblokkeerd}, fout ${r.resultaat.fout}`:'Opgeslagen'));await open(id);laadLijst();}
     catch(x){if(x.message!=='uit')meld(x.message,true);pk.disabled=false;}
+    return;}
+  const sv=e.target.closest('button[data-svnieuw],button[data-svzet],button[data-svfoto]');
+  if(sv&&huidig){const id=huidig.id;sv.disabled=true;
+    try{
+      if(sv.dataset.svnieuw!==undefined){const regels=[...document.querySelectorAll('#vak [data-svregel]:checked')].map(i=>i.dataset.svregel);
+        const r=await api('service-nieuw',{method:'POST',body:{bestelling_id:id,soort:$('#svSoort').value,omschrijving:$('#svTekst').value,regels}});meld(r.melding);}
+      else if(sv.dataset.svzet){const [vid,status]=sv.dataset.svzet.split('|');const oplossing=document.querySelector(`#vak [data-svopl="${vid}"]`)?.value||undefined;
+        let notitie;if(status==='afgewezen'){notitie=prompt('Waarom afgewezen?');if(!notitie){sv.disabled=false;return;}}
+        else if(status==='opgelost'){if(!oplossing){meld('Kies eerst hoe het is opgelost',true);sv.disabled=false;return;}notitie=prompt('Notitie (optioneel):')??undefined;}
+        const r=await api('service-zet',{method:'POST',body:{id:Number(vid),status,oplossing,notitie}});meld(r.melding);}
+      else if(sv.dataset.svfoto){const vid=Number(sv.dataset.svfoto);
+        const f=await new Promise(ok=>{const i=document.createElement('input');i.type='file';i.accept='image/*';i.onchange=()=>ok(i.files[0]);i.click();});
+        if(!f){sv.disabled=false;return;}
+        const u=await api('service-foto-upload',{method:'POST',body:{id:vid,bestandsnaam:f.name,bytes:f.size}});
+        const put=await fetch(u.url,{method:'PUT',headers:{'content-type':u.mime,'x-upsert':'true'},body:f});if(!put.ok)throw new Error(`Upload mislukt (${put.status})`);
+        const r=await api('service-foto-bevestig',{method:'POST',body:{id:vid,pad:u.pad}});meld(r.melding||'Foto toegevoegd');}
+      await open(id);
+    }catch(x){if(x.message!=='uit')meld(x.message,true);sv.disabled=false;}
     return;}
   const k=e.target.closest('button[data-a]');if(!k||!huidig)return;const a=k.dataset.a,id=huidig.id;
   if(a==='sluit')return sluit();
@@ -384,7 +441,7 @@ const VELDEN={
   amazon:[['opslag_pct','opslag t.o.v. webshop (%)'],['voorraad','voorraad tonen (stuks)'],['verwerkingsdagen','verwerkingstijd (dagen)'],['producttype','producttype'],['merk','merk'],['marketplace_id','marketplace-id']],
 };
 function toonView(v){document.querySelectorAll('.nav button').forEach(b=>b.setAttribute('aria-current',String(b.dataset.view===v)));
-  $('#viewBestellingen').classList.toggle('verberg',v!=='bestellingen');$('#viewKanalen').classList.toggle('verberg',v!=='kanalen');$('#viewProducten').classList.toggle('verberg',v!=='producten');$('#viewVerkoop').classList.toggle('verberg',v!=='verkoop');if(v==='verkoop')Verkoop.open();
+  $('#viewBestellingen').classList.toggle('verberg',v!=='bestellingen');$('#viewKanalen').classList.toggle('verberg',v!=='kanalen');$('#viewProducten').classList.toggle('verberg',v!=='producten');$('#viewVerkoop').classList.toggle('verberg',v!=='verkoop');if(v==='verkoop')Verkoop.open();$('#viewDashboard').classList.toggle('verberg',v!=='dashboard');if(v==='dashboard')Dashboard.open();
   if(v==='kanalen'){laadKanalen();laadAssort();}if(v==='producten')Producten.open();if(v!=='producten')history.replaceState(null,'',v==='bestellingen'?location.pathname:'#'+v);}
 document.querySelector('.nav').addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(b)toonView(b.dataset.view);});
 async function kapi(actie,{method='GET',body,params}={}){
@@ -502,9 +559,10 @@ for(const [id,aan] of [['#allesAan',true],['#allesUit',false]])$(id).addEventLis
   if(!confirm(aan?`Alle posters op ${KNAAM[k]} aanbieden?`:`Alle posters op ${KNAAM[k]} pauzeren?`))return;
   try{await kapi('alles',{method:'POST',body:{kanaal:k,aan}});laadAssort();}catch(e){if(e.message!=='uit')meld(e.message,true);}});
 {const m=new URLSearchParams(location.search).get('melding');if(m){setTimeout(()=>meld(m,/mislukt/.test(m)),600);history.replaceState(null,'',location.pathname+location.hash);}}
-start().then(()=>{const h=location.hash.slice(1);if(h==='kanalen'||h==='producten'||h==='verkoop'||h.startsWith('product/'))toonView(h.startsWith('product/')?'producten':h);});
+start().then(()=>{const h=location.hash.slice(1);if(h==='kanalen'||h==='producten'||h==='verkoop'||h==='dashboard'||h.startsWith('product/'))toonView(h.startsWith('product/')?'producten':h);});
 </script>
 <script src="/beheer/producten.js"></script>
 <script src="/beheer/verkoopkanalen.js"></script>
+<script src="/beheer/dashboard.js"></script>
 </body>
 </html>

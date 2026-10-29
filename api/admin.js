@@ -21,6 +21,7 @@ import { betaald, verwerkMollie } from './_verwerk.js';
 import { metDrukbestanden } from './_media.js';
 import { fulfilmentVan, fulfilmentsVan, annuleer as prodigiAnnuleer } from './_prodigi.js';
 import { registreer, zendingenVan } from './_zendingen.js';
+import * as service from './_service.js';
 
 const STATUSSEN = ['open', 'betaald', 'in_productie', 'deels_verzonden', 'verzonden', 'geleverd', 'geannuleerd', 'mislukt', 'terugbetaald'];
 const param = (req, k) => String(req.query?.[k] ?? new URL(req.url || '/', 'http://x').searchParams.get(k) ?? '');
@@ -81,6 +82,8 @@ async function bestelling(id) {
   r.drukker = !!process.env.DRUKKER_EMAIL;
   try { r.zendingen = await zendingenVan(id); } catch { r.zendingen = []; }
   try { r.fulfilments = await fulfilmentsVan(id); r.fulfilment = r.fulfilments.find((f) => !f.herdruk_nr) || null; } catch { r.fulfilments = []; r.fulfilment = null; }
+  try { r.service = await service.verzoekenMetFotos(id); } catch { r.service = []; }
+  r.marge = service.margeVan(r, r.fulfilments);
   return r;
 }
 
@@ -205,6 +208,8 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       if (actie === 'overzicht') return res.status(200).json({ ok: true, ...(await overzicht()) });
+      if (actie === 'dashboard') return res.status(200).json({ ok: true, ...(await service.dashboard({ van: param(req, 'van'), tot: param(req, 'tot') })) });
+      if (actie === 'actielijst') return res.status(200).json({ ok: true, ...(await service.actielijst()) });
       if (actie === 'bestellingen') return res.status(200).json({ ok: true, bestellingen: await lijst(req) });
       if (actie === 'bestelling') {
         const id = param(req, 'id');
@@ -216,6 +221,14 @@ export default async function handler(req, res) {
         res.setHeader('content-disposition', `attachment; filename="skiffa-facturen-${param(req, 'van') || 'alles'}-${param(req, 'tot') || 'nu'}.csv"`);
         return res.status(200).send(await exporteer(req));
       }
+    }
+    // Actielijst en serviceverzoeken (eigen id's, geen bestelling-id).
+    const SERVICE = { afvinken: () => service.afvinken(body.sleutel, body.notitie), 'zending-opnieuw': () => service.zendingOpnieuw(body.zending_id),
+      'service-foto-upload': () => service.fotoUpload(body), 'service-foto-bevestig': () => service.fotoBevestig(body), 'service-zet': () => service.zetVerzoek(body, 'admin'),
+      'service-nieuw': () => (isUuid(body.bestelling_id) ? service.nieuwVerzoek(body, 'admin') : { fout: 'Geen bestelling gekozen.' }) };
+    if (req.method === 'POST' && SERVICE[actie]) {
+      const uit = await SERVICE[actie]();
+      return uit.fout ? fout(res, 400, uit.fout) : res.status(200).json(uit);
     }
     if (req.method === 'POST') {
       const id = String(body.id || '');

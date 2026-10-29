@@ -36,12 +36,13 @@ td{padding:6px 0;border-bottom:1px solid rgba(0,0,0,.12)}
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const euro=v=>'€ '+Number(v||0).toFixed(2).replace('.',',');
 const q=new URLSearchParams(location.search),nr=q.get('nr'),t=q.get('t');
-const STAP={open:0,mislukt:0,betaald:1,in_productie:2,verzonden:3,geleverd:4};
+const STAP={open:0,mislukt:0,betaald:1,in_productie:2,deels_verzonden:3,verzonden:3,geleverd:4};
 const TEKST={
   open:['We wachten op je betaling.','Dit duurt meestal een paar seconden. Deze pagina ververst vanzelf.'],
   mislukt:['De betaling is niet gelukt.','Er is niets afgeschreven. Je mandje staat nog klaar in de winkel.'],
   betaald:['Dank je. Je betaling is binnen.','We gaan je poster drukken en sturen je een mail zodra hij onderweg is.'],
   in_productie:['Je poster wordt gedrukt.','Binnenkort gaat hij opgerold in een koker op de post.'],
+  deels_verzonden:['Een deel van je bestelling is onderweg.','De rest volgt in een aparte zending; je krijgt daar ook een mail van.'],
   verzonden:['Je poster is onderweg.','Opgerold in een stevige koker.'],
   geleverd:['Je poster is bezorgd.','Veel plezier ermee aan de muur.'],
   geannuleerd:['Deze bestelling is geannuleerd.','Vragen? Mail naar hallo@skiffa.nl.'],
@@ -62,9 +63,16 @@ async function laad(){
     <table>${j.regels.map(r=>`<tr><td>${r.aantal}× poster ${esc(r.naam)} <span class="sub">${esc(r.formaatLabel)}</span></td><td class="r">${euro(r.prijs*r.aantal)}</td></tr>`).join('')}
       <tr><td>verzending</td><td class="r">${j.verzending?euro(j.verzending):'gratis'}</td></tr>
       <tr><td><b>totaal</b></td><td class="r"><b>${euro(j.totaal)}</b></td></tr></table>
-    ${j.track_trace?`<p style="margin-top:18px">track-and-trace: ${/^https?:\/\//.test(j.track_trace)?`<a href="${esc(j.track_trace)}" target="_blank" rel="noopener">${esc(j.track_trace)}</a>`:`<b>${esc(j.track_trace)}</b>`}</p>`:''}
+    ${(j.zendingen||[]).length?(j.zendingen.map((z,i)=>`<p style="margin-top:${i?6:18}px">${j.zendingen.length>1?`zending ${i+1}`:'track-and-trace'}${z.vervoerder?` (${esc(z.vervoerder)})`:''}: ${z.url?`<a href="${esc(z.url)}" target="_blank" rel="noopener">${esc(z.code||'volg je zending')}</a>`:`<b>${esc(z.code)}</b>`}</p>`).join('')):j.track_trace?`<p style="margin-top:18px">track-and-trace: ${/^https?:\/\//.test(j.track_trace)?`<a href="${esc(j.track_trace)}" target="_blank" rel="noopener">${esc(j.track_trace)}</a>`:`<b>${esc(j.track_trace)}</b>`}</p>`:''}
     ${j.factuur?`<a class="knop" href="${esc(j.factuur)}" target="_blank" rel="noopener">factuur bekijken</a>`:''}
-    <a class="knop lijn" href="/">terug naar de winkel</a>`;
+    <a class="knop lijn" href="/">terug naar de winkel</a>
+    ${j.annuleren_mogelijk?`<details style="margin-top:22px"><summary class="sub" style="cursor:pointer">annulering aanvragen</summary>
+      <p class="sub" style="margin:8px 0">Je poster wordt op bestelling gedrukt en kan al in productie zijn. We laten je weten of annuleren nog kan.</p>
+      <textarea id="reden" rows="3" style="width:100%;font:inherit;padding:8px" placeholder="reden (optioneel)"></textarea>
+      <button class="knop lijn" id="annuleer" type="button">verzoek versturen</button><p class="sub" id="annUit"></p></details>`:j.annulering_aangevraagd?'<p class="sub" style="margin-top:18px">Je annuleringsverzoek is ontvangen; we nemen contact met je op.</p>':''}`;
+  document.getElementById('annuleer')?.addEventListener('click',async e=>{e.target.disabled=true;
+    let r=null;try{r=await fetch('/api/bestel',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({actie:'annuleringsverzoek',nr,t,reden:document.getElementById('reden').value})}).then(x=>x.json());}catch(_){}
+    document.getElementById('annUit').textContent=r?.melding||'Versturen lukte niet. Mail ons gerust.';if(!r?.ok)e.target.disabled=false;});
   if(j.status==='open'&&pogingen++<12)setTimeout(laad,2500);
 }
 function fout(){document.getElementById('inhoud').innerHTML='<h1 class="fout">We konden deze bestelling niet vinden.</h1><p class="sub">Gebruik de link uit je bevestigingsmail, of mail naar hallo@skiffa.nl.</p><a class="knop lijn" href="/">terug naar de winkel</a>';}

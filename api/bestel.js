@@ -37,7 +37,15 @@ async function status(req, res) {
         try { b = (await verwerkMollie(b.mollie_id)).bestelling || b; } catch { /* toon wat we weten */ }
       }
       const o = vanRij(b);
+      // Alleen zendingen mét track-and-trace: nooit een volglink tonen die nog niet bestaat.
+      let zendingen = [], annuleringAangevraagd = false;
+      try {
+        zendingen = (await db(`zendingen?bestelling_id=eq.${b.id}&select=vervoerder,tracking_code,tracking_url,verzonden_op&order=id.asc`))
+          .filter((z) => z.tracking_code || z.tracking_url).map((z) => ({ vervoerder: z.vervoerder, code: z.tracking_code, url: z.tracking_url, op: z.verzonden_op }));
+        annuleringAangevraagd = !!(await db(`serviceverzoeken?bestelling_id=eq.${b.id}&soort=eq.annulering&select=id&limit=1`))?.length;
+      } catch { /* oudere database */ }
       res.status(200).json({
+        zendingen, annulering_aangevraagd: annuleringAangevraagd, annuleren_mogelijk: ['betaald', 'in_productie'].includes(b.status) && !annuleringAangevraagd,
         ok: true, nummer: o.nummer, status: b.status, betaalwijze: b.betaalwijze, aangemaakt: b.aangemaakt_op,
         regels: o.regels, subtotaal: o.subtotaal, verzending: o.verzending, totaal: o.totaal,
         track_trace: b.track_trace, verzonden_op: b.verzonden_op, factuur: factuurLink(o) || null,
@@ -146,6 +154,22 @@ async function zonderAdministratie(req, res, b) {
   res.status(200).json({ ok: false, reden: 'geen-afhandeling' });
 }
 
+// De klant vraagt annulering aan vanaf de statuspagina. Dat is een verzoek, geen automatische annulering:
+// het komt op de actielijst, de winkel krijgt een mail en beslist (productie loopt mogelijk al).
+async function annuleringsverzoek(res, body) {
+  const nr = String(body.nr || ''), t = String(body.t || '');
+  if (!dbAan() || !/^SK-[A-Z0-9]{4,20}$/.test(nr) || !/^[a-f0-9]{36}$/.test(t)) return res.status(400).json({ ok: false, melding: 'Onbekende bestelling.' });
+  const b = await haalBestelling('nummer', nr);
+  if (!b || b.token !== t) return res.status(404).json({ ok: false, melding: 'Onbekende bestelling.' });
+  if (!['betaald', 'in_productie'].includes(b.status)) return res.status(400).json({ ok: false, melding: 'Deze bestelling kan niet meer worden geannuleerd via deze pagina. Mail ons gerust.' });
+  if ((await db(`serviceverzoeken?bestelling_id=eq.${b.id}&soort=eq.annulering&select=id&limit=1`))?.length) return res.status(200).json({ ok: true, melding: 'Je verzoek is al binnen.' });
+  const reden = String(body.reden || '').replace(/[<>]/g, '').trim().slice(0, 1000) || '(geen reden opgegeven)';
+  await db('serviceverzoeken', { method: 'POST', body: { bestelling_id: b.id, soort: 'annulering', omschrijving: `Klant vraagt annulering aan: ${reden}`, door: 'klant' } });
+  await log(b.id, 'service', `annulering aangevraagd door klant: ${reden.slice(0, 200)}`, 'klant');
+  if (mailAan()) await mail({ to: winkelMail(), subject: `Annuleringsverzoek ${b.nummer}`, html: `<p>${esc(b.naam)} vraagt annulering aan van ${esc(b.nummer)}.</p><p>Reden: ${esc(reden)}</p><p>Beslis in /admin (actielijst). De productie loopt mogelijk al.</p>` }).catch(() => {});
+  return res.status(200).json({ ok: true, melding: 'Je verzoek is ontvangen. We laten je zo snel mogelijk weten of annuleren nog kan; je poster kan al in productie zijn.' });
+}
+
 export default async function handler(req, res) {
   await laadCatalogus();
   res.setHeader('Cache-Control', 'no-store');
@@ -163,6 +187,7 @@ export default async function handler(req, res) {
     res.status(400).json({ ok: false, reden: 'ongeldig', melding: 'Er ging iets mis met je bestelling.' });
     return;
   }
+  if (body.actie === 'annuleringsverzoek') return annuleringsverzoek(res, body);
   // Bot: geef een neutraal antwoord en doe niets.
   if (body.website || Number(body.t) < 1500) {
     res.status(200).json({ ok: true, modus: 'mail', nummer: 'SK-0' });

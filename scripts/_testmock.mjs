@@ -1,6 +1,6 @@
 // Nagebootste Supabase (PostgREST-subset + de RPC's uit supabase/migrations) voor de tests.
 import crypto from 'node:crypto';
-export const T = { bestellingen: [], bestelregels: [], bestelling_log: [], factuurteller: {}, poster_ean: [], kanaal_instellingen: [], kanaal_listings: [], kanaal_sync_log: [], etsy_koppeling: [], etsy_oauth_states: [], poster_visuals: [], producten: [], formaten: [], papiersoorten: [], varianten: [], drukbestand_versies: [], fulfilments: [], proefbestellingen: [], zendingen: [], kanaal_sjablonen: [], product_kanalen: [] };
+export const T = { bestellingen: [], bestelregels: [], bestelling_log: [], factuurteller: {}, poster_ean: [], kanaal_instellingen: [], kanaal_listings: [], kanaal_sync_log: [], etsy_koppeling: [], etsy_oauth_states: [], poster_visuals: [], producten: [], formaten: [], papiersoorten: [], varianten: [], drukbestand_versies: [], fulfilments: [], proefbestellingen: [], zendingen: [], kanaal_sjablonen: [], product_kanalen: [], serviceverzoeken: [], actie_afgehandeld: [] };
 // Nagebootste Supabase Storage: S[bucket][pad] = { size, type }
 export const S = { drukbestanden: {}, visuals: {} };
 let seq = 1;
@@ -16,9 +16,10 @@ const STANDAARD = {
   kanaal_sjablonen: () => ({ id: seq++, standaard: false, waarden: {}, bijgewerkt_op: nu() }),
   product_kanalen: () => ({ publiceren: false, sjabloon_id: null, afwijkingen: {}, status: 'niet_gepubliceerd', melding: null, extern_id: null, extern_url: null, gepubliceerd_hash: null, poging_hash: null, verwerken_sinds: null, aanmaken_gestart_op: null, laatste_sync_op: null, meta: {}, bijgewerkt_op: nu() }),
   proefbestellingen: () => ({ id: crypto.randomUUID(), status: 'offerte', extern_id: null, laatste_fout: null, aangemaakt_op: new Date().toISOString(), geplaatst_op: null }),
+  serviceverzoeken: () => ({ id: seq++, status: 'open', regels: null, fotos: [], oplossing: null, oplossing_notitie: null, fulfilment_id: null, terugbetaald: null, opgelost_op: null, door: 'admin', aangemaakt_op: nu(), bijgewerkt_op: nu() }),
   fulfilments: () => ({ id: seq++, herdruk_nr: 0, herdruk_reden: null, vrijgegeven_reden: null, branding: null, kosten: null, aanbieder: 'prodigi', status: 'wacht', pogingen: 0, geclaimd_op: null, extern_id: null, extern_status: null, laatste_fout: null, verstuurd_op: null, vanaf: new Date().toISOString(), aangemaakt_op: nu(), bijgewerkt_op: new Date().toISOString() }),
 };
-const UNIEK = { kanaal_listings: ['kanaal', 'poster_id', 'formaat'], poster_ean: ['poster_id', 'formaat'], kanaal_instellingen: ['kanaal'], etsy_koppeling: ['id'], poster_visuals: ['poster_id', 'positie'], producten: ['id'], formaten: ['id'], papiersoorten: ['id'], varianten: ['sku'], fulfilments: ['bestelling_id', 'herdruk_nr'], proefbestellingen: ['id'], zendingen: ['bestelling_id', 'extern_ref'], product_kanalen: ['product_id', 'kanaal'] };
+const UNIEK = { kanaal_listings: ['kanaal', 'poster_id', 'formaat'], poster_ean: ['poster_id', 'formaat'], kanaal_instellingen: ['kanaal'], etsy_koppeling: ['id'], poster_visuals: ['poster_id', 'positie'], producten: ['id'], formaten: ['id'], papiersoorten: ['id'], varianten: ['sku'], fulfilments: ['bestelling_id', 'herdruk_nr'], proefbestellingen: ['id'], zendingen: ['bestelling_id', 'extern_ref'], product_kanalen: ['product_id', 'kanaal'], actie_afgehandeld: ['sleutel'] };
 function voldoet(x, k, v) {
   if (k === 'or') {
     const conds = v.slice(1, -1).split(',').map((c) => { const [f, op, ...r] = c.split('.'); return [f, op, r.join('.')]; });
