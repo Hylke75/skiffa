@@ -2,7 +2,7 @@
 // (dreamer-collectives/supabase/functions/_shared/bol.ts), vertaald naar posters op bestelling:
 // geen fysieke voorraad, wel een vaste "voorraad" die we aan het kanaal doorgeven.
 import { POSTERS, FORMATEN } from '../_catalogus.js';
-import { POSTERTEKSTEN } from '../_posterteksten.js';
+import { TEKSTEN as POSTERTEKSTEN } from '../_catalogus.js';
 import { bedrijf } from '../_bedrijf.js';
 
 export const KANALEN = ['bol', 'etsy', 'amazon'];

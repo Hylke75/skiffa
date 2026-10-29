@@ -11,6 +11,7 @@
 // GET ?id=tr_…         : status van een Mollie-betaling (oude flow zonder database)
 // Spam: honeypot-veld `website` en een minimale invultijd `t` (ms).
 
+import { laadCatalogus } from './_catalogus.js';
 import { valideer, overzichtHtml, mail, mollie, naarMetadata, euro, esc, winkelMail } from './_bestelling.js';
 import { dbAan, db, haalBestelling, log } from './_db.js';
 import { mails, mailAan, vanRij, factuurLink } from './_mails.js';
@@ -146,6 +147,7 @@ async function zonderAdministratie(req, res, b) {
 }
 
 export default async function handler(req, res) {
+  await laadCatalogus();
   res.setHeader('Cache-Control', 'no-store');
   if (req.method === 'GET') return status(req, res);
   if (req.method !== 'POST') {

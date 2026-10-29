@@ -1,6 +1,6 @@
 // Nagebootste Supabase (PostgREST-subset + de RPC's uit supabase/migrations) voor de tests.
 import crypto from 'node:crypto';
-export const T = { bestellingen: [], bestelregels: [], bestelling_log: [], factuurteller: {}, poster_ean: [], kanaal_instellingen: [], kanaal_listings: [], kanaal_sync_log: [], etsy_koppeling: [], etsy_oauth_states: [], drukbestanden: [], poster_visuals: [] };
+export const T = { bestellingen: [], bestelregels: [], bestelling_log: [], factuurteller: {}, poster_ean: [], kanaal_instellingen: [], kanaal_listings: [], kanaal_sync_log: [], etsy_koppeling: [], etsy_oauth_states: [], drukbestanden: [], poster_visuals: [], catalogus_producten: [], catalogus_formaten: [], fulfilments: [] };
 // Nagebootste Supabase Storage: S[bucket][pad] = { size, type }
 export const S = { drukbestanden: {}, visuals: {} };
 let seq = 1;
@@ -9,8 +9,9 @@ const STANDAARD = {
   bestellingen: () => ({ id: crypto.randomUUID(), token: crypto.randomBytes(18).toString('hex'), status: 'open', terugbetaald: 0, btw_tarief: 21, notitie: '', factuurnummer: null, factuurdatum: null, mollie_id: null, betaald_op: null, track_trace: null, kanaal: 'webshop', extern_id: null, extern_meta: {}, extern_verzonden_op: null, vervoerder: 'postnl', aangemaakt_op: nu() }),
   kanaal_listings: () => ({ id: seq++, ingeschakeld: false, extern_id: null, status: 'concept', laatste_fout: null, laatste_prijs: null, laatste_voorraad: null, meta: {} }),
   etsy_oauth_states: () => ({ aangemaakt_op: nu() }),
+  fulfilments: () => ({ id: seq++, aanbieder: 'prodigi', status: 'wacht', pogingen: 0, geclaimd_op: null, extern_id: null, extern_status: null, laatste_fout: null, verstuurd_op: null, vanaf: new Date().toISOString(), aangemaakt_op: nu(), bijgewerkt_op: new Date().toISOString() }),
 };
-const UNIEK = { kanaal_listings: ['kanaal', 'poster_id', 'formaat'], poster_ean: ['poster_id', 'formaat'], kanaal_instellingen: ['kanaal'], etsy_koppeling: ['id'], drukbestanden: ['poster_id', 'formaat'], poster_visuals: ['poster_id', 'positie'] };
+const UNIEK = { kanaal_listings: ['kanaal', 'poster_id', 'formaat'], poster_ean: ['poster_id', 'formaat'], kanaal_instellingen: ['kanaal'], etsy_koppeling: ['id'], drukbestanden: ['poster_id', 'formaat'], poster_visuals: ['poster_id', 'positie'], catalogus_producten: ['id'], catalogus_formaten: ['id'], fulfilments: ['bestelling_id'] };
 function voldoet(x, k, v) {
   if (k === 'or') {
     const conds = v.slice(1, -1).split(',').map((c) => { const [f, op, ...r] = c.split('.'); return [f, op, r.join('.')]; });
@@ -76,6 +77,13 @@ export function supabase(url, o) {
   const pad = u.pathname.replace('/rest/v1/', ''); const body = o.body ? JSON.parse(o.body) : undefined;
   if (pad === 'rpc/skiffa_markeer_betaald') return markeerBetaald(body);
   if (pad === 'rpc/skiffa_importeer_kanaalorder') return importeer(body);
+  if (pad === 'rpc/skiffa_claim_fulfilment') {
+    const f = T.fulfilments.find((x) => x.id === body.p_id), b = f && T.bestellingen.find((x) => x.id === f.bestelling_id);
+    if (!f || !b || !['wacht', 'opnieuw'].includes(f.status) || f.vanaf > new Date().toISOString() || !b.betaald_op || !['betaald', 'in_productie'].includes(b.status) || Number(b.terugbetaald || 0) !== 0) return [];
+    Object.assign(f, { status: 'bezig', geclaimd_op: new Date().toISOString(), pogingen: f.pogingen + 1 });
+    return [{ ...f }];
+  }
+  if (pad === 'rpc/skiffa_vrijgeven_fulfilments') { let n = 0; for (const f of T.fulfilments) if (f.status === 'bezig' && f.geclaimd_op < new Date(Date.now() - 600000).toISOString()) { f.status = 'opnieuw'; n++; } return n; }
   const rows = T[pad]; if (!rows) throw new Error('onbekende tabel ' + pad);
   if (o.method === 'POST') {
     const prefer = o.headers?.prefer || '';

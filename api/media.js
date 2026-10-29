@@ -13,7 +13,7 @@
 //   POST drukker {id}                     drukopdracht van een bestelling (opnieuw) naar DRUKKER_EMAIL
 import { dbAan, db, haalBestelling } from './_db.js';
 import { isAdmin } from './_auth.js';
-import { POSTERS, ALLE_FORMATEN } from './_catalogus.js';
+import { ALLE_POSTERS as POSTERS, ALLE_FORMATEN, BEELDEN, laadCatalogus } from './_catalogus.js';
 import { uploadUrl, downloadUrl, info, verwijder } from './_opslag.js';
 import { AANTAL_VISUALS, drukPad, drukNaam, maatStatus, herken, drukLinkGeldig, drukbestanden, visuals } from './_media.js';
 import { vanRij } from './_mails.js';
@@ -129,6 +129,7 @@ async function stuurDruk(res, p, f) {
 }
 
 export default async function handler(req, res) {
+  await laadCatalogus();
   const actie = param(req, 'actie');
   let body = req.body;
   if (typeof body === 'string') { try { body = JSON.parse(body); } catch { body = {}; } }

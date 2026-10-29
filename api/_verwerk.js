@@ -4,6 +4,7 @@ import { mollie } from './_bestelling.js';
 import { rpc, haalBestelling, werkBij, log } from './_db.js';
 import { mails, vanRij } from './_mails.js';
 import { metDrukbestanden, drukLijstHtml, naarDrukker } from './_media.js';
+import * as prodigi from './_prodigi.js';
 
 async function probeer(id, soort, fn) {
   try { if (await fn()) await log(id, 'mail', soort); }
@@ -21,6 +22,18 @@ export async function drukopdracht(o, door = 'systeem', kanaal) {
   catch (e) { await log(o.id, 'fout', `drukopdracht mislukt: ${e.message}`, door); return { verstuurd: false, reden: e.message }; }
 }
 
+// Na betaling (of import van een kanaalorder): naar Prodigi als dat aan staat, anders de drukopdracht per
+// mail (DRUKKER_EMAIL). Mag een betaling nooit laten mislukken.
+export async function naBetaling(o, door = 'systeem', kanaal) {
+  try {
+    const r = await prodigi.aanmelden(o, door);
+    if (r.aangemeld || r.reden === 'al aangemeld') return r;
+  } catch (e) {
+    if (!/kanaal_instellingen|fulfilments|db-4/.test(e.message)) { await log(o.id, 'fout', `Prodigi aanmelden mislukt: ${e.message}`, door); return { aangemeld: false }; }
+  }
+  return drukopdracht(o, door, kanaal);
+}
+
 // Zet een bestelling op betaald (idempotent) en stuurt alleen de eerste keer de mails.
 export async function betaald(bestelling, methode, door = 'systeem') {
   const res = await rpc('skiffa_markeer_betaald', { p_id: bestelling.id, p_methode: methode || null, p_door: door });
@@ -29,7 +42,7 @@ export async function betaald(bestelling, methode, door = 'systeem') {
     await probeer(o.id, 'bevestiging', () => mails.bevestiging(o));
     const druk = await drukOverzicht(o);
     await probeer(o.id, 'winkel', () => mails.winkelNieuw(o, `Betaald${methode ? ` via ${methode}` : ''}.`, druk));
-    await drukopdracht(o, door);
+    await naBetaling(o, door);
   }
   return res;
 }

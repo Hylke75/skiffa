@@ -469,14 +469,13 @@ let posters=[
   {id:'zon',naam:'Zon',kleur:'#E8571E',actief:true,sub:'linodrukstijl · illustratie',zin:'Een oranje zon, een muur van blauw water en de vuurtoren klein in de verte. Een surfer loopt terug naar het strand; de zee mag even rusten.',punten:PUNTEN},
 ];
 /* Zes visuals per poster (geüpload in /admin → posters). Zolang er geen zijn, toont het productvenster
-   de poster en de twee lijst-dia's. */
-let visuals={};
-fetch('/api/media?actie=visuals').then(r=>r.ok?r.json():null).then(j=>{if(j&&j.ok&&j.visuals)visuals=j.visuals;}).catch(()=>{});
-const beeld=id=>`/posters/${id}.webp`,klein=id=>`/posters/${id}-klein.webp`;
+   de poster en de twee lijst-dia's. Visuals en de centrale catalogus komen uit /api/catalogus (onderaan). */
+let visuals={};const eigenBeeld={};
+const beeld=id=>eigenBeeld[id]?.beeld||`/posters/${id}.webp`,klein=id=>eigenBeeld[id]?.klein||`/posters/${id}-klein.webp`;
 const zichtbaar=()=>posters.filter(p=>p.actief!==false);
 const vind=id=>posters.find(p=>p.id===id);
 const euro=v=>'€ '+(Number.isInteger(v)?v:v.toFixed(2).replace('.',','));
-const vanaf=Math.min(...formaten.map(f=>f.prijs));
+let vanaf=Math.min(...formaten.map(f=>f.prijs));
 const WINKEL_MAIL='hallo@skiffa.nl';
 
 /* Hotspots: verankerd aan een plek in de uitsnede (fractie van beeldbreedte/-hoogte, zoals maikasui doet met videoX/videoY) */
@@ -746,6 +745,25 @@ tekenMandje();
     image:location.origin+beeld(p.id),url:location.origin+'/#'+p.id,brand:{'@type':'Brand',name:'Skiffa'},
     offers:{'@type':'AggregateOffer',priceCurrency:'EUR',lowPrice:vanaf,highPrice:Math.max(...formaten.map(f=>f.prijs)),offerCount:formaten.length,availability:'https://schema.org/InStock'}}))});
   document.head.appendChild(s);})();
+
+/* ---------- Centrale catalogus (/admin → posters) ----------
+   Staat de catalogus in de database, dan zijn producten, formaten en prijzen daar leidend (de server rekent
+   met dezelfde gegevens). Zonder database blijft alles zoals hierboven in de code. */
+(async()=>{
+  try{
+    const r=await fetch('/api/catalogus');if(!r.ok)return;
+    const d=await r.json();if(!d||!d.ok)return;
+    if(d.visuals)visuals=d.visuals;
+    if(d.bron!=='database'||!Array.isArray(d.producten)||!d.producten.length||!Array.isArray(d.formaten)||!d.formaten.length)return;
+    formaten.splice(0,formaten.length,...d.formaten.map(f=>({id:String(f.id),label:String(f.label),prijs:Number(f.prijs),...(f.standaard?{standaard:true}:{})})));
+    vanaf=Math.min(...formaten.map(f=>f.prijs));
+    posters=d.producten.map(p=>{const oud=vind(p.id);
+      if(p.beeld&&!String(p.beeld).startsWith('/posters/'))eigenBeeld[p.id]={beeld:p.beeld,klein:p.klein||p.beeld};
+      return {id:String(p.id),naam:String(p.naam),sub:String(p.sub||''),zin:String(p.zin||''),kleur:/^#[0-9a-f]{6}$/i.test(p.kleur)?p.kleur:'#1F4E79',actief:true,punten:oud?.punten||PUNTEN};});
+    regels=regels.filter(x=>vind(x.id)&&formaatVan(x.formaat));bewaar();
+    tekenShop();if(overGetekend)tekenOverBlok();tekenMandje();plaatsHotspots(document.body.dataset.periode||'ochtend');
+  }catch(_){/* stil terugvallen op de catalogus in de code */}
+})();
 
 /* ---------- CMS-hydratie (headless; env-gated op de server, valt stil terug op de content in de code) ----------
    De site draait volledig zonder CMS. Staat er op de server een CMS_URL + CMS_TOKEN (zie /api/content),

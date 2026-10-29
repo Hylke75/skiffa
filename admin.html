@@ -79,6 +79,17 @@ tbody tr:hover{background:var(--zee)}
 .schakel:checked{background:#111}
 .schakel::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#fff;transition:left .2s}
 .schakel:checked::after{left:16px}
+.cat{background:#fff;border:1px solid var(--lijn);border-radius:12px;padding:14px 16px;margin-bottom:14px;overflow-x:auto}
+.cat table{border:0;min-width:760px}.cat td{vertical-align:middle;padding:6px 8px}.cat tbody tr{cursor:default}
+.cat input[type=text],.cat input[type=number]{width:100%;font-size:11px;padding:4px 8px}
+.pk details{margin:-2px 0 6px}.pk summary{cursor:pointer;font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.7;padding:4px 0}
+.gegevens{display:grid;grid-template-columns:96px 1fr;gap:10px;margin-top:6px}
+.gegevens .pbeeld{width:96px;aspect-ratio:2/3;border:1px dashed #aaa;border-radius:8px;overflow:hidden;cursor:pointer;display:grid;place-items:center;font-size:10px;color:#777;background:var(--papier);position:relative}
+.gegevens .pbeeld img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.gegevens .velden{display:grid;gap:6px}.gegevens input,.gegevens textarea{width:100%;font-size:11px;padding:5px 8px}
+.gegevens .rijtje{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.gegevens input[type=color]{width:40px;height:28px;padding:2px}
+.gegevens input[type=number]{width:70px}
+.pk.uit{opacity:.75}.pk.uit h3 span:first-child::after{content:" · niet te koop";font-size:10px;color:var(--rood);letter-spacing:.05em}
 .drop{display:block;background:#fff;border:1.5px dashed #999;border-radius:12px;padding:22px;text-align:center;cursor:pointer;margin-bottom:14px}
 .drop.over{border-color:#111;background:var(--zee)}
 .drop code,.mini code{background:var(--zee);padding:0 4px;border-radius:4px}
@@ -122,6 +133,7 @@ tbody tr:hover{background:var(--zee)}
   <main>
     <div id="instellingen"></div>
     <section id="viewKanalen" class="verberg">
+      <div class="kanalen" id="prodigiKaart" style="margin-bottom:14px"></div>
       <div class="kanalen" id="kanaalKaarten"></div>
       <div class="assort">
         <div class="balk"><b style="margin-right:8px">assortiment</b>
@@ -133,6 +145,7 @@ tbody tr:hover{background:var(--zee)}
     </section>
     <section id="viewPosters" class="verberg">
       <div class="kaarten" id="mediaTellers"></div>
+      <div id="catalogusBlok"></div>
       <label class="drop" id="drop"><input type="file" id="dropInput" multiple accept=".pdf,application/pdf,image/jpeg,image/png,image/webp" hidden>
         <b>Sleep al je drukbestanden en visuals hierheen</b> (of klik om te kiezen). De bestandsnaam bepaalt de koppeling:
         <span class="mini" style="display:block;margin-top:4px">drukbestand: <code>golf-50x70.pdf</code> · <code>pier-en-strand-30x40.pdf</code> · <code>regatta-18x24in.pdf</code> &nbsp;—&nbsp; visuals: <code>golf-1.jpg</code> t/m <code>golf-6.jpg</code></span></label>
@@ -227,6 +240,26 @@ function sluit(){$('#paneel').classList.remove('open');huidig=null;history.repla
 $('#paneel').addEventListener('click',e=>{if(e.target.id==='paneel')sluit();if(e.target.closest('[data-naarposters]')){e.preventDefault();sluit();toonView('posters');}});
 addEventListener('keydown',e=>{if(e.key==='Escape')sluit();});
 
+const FSTATUS={wacht:'wacht (bedenktijd)',bezig:'wordt verstuurd',opnieuw:'volgt opnieuw',verstuurd:'bij Prodigi',in_productie:'in productie bij Prodigi',verzonden:'verzonden door Prodigi',geblokkeerd:'geblokkeerd',fout:'fout',geannuleerd:'geannuleerd'};
+function prodigiBlok(b){
+  const f=b.fulfilment;
+  if(!f)return b.betaald_op&&!['geannuleerd','terugbetaald'].includes(b.status)?`<div class="blok"><h3>prodigi</h3><div class="acties"><span class="mini">Niet aangemeld bij Prodigi.</span><button data-p="aanmelden">naar Prodigi</button></div></div>`:'';
+  const k=['fout','geblokkeerd'].includes(f.status)?'nok':['verzonden','verstuurd','in_productie'].includes(f.status)?'ok':'';
+  return `<div class="blok"><h3>prodigi${f.omgeving==='sandbox'?' · proefomgeving':''}</h3>
+    <p><span class="${k}">${esc(FSTATUS[f.status]||f.status)}</span>${f.extern_id?` · order <code>${esc(f.extern_id)}</code>${f.extern_status?` (${esc(f.extern_status)})`:''}`:''}${f.status==='wacht'?` · vanaf ${datum(f.vanaf)}`:''}${f.pogingen?` · ${f.pogingen} poging${f.pogingen>1?'en':''}`:''}</p>
+    ${f.laatste_fout?`<p class="mini nok" style="margin-top:4px">${esc(f.laatste_fout)}</p>`:''}
+    <div class="acties" style="margin-top:8px">
+      ${['fout','geblokkeerd','wacht','opnieuw'].includes(f.status)?`<button data-p="opnieuw">${f.status==='wacht'?'nu versturen':'opnieuw proberen'}</button>`:''}
+      ${!['geannuleerd','verzonden'].includes(f.status)?`<button data-p="annuleer">${f.extern_id?'annuleer bij Prodigi':'niet naar Prodigi'}</button>`:''}
+      ${f.omgeving==='sandbox'&&f.extern_id?'<button data-p="reset-sandbox">proeforder loskoppelen (daarna live)</button>':''}
+    </div></div>`;
+}
+async function papi(actie,body){
+  const r=await fetch('/api/prodigi?actie='+actie,{method:body?'POST':'GET',headers:body?{'content-type':'application/json'}:{},body:body?JSON.stringify(body):undefined});
+  const j=await r.json().catch(()=>({ok:false,melding:'Onverwacht antwoord'}));
+  if(r.status===401){toonLogin();throw new Error('uit');}
+  if(!j.ok)throw new Error(j.melding||j.info||'Mislukt');return j;
+}
 function tekenPaneel(b){
   const druk=r=>r.druk?`<a href="${esc(r.druk.link)}" target="_blank" rel="noopener" class="${r.druk.status==='afwijkend'?'nok':'ok'}">drukbestand ↓${r.druk.status==='afwijkend'?' (maat wijkt af)':''}</a>`:`<span class="nok">drukbestand ontbreekt</span> · <a href="#posters" data-naarposters>uploaden</a>`;
   const regels=(b.bestelregels||[]).map(r=>`<tr><td>${r.aantal}× ${esc(r.poster_naam)} <span style="opacity:.6">${esc(r.formaat_label)}</span><div class="mini">${druk(r)}</div></td><td class="r">${euro(r.prijs*r.aantal)}</td></tr>`).join('');
@@ -246,7 +279,7 @@ function tekenPaneel(b){
   <div class="blok"><h3>acties</h3><div class="acties">
     ${kan('verzenden')?`<select id="vervoerder">${['postnl','dhl','dpd','ups','gls','bpost'].map(v=>`<option ${v===(b.vervoerder||'postnl')?'selected':''}>${v}</option>`).join('')}</select><input id="tt" placeholder="track-and-trace (code${b.kanaal==='webshop'?' of link':''})" value="${esc(b.track_trace||'')}"><button class="vol" data-a="verzonden">markeer verzonden${b.kanaal==='webshop'?' + mail':` + door naar ${esc(b.kanaal)}`}</button>`:''}
     ${kan('productie')?`<button data-a="in_productie">in productie</button>`:''}
-    ${b.betaald_op&&b.drukker&&!['verzonden','geleverd','geannuleerd','terugbetaald'].includes(b.status)?`<button data-a="drukker">drukopdracht ${(b.log||[]).some(l=>l.soort==='drukker')?'opnieuw ':''}naar drukker</button>`:''}
+    ${b.betaald_op&&b.drukker&&!b.fulfilment&&!['verzonden','geleverd','geannuleerd','terugbetaald'].includes(b.status)?`<button data-a="drukker">drukopdracht ${(b.log||[]).some(l=>l.soort==='drukker')?'opnieuw ':''}naar drukker</button>`:''}
     ${kan('geleverd')?`<button data-a="geleverd">geleverd</button>`:''}
     ${kan('betaald')?`<button data-a="betaald">markeer betaald (overboeking)</button>`:''}
     ${b.mollie_id?`<button data-a="ververs">ververs betaalstatus</button>`:''}
@@ -259,6 +292,7 @@ function tekenPaneel(b){
   ${kan('terug')?`<div class="acties" style="margin-top:10px"><input id="terugBedrag" placeholder="bedrag (leeg = alles: ${euro(b.totaal-b.terugbetaald)})" inputmode="decimal"><button data-a="terugbetalen">terugbetalen${b.mollie_id?' via Mollie':''}</button></div>`:''}
   </div>
 
+  ${prodigiBlok(b)}
   <div class="blok"><h3>bestelling</h3><table>${regels}
     <tr><td>verzending</td><td class="r">${Number(b.verzending)?euro(b.verzending):'gratis'}</td></tr>
     <tr><td><b>totaal</b> (waarvan btw ${euro(b.totaal-b.totaal/1.21)})</td><td class="r"><b>${euro(b.totaal)}</b></td></tr>
@@ -275,6 +309,13 @@ function tekenPaneel(b){
 }
 
 $('#vak').addEventListener('click',async e=>{
+  const pk=e.target.closest('button[data-p]');
+  if(pk&&huidig){const a=pk.dataset.p,id=huidig.id;
+    const vraag={annuleer:'Niet (meer) laten drukken door Prodigi?','reset-sandbox':'Proeforder loskoppelen? De bestelling gaat daarna live naar Prodigi.',aanmelden:'Deze bestelling naar Prodigi sturen?'}[a];
+    if(vraag&&!confirm(vraag))return;pk.disabled=true;
+    try{const r=await papi(a,{id});meld(r.melding||(r.resultaat?`Prodigi: verstuurd ${r.resultaat.verstuurd}, geblokkeerd ${r.resultaat.geblokkeerd}, fout ${r.resultaat.fout}`:'Opgeslagen'));await open(id);laadLijst();}
+    catch(x){if(x.message!=='uit')meld(x.message,true);pk.disabled=false;}
+    return;}
   const k=e.target.closest('button[data-a]');if(!k||!huidig)return;const a=k.dataset.a,id=huidig.id;
   if(a==='sluit')return sluit();
   const bevestig={geannuleerd:'Bestelling annuleren? De klant krijgt een mail.',terugbetalen:'Geld terugstorten naar de klant?',betaald:'Markeren als betaald? Er wordt een factuurnummer toegekend en de klant krijgt de bevestiging.'};
@@ -312,7 +353,41 @@ async function kapi(actie,{method='GET',body,params}={}){
   if(!j.ok&&j.melding)throw new Error(j.melding);return j;
 }
 function logTekst(l){return (l||[]).map(x=>`<div class="${x.ok?'':'nok'}">${esc(x.stap)}: ${esc(x.info)}</div>`).join('');}
+async function laadProdigi(){
+  try{const o=await papi('overzicht'),s=o.instellingen,t=o.tellers||{},omg=s.sandbox?'sandbox':'live';
+    $('#prodigiKaart').innerHTML=`<div class="kanaal" style="grid-column:1/-1" id="prodigi">
+      <h3>Prodigi (drukken en verzenden) <span class="${s.aan?'ok':''}">${s.aan?(s.sandbox?'aan · proefomgeving':'aan · live'):'uit'}</span></h3>
+      <p class="mini">sleutels: sandbox ${o.sleutels.sandbox?'<span class="ok">aanwezig</span>':'<span class="nok">ontbreekt (PRODIGI_SANDBOX_API_KEY)</span>'} · live ${o.sleutels.live?'<span class="ok">aanwezig</span>':'<span class="nok">ontbreekt (PRODIGI_API_KEY)</span>'}</p>
+      <p class="mini" style="margin-bottom:8px">Elke betaalde bestelling (webshop, Etsy, bol, Amazon) gaat na de wachttijd hooguit één keer naar Prodigi. Nu: ${['wacht','opnieuw','verstuurd','in_productie','verzonden','geblokkeerd','fout'].map(k=>`${FSTATUS[k]} ${t[k]||0}`).join(' · ')}</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:4px 24px">
+        <div class="rij"><label>Prodigi aan</label><input type="checkbox" class="schakel" data-pv="aan" ${s.aan?'checked':''}></div>
+        <div class="rij"><label>proefomgeving (sandbox: er wordt niets gedrukt)</label><input type="checkbox" class="schakel" data-pv="sandbox" ${s.sandbox?'checked':''}></div>
+        <div class="rij"><label>wachttijd na betaling (minuten)</label><input data-pv="wachttijd_min" value="${esc(s.wachttijd_min)}"></div>
+        <div class="rij"><label>verzendmethode</label><select data-pv="verzendmethode">${o.verzendmethoden.map(v=>`<option ${v===s.verzendmethode?'selected':''}>${v}</option>`).join('')}</select></div>
+        <div class="rij"><label>beeld op het papier</label><select data-pv="sizing">${[['fillPrintArea','vullend (afloop valt weg)'],['fitPrintArea','passend (niets wegsnijden)']].map(([v,l])=>`<option value="${v}" ${v===s.sizing?'selected':''}>${l}</option>`).join('')}</select></div>
+      </div>
+      <div class="acties" style="margin-top:10px"><button class="vol" data-pa="opslaan">opslaan</button><button data-pa="ping">test verbinding (${omg})</button><button data-pa="verwerk">nu versturen wat klaarstaat</button></div>
+      <p class="mini" style="margin-top:6px">Prodigi-SKU per formaat stel je in bij Beheer → posters → formaten en prijzen. Statusmeldingen komen binnen op ${esc(o.callbackUrl)} (gaat automatisch mee met elke order).</p>
+      ${(o.aandacht||[]).length?`<div class="waarschuw" style="margin:10px 0 0">Aandacht nodig: ${o.aandacht.map(a=>`<a href="#${esc(a.bestellingen?.nummer||'')}" data-open="${esc(a.bestelling_id)}">${esc(a.bestellingen?.nummer||a.bestelling_id.slice(0,8))}</a> (${esc(FSTATUS[a.status])}: ${esc((a.laatste_fout||'').slice(0,120))})`).join(' · ')}</div>`:''}
+      <div class="mini" id="uit-prodigi" style="margin-top:8px"></div></div>`;
+  }catch(e){if(e.message!=='uit')$('#prodigiKaart').innerHTML=`<div class="waarschuw" style="grid-column:1/-1;margin:0">Prodigi: ${esc(e.message)}</div>`;}
+}
+$('#prodigiKaart').addEventListener('click',async e=>{
+  const ln=e.target.closest('[data-open]');if(ln){e.preventDefault();toonView('bestellingen');open(ln.dataset.open);return;}
+  const b=e.target.closest('[data-pa]');if(!b)return;const uit=$('#uit-prodigi'),a=b.dataset.pa;b.disabled=true;
+  try{
+    if(a==='opslaan'){const w={};document.querySelectorAll('#prodigi [data-pv]').forEach(i=>w[i.dataset.pv]=i.type==='checkbox'?i.checked:i.value);
+      if(w.aan&&!w.sandbox&&!confirm('Prodigi live zetten? Betaalde bestellingen worden dan echt gedrukt en verzonden (op jouw kosten bij Prodigi).')){b.disabled=false;return;}
+      await papi('instellingen',{waarden:w});meld('Prodigi-instellingen opgeslagen');await laadProdigi();return;}
+    if(a==='ping'){const r=await fetch('/api/prodigi?actie=ping',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({omgeving:document.querySelector('#prodigi [data-pv=sandbox]').checked?'sandbox':'live'})}).then(r=>r.json());
+      uit.innerHTML=`<span class="${r.ok?'ok':'nok'}">${esc(r.info||r.melding)}</span>`;}
+    if(a==='verwerk'){const r=await papi('verwerk',{});const v=r.verwerk;
+      uit.innerHTML=v.uit?'Prodigi staat uit.':`verstuurd ${v.verstuurd} · geblokkeerd ${v.geblokkeerd} · fout ${v.fout} · opnieuw later ${v.opnieuw} · status bijgewerkt ${r.statussen.bijgewerkt}`;laadOverzicht();laadLijst();}
+  }catch(x){if(x.message!=='uit'){uit.innerHTML=`<span class="nok">${esc(x.message)}</span>`;}}
+  b.disabled=false;
+});
 async function laadKanalen(){
+  laadProdigi();
   try{const {kanalen,cron}=await kapi('overzicht');
     $('#kanaalKaarten').innerHTML=['bol','etsy','amazon'].map(k=>{const c=kanalen[k],s=c.instellingen,l=c.listings,laatste=c.laatste[0];
       return `<div class="kanaal" data-k="${k}">
@@ -377,18 +452,67 @@ async function mapi(actie,body,params){
   if(!j.ok)throw new Error(j.melding||'Mislukt');return j;
 }
 const mb=b=>b>=1e9?(b/1e9).toFixed(1).replace('.',',')+' GB':(b/1e6).toFixed(b<1e7?1:0).replace('.',',')+' MB';
+let cat=null,catFout='';
+async function capi(actie,body){
+  const r=await fetch('/api/catalogus?actie='+actie,{method:body?'POST':'GET',headers:body?{'content-type':'application/json'}:{},body:body?JSON.stringify(body):undefined});
+  const j=await r.json().catch(()=>({ok:false,melding:'Onverwacht antwoord'}));
+  if(r.status===401){toonLogin();throw new Error('uit');}
+  if(!j.ok)throw new Error(j.melding||'Mislukt');return j;
+}
 async function laadMedia(){
-  try{media=await mapi('overzicht');tekenMedia();}
+  try{const [m,c]=await Promise.all([mapi('overzicht'),capi('beheer').catch(e=>{if(e.message==='uit')throw e;catFout=e.message;return null;})]);
+    media=m;cat=c;tekenCatalogus();tekenMedia();}
   catch(e){if(e.message!=='uit')$('#posterKaarten').innerHTML=`<div class="leeg">${esc(e.message)}</div>`;}
+}
+function tekenCatalogus(){
+  if(!cat){$('#catalogusBlok').innerHTML=`<div class="waarschuw">Centrale catalogus: ${esc(catFout||'niet beschikbaar')}. Tot dan gelden de producten en prijzen uit de code.</div>`;return;}
+  $('#catalogusBlok').innerHTML=`<div class="cat"><div class="balk" style="margin-bottom:6px"><b>formaten en prijzen</b><span class="mini">geldt voor webshop, kanalen (plus opslag) en Prodigi</span><span style="flex:1"></span><button class="vol" data-c="nieuw">+ nieuwe poster</button></div>
+    <table><thead><tr><th>formaat</th><th>maat (mm)</th><th>prijs (€)</th><th>te koop</th><th>standaard</th><th>Prodigi-SKU</th><th>volgorde</th><th></th></tr></thead><tbody>${cat.formaten.map(f=>`<tr data-fid="${esc(f.id)}">
+      <td><input type="text" data-v="label" value="${esc(f.label)}"></td><td class="mini">${String(f.breedte_mm).replace('.',',')} × ${String(f.hoogte_mm).replace('.',',')}</td>
+      <td><input type="text" inputmode="decimal" data-v="prijs" value="${String(f.prijs).replace('.',',')}" style="width:80px"></td>
+      <td><input type="checkbox" class="schakel" data-v="actief" ${f.actief?'checked':''}></td><td><input type="radio" name="standaard" data-v="standaard" ${f.standaard?'checked':''}></td>
+      <td><input type="text" data-v="prodigi_sku" value="${esc(f.prodigi_sku||'')}" placeholder="bv. GLOBAL-FAP-…"></td>
+      <td><input type="number" data-v="volgorde" value="${f.volgorde}" style="width:64px"></td><td><button data-c="formaat">opslaan</button></td></tr>`).join('')}</tbody></table></div>`;
+}
+function gegevensHtml(p){
+  const c=cat?.producten.find(x=>x.id===p.id);if(!c)return '';
+  return `<details><summary>gegevens en productbeeld</summary><div class="gegevens">
+    <div class="pbeeld" data-c="kies-beeld" title="productbeeld vervangen">${c.klein?`<img src="${esc(c.klein)}" alt="">`:''}<span style="position:relative;background:rgba(255,255,255,.85);padding:0 4px;border-radius:4px">${c.beeld||c.vast_beeld?'vervang':'+ beeld'}</span></div>
+    <div class="velden"><input data-g="naam" value="${esc(c.naam)}" placeholder="naam"><input data-g="sub" value="${esc(c.sub)}" placeholder="stijl, bv. jaren zestig · foto">
+      <textarea data-g="zin" rows="3" placeholder="omschrijving">${esc(c.zin)}</textarea>
+      <div class="rijtje"><label class="mini">kleur <input type="color" data-g="kleur" value="${esc(c.kleur)}"></label><label class="mini">volgorde <input type="number" data-g="volgorde" value="${c.volgorde}"></label>
+        <label class="mini">te koop <input type="checkbox" class="schakel" data-g="actief" ${c.actief?'checked':''}></label><span style="flex:1"></span><button class="vol" data-c="product">opslaan</button></div></div></div></details>`;
+}
+$('#catalogusBlok').addEventListener('click',async e=>{
+  const b=e.target.closest('[data-c]');if(!b)return;
+  try{
+    if(b.dataset.c==='formaat'){const tr=b.closest('tr'),w={id:tr.dataset.fid};tr.querySelectorAll('[data-v]').forEach(i=>w[i.dataset.v]=i.type==='checkbox'||i.type==='radio'?i.checked:i.value);
+      b.disabled=true;const r=await capi('formaat',w);meld(r.melding);await laadMedia();}
+    if(b.dataset.c==='nieuw'){const naam=prompt('Naam van de nieuwe poster:');if(!naam)return;
+      const r=await capi('product',{nieuw:true,naam,actief:false,volgorde:(cat.producten.length+1)*10});meld(r.melding+'. Upload nu het productbeeld, de visuals en de drukbestanden.');await laadMedia();
+      const k=document.querySelector(`.pk[data-p="${CSS.escape(r.id)}"]`);if(k){k.querySelector('details')?.setAttribute('open','');k.scrollIntoView({behavior:'smooth',block:'center'});}}
+  }catch(x){if(x.message!=='uit')meld(x.message,true);b.disabled=false;}
+});
+async function productBeeld(file,id,el){
+  if(!/^image\/(jpeg|png|webp)$/.test(file.type))return meld('Alleen jpg, png of webp',true);
+  meld('Bezig met uploaden…');
+  try{const [groot,klein]=await Promise.all([verklein(file,2000),verklein(file,600)]);
+    const u=await capi('beeld-upload',{id,bytes:groot.blob.size});
+    await put(u.url,groot.blob,'image/jpeg');await put(u.url_klein,klein.blob,'image/jpeg');
+    const r=await capi('beeld-bevestig',{id,pad:u.pad,pad_klein:u.pad_klein});meld(r.melding);}
+  catch(x){if(x.message!=='uit')meld(x.message,true);}
+  await laadMedia();
 }
 function tekenMedia(){
   const t=media.tellers;
   $('#mediaTellers').innerHTML=[['drukbestanden (te koop)',`${t.druk} / ${t.drukNodig}`],['maat wijkt af',t.afwijkend],['visuals',`${t.visuals} / ${t.visualsNodig}`],['drukopdracht per mail',media.drukker?'aan':'uit']]
     .map(([k,v])=>`<div class="kaart"><small>${k}</small><b class="${k==='maat wijkt af'&&v?'nok':''}">${v}</b></div>`).join('')
     +(media.drukker?'':`<div class="waarschuw" style="grid-column:1/-1;margin:0">Zet DRUKKER_EMAIL in Vercel om na elke betaling automatisch een drukopdracht (verzendadres + drukbestanden) naar je drukker te sturen.</div>`);
+  const open=new Set([...document.querySelectorAll('.pk details[open]')].map(d=>d.closest('.pk').dataset.p));
   $('#posterKaarten').innerHTML=media.posters.map(p=>{
     const n=media.formaten.filter(f=>f.actief&&p.druk[f.id]).length,na=media.formaten.filter(f=>f.actief).length;
-    return `<div class="pk" data-p="${esc(p.id)}"><h3><span>${esc(p.naam)}</span><span class="mini ${n===na&&p.visuals.length===media.aantalVisuals?'ok':''}">druk ${n}/${na} · visuals ${p.visuals.length}/${media.aantalVisuals}</span></h3>
+    const c=cat?.producten.find(x=>x.id===p.id);
+    return `<div class="pk ${c&&!c.actief?'uit':''}" data-p="${esc(p.id)}"><h3><span>${esc(p.naam)}</span><span class="mini ${n===na&&p.visuals.length===media.aantalVisuals?'ok':''}">druk ${n}/${na} · visuals ${p.visuals.length}/${media.aantalVisuals}</span></h3>${gegevensHtml(p)}
       <div class="sub">drukbestanden (pdf, hoge resolutie)</div><div class="druklijst">${media.formaten.map(f=>{const d=p.druk[f.id];
         return `<div class="drukrij ${f.actief?'':'later'}" data-f="${f.id}"><span>${esc(f.label)}${f.actief?'':' <span class="kb">later</span>'}</span>
         <span>${d?`<span class="${d.status==='ok'?'ok':d.status==='afwijkend'?'nok':''}">${d.status==='ok'?'✓ maat klopt':d.status==='afwijkend'?`⚠ ${d.breedte} × ${d.hoogte} mm`:'maat onbekend'}</span> <span class="mini">${d.afloop?`${String(d.afloop).replace('.',',')} mm afloop · `:''}${d.bytes?mb(d.bytes):''}</span>`:`<span class="mini">nog geen bestand · ${f.mm.map(x=>String(x).replace('.',',')).join(' × ')} mm</span>`}</span>
@@ -396,6 +520,7 @@ function tekenMedia(){
       <div class="sub">visuals voor de webshop (1 = eerste beeld)</div><div class="vis">${[1,2,3,4,5,6].map(i=>{const v=p.visuals.find(x=>x.positie===i);
         return `<div class="slot" data-pos="${i}" tabindex="0" role="button" aria-label="visual ${i} ${v?'vervangen':'uploaden'}">${v?`<img src="${esc(v.klein)}" alt="${esc(v.alt)}" loading="lazy"><span class="nr">${i}</span><button class="x" data-m="weg-visual" aria-label="verwijder visual ${i}">×</button>`:`+ ${i}`}</div>`;}).join('')}</div>
     </div>`;}).join('');
+  open.forEach(id=>document.querySelector(`.pk[data-p="${CSS.escape(id)}"] details`)?.setAttribute('open',''));
 }
 
 // PDF-maat uitlezen in de browser (MediaBox/TrimBox van de eerste pagina, in mm). Leest in stukken,
@@ -451,6 +576,10 @@ async function losseUpload(file,doel,el){
 function kiesBestand(accept,fn){const i=document.createElement('input');i.type='file';i.accept=accept;i.onchange=()=>i.files[0]&&fn(i.files[0]);i.click();}
 $('#posterKaarten').addEventListener('click',async e=>{
   const pk=e.target.closest('.pk');if(!pk)return;const p=pk.dataset.p,m=e.target.closest('[data-m]')?.dataset.m,rij=e.target.closest('.drukrij'),slot=e.target.closest('.slot');
+  const c=e.target.closest('[data-c]')?.dataset.c;
+  if(c==='kies-beeld')return kiesBestand('image/jpeg,image/png,image/webp',f=>productBeeld(f,p));
+  if(c==='product'){const b=e.target.closest('button'),w={id:p};pk.querySelectorAll('[data-g]').forEach(i=>w[i.dataset.g]=i.type==='checkbox'?i.checked:i.value);
+    b.disabled=true;try{const r=await capi('product',w);meld(r.melding);await laadMedia();}catch(x){if(x.message!=='uit')meld(x.message,true);b.disabled=false;}return;}
   if(m==='kies-druk')return kiesBestand('.pdf,application/pdf',f=>losseUpload(f,{soort:'druk',poster_id:p,formaat:rij.dataset.f},rij));
   if(m==='weg-druk'){if(!confirm(`Drukbestand ${naamVan(p)} ${labelVan(rij.dataset.f)} verwijderen?`))return;try{await mapi('verwijder',{soort:'druk',poster_id:p,formaat:rij.dataset.f});meld('Verwijderd');}catch(x){if(x.message!=='uit')meld(x.message,true);}return laadMedia();}
   if(m==='weg-visual'){e.stopPropagation();if(!confirm(`Visual ${slot.dataset.pos} van ${naamVan(p)} verwijderen?`))return;try{await mapi('verwijder',{soort:'visual',poster_id:p,positie:+slot.dataset.pos});meld('Verwijderd');}catch(x){if(x.message!=='uit')meld(x.message,true);}return laadMedia();}

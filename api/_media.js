@@ -7,7 +7,7 @@
 //
 // Visuals: zes beelden per poster (positie 1–6) in de publieke bucket 'visuals', voor het
 // productvenster in de webshop en als extra foto's op Etsy en Amazon.
-import { POSTERS, ALLE_FORMATEN } from './_catalogus.js';
+import { ALLE_POSTERS as POSTERS, ALLE_FORMATEN, BEELDEN } from './_catalogus.js';
 import { db, log } from './_db.js';
 import { onderteken, handtekeningKlopt } from './_auth.js';
 import { publiekeUrl } from './_opslag.js';
@@ -158,5 +158,6 @@ export { isWebshop };
 export async function kanaalBeelden(poster_id) {
   let v = [];
   try { v = (await visuals(poster_id))[poster_id] || []; } catch { /* zonder media-tabel: alleen de poster */ }
-  return [`${bedrijf().site}/posters/${poster_id}.jpg`, ...v.map((x) => x.url)];
+  const hoofd = BEELDEN[poster_id] ? visualUrl(BEELDEN[poster_id].groot) : `${bedrijf().site}/posters/${poster_id}.jpg`;
+  return [hoofd, ...v.map((x) => x.url)];
 }

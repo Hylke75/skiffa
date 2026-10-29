@@ -11,6 +11,7 @@
 // POST sync {kanaal, stap?}              · ping {kanaal}
 // GET  etsy-koppel → {url} · etsy-terug (OAuth-callback, via /etsy/terug) · etsy-profielen
 // GET/POST cron                          alle ingeschakelde kanalen, alle stappen
+import { laadCatalogus } from './_catalogus.js';
 import crypto from 'node:crypto';
 import { dbAan, db } from './_db.js';
 import { isAdmin } from './_auth.js';
@@ -21,6 +22,7 @@ import { instellingen, zetInstellingen, listings, zetListing, eans, logRun } fro
 import * as bol from './_kanalen/bol.js';
 import * as etsy from './_kanalen/etsy.js';
 import * as amazon from './_kanalen/amazon.js';
+import * as prodigi from './_prodigi.js';
 
 const MOD = { bol, etsy, amazon };
 const INGESTELD = { bol: bol.bolIngesteld, etsy: etsy.etsyIngesteld, amazon: amazon.amazonIngesteld };
@@ -63,6 +65,7 @@ async function draaiKanaal(kanaal, stap, door) {
 }
 
 export default async function handler(req, res) {
+  await laadCatalogus();
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('X-Robots-Tag', 'noindex');
   const actie = param(req, 'actie');
@@ -82,6 +85,12 @@ export default async function handler(req, res) {
       try { const r = await draaiKanaal(k, '', 'automatisch'); resultaat[k] = r.ok ? 'ok' : r.log.filter((l) => !l.ok).map((l) => l.info).join(' · '); }
       catch (e) { resultaat[k] = `fout: ${e.message}`; }
     }
+    // Prodigi: klaarstaande bestellingen versturen en open orders bijwerken (vangnet voor callbacks).
+    try {
+      const v = await prodigi.verwerk();
+      if (v.uit) resultaat.prodigi = 'uit';
+      else { const st = await prodigi.statussen(); resultaat.prodigi = `verstuurd ${v.verstuurd}, geblokkeerd ${v.geblokkeerd}, fout ${v.fout}, opnieuw ${v.opnieuw}; status bijgewerkt ${st.bijgewerkt}`; }
+    } catch (e) { resultaat.prodigi = `fout: ${e.message}`; }
     return res.status(200).json({ ok: true, resultaat });
   }
 

@@ -6,8 +6,10 @@
 import { mollie, uitMetadata, overzichtHtml, mail, euro, esc, winkelMail } from './_bestelling.js';
 import { dbAan } from './_db.js';
 import { verwerkMollie } from './_verwerk.js';
+import { laadCatalogus } from './_catalogus.js';
 
 export default async function handler(req, res) {
+  await laadCatalogus(); // Prodigi-SKU's en prijzen uit de centrale catalogus
   if (req.method !== 'POST') {
     res.status(405).end();
     return;

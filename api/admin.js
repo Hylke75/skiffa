@@ -11,6 +11,7 @@
 // POST ververs {id}               actuele betaalstatus bij Mollie ophalen
 // POST notitie {id, tekst}        interne notitie
 // POST mail {id, soort}           mail opnieuw sturen (bevestiging, verzonden)
+import { laadCatalogus } from './_catalogus.js';
 import { dbAan, db, haalBestelling, werkBij, log } from './_db.js';
 import { isAdmin, wachtwoordKlopt, sessieCookie, uitlogCookie, adminIngesteld } from './_auth.js';
 import { mollie, euro } from './_bestelling.js';
@@ -18,6 +19,7 @@ import { btwDeel } from './_bedrijf.js';
 import { mails, vanRij, mailAan } from './_mails.js';
 import { betaald, verwerkMollie } from './_verwerk.js';
 import { drukbestanden } from './_media.js';
+import { fulfilmentVan, annuleer as prodigiAnnuleer } from './_prodigi.js';
 
 const STATUSSEN = ['open', 'betaald', 'in_productie', 'verzonden', 'geleverd', 'geannuleerd', 'mislukt', 'terugbetaald'];
 const param = (req, k) => String(req.query?.[k] ?? new URL(req.url || '/', 'http://x').searchParams.get(k) ?? '');
@@ -79,6 +81,7 @@ async function bestelling(id) {
     });
   } catch { /* zonder media-migratie: geen drukbestanden */ }
   r.drukker = !!process.env.DRUKKER_EMAIL;
+  try { r.fulfilment = await fulfilmentVan(id); } catch { r.fulfilment = null; }
   return r;
 }
 
@@ -117,6 +120,14 @@ async function zetStatus(id, body) {
     if (r.kanaal !== 'webshop' && !velden.track_trace) return { fout: `${r.kanaal} eist een track-and-trace-code.` };
   }
   if (nieuw === 'geannuleerd' && r.kanaal !== 'webshop') return { fout: `Annuleer een ${r.kanaal}-order bij ${r.kanaal} zelf; de volgende synchronisatie neemt dat over.` };
+  // Nog niet naar Prodigi verstuurd? Dan gaat het ook niet meer. Al verstuurd: melden.
+  if (nieuw === 'geannuleerd') {
+    try {
+      const f = await fulfilmentVan(id);
+      if (f && !f.extern_id && !['geannuleerd'].includes(f.status)) await prodigiAnnuleer(id, 'admin');
+      else if (f?.extern_id && !['geannuleerd'].includes(f.status)) await log(id, 'waarschuwing', `Deze bestelling is al bij Prodigi (${f.extern_id}); annuleer hem daar ook (knop "annuleer bij Prodigi").`, 'admin');
+    } catch { /* zonder Prodigi-tabel */ }
+  }
   const bijgewerkt = await werkBij(id, velden);
   await log(id, 'status', `${r.status} → ${nieuw}${velden.track_trace ? ` (${velden.track_trace})` : ''}`, 'admin');
   let gemaild = false;
@@ -153,11 +164,17 @@ async function terugbetalen(id, body) {
   const volledig = totaalTerug >= Number(r.totaal) - 0.001;
   await werkBij(id, { terugbetaald: totaalTerug, ...(volledig ? { status: 'terugbetaald' } : {}) });
   await log(id, 'terugbetaling', `${euro(b)} teruggestort${r.mollie_id ? ' via Mollie' : ' (handmatig)'}`, 'admin');
+  try {
+    const f = await fulfilmentVan(id);
+    if (f && !f.extern_id && f.status !== 'geannuleerd') await prodigiAnnuleer(id, 'admin');
+    else if (f?.extern_id && !['geannuleerd', 'verzonden'].includes(f.status)) await log(id, 'waarschuwing', `Al bij Prodigi (${f.extern_id}): annuleer daar als er niet meer gedrukt moet worden.`, 'admin');
+  } catch { /* zonder Prodigi-tabel */ }
   const gemaild = await mailEnLog(id, 'terugbetaald', () => mails.terugbetaald(vanRij(r), b));
   return { ok: true, gemaild };
 }
 
 export default async function handler(req, res) {
+  await laadCatalogus();
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('X-Robots-Tag', 'noindex');
   const actie = param(req, 'actie');

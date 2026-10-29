@@ -25,6 +25,49 @@ een scène die met de tijd in Scheveningen meebeweegt (uitsneden uit de posters)
 - **Mandje**: wordt in de browser bewaard (`localStorage`).
 - **Afrekenen**: zie [Webshop en administratie](#webshop-en-administratie).
 
+## Centrale catalogus
+
+Producten (posters), formaten en prijzen staan in Supabase (`catalogus_producten`, `catalogus_formaten`,
+migratie `20261029030000_catalogus.sql`, met de huidige catalogus als startvulling) en worden beheerd in
+**/admin → posters**: formaten en prijzen (te koop, standaardformaat, Prodigi-SKU), per poster naam, stijl,
+omschrijving, kleur, volgorde, te koop en een eigen productbeeld. Nieuwe posters maak je daar ook aan.
+
+- Webshop: `/api/catalogus` (60 s gecachet) levert producten, formaten, prijzen en visuals; `index.html` neemt die
+  over. Server: `laadCatalogus()` in `api/_catalogus.js` vult dezelfde objecten die de rest van de code al
+  gebruikt (prijsberekening, kanalen, drukbestanden, Prodigi). Zonder database of met lege tabellen geldt de
+  catalogus in de code, dus de site werkt altijd.
+- Een poster kan pas te koop als er een beeld is (eigen productbeeld of `posters/<id>.webp`).
+- Prijzen per formaat gelden voor de webshop; de kanalen rekenen er hun opslag bovenop.
+
+## Prodigi: drukken en verzenden
+
+Elke betaalde bestelling (webshop, Etsy, bol, Amazon) gaat **hooguit één keer** naar Prodigi:
+
+1. Na betaling (of import van een kanaalorder) komt er één regel in `fulfilments` (uniek per bestelling) met
+   status `wacht` en een instelbare **wachttijd** (standaard 30 min, zodat annuleren nog kan).
+2. Versturen gebeurt alleen na een **atomaire claim** (`skiffa_claim_fulfilment`): van `wacht`/`opnieuw` naar
+   `bezig`, en alleen als de bestelling betaald is, niet geannuleerd en zonder terugbetaling. Dubbele
+   webhooks, gelijktijdige runs of een dubbele klik krijgen de claim niet.
+3. Elke poging stuurt dezelfde **idempotentiesleutel** (`skiffa-<omgeving>-<bestelling-id>`) en het bestelnummer
+   als referentie mee. Een herhaling na een storing of time-out maakt bij Prodigi dus geen tweede order.
+   Vastgelopen claims worden na 10 minuten vrijgegeven en met dezelfde sleutel opnieuw geprobeerd.
+4. Vooraf gecontroleerd: Prodigi-SKU per formaat, drukbestand aanwezig en maat niet afwijkend, adres compleet.
+   Klopt iets niet, dan wordt de bestelling `geblokkeerd` (met reden in de administratie) en gaat er niets weg.
+5. Statusmeldingen van Prodigi komen binnen op `/api/prodigi?actie=callback&t=<token>`. De inhoud telt niet: de
+   order wordt altijd opnieuw bij Prodigi opgevraagd. Verzonden → bestelling op verzonden met track-and-trace,
+   klant krijgt de verzendmail (kanaalorders: track-and-trace gaat met de volgende sync naar het kanaal).
+   Als vangnet vraagt de cron elk uur open orders zelf op.
+6. Annuleren of terugbetalen vóór verzenden: er gaat niets naar Prodigi. Al verstuurd: "annuleer bij Prodigi".
+
+Instellingen in **/admin → kanalen → Prodigi**: aan/uit, **proefomgeving** (sandbox, er wordt niets gedrukt),
+wachttijd, verzendmethode, beeld vullend of passend. Een proeforder kan na het live zetten één keer worden
+losgekoppeld en live verstuurd; een live-order nooit opnieuw. Zolang Prodigi uit staat, geldt de drukopdracht per
+mail (`DRUKKER_EMAIL`). Code: `api/_prodigi.js`, `api/prodigi.js`, migratie `20261029040000_prodigi.sql`.
+
+**Nog te controleren in de Prodigi-sandbox**: de juiste SKU's voor 30×40, 50×70 en 70×100 (papier naar keuze),
+of pdf als drukbestand wordt geaccepteerd en hoe de afloop wordt verwerkt (vullend/passend), en hoe Prodigi met de
+idempotentiesleutel omgaat.
+
 ## Drukbestanden en visuals
 
 Per poster hoort bij **elk formaat een eigen drukbestand** (hoge-resolutie pdf) en heeft de poster **zes visuals**
@@ -82,15 +125,15 @@ Juridisch: `voorwaarden.html` (incl. herroepingsrecht en modelformulier) en `pri
 
 ```bash
 supabase link --project-ref <project-ref>
-supabase db push            # past de migraties in supabase/migrations toe (webshop, kanalen, media)
+supabase db push            # past de migraties in supabase/migrations toe (webshop, kanalen, media, catalogus, prodigi)
 ```
 
 Zet daarna in Vercel: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_WACHTWOORD`, `MOLLIE_API_KEY`,
 `RESEND_API_KEY`, `RESEND_FROM` (op een in Resend geverifieerd domein), `BESTEL_EMAIL`, `SITE_URL`, `BEDRIJF_*` en
-eventueel `DRUKKER_EMAIL`. Grote pdf's: verhoog in Supabase (Storage → Settings) de uploadlimiet; op het gratis plan
+eventueel `DRUKKER_EMAIL` en `PRODIGI_SANDBOX_API_KEY` / `PRODIGI_API_KEY`. Grote pdf's: verhoog in Supabase (Storage → Settings) de uploadlimiet; op het gratis plan
 is die 50 MB per bestand.
 
-**Testen**: `npm test` (catalogus, de hele bestelstroom, de drie kanalen en de drukbestanden/visuals, met nagebootste Supabase, Storage, Mollie, Resend, bol, Etsy en Amazon).
+**Testen**: `npm test` (catalogus, de hele bestelstroom, de drie kanalen, drukbestanden/visuals, de centrale catalogus en Prodigi, met nagebootste Supabase, Storage, Mollie, Resend, bol, Etsy, Amazon en Prodigi).
 
 ## Verkoopkanalen: bol.com, Etsy en Amazon
 

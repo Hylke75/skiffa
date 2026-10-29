@@ -45,3 +45,55 @@ export const GRATIS_VANAF = 75;
 export function verzendkosten(subtotaal, land) {
   return subtotaal >= GRATIS_VANAF ? 0 : VERZENDING[land] ?? VERZENDING.NL;
 }
+
+// ---------------------------------------------------------------------------------------------
+// Centrale catalogus. Staat er in Supabase een catalogus (tabellen catalogus_producten en
+// catalogus_formaten, beheer in /admin → posters), dan is die leidend: laadCatalogus() vult de
+// objecten hierboven daarmee (in place, zodat alle bestaande imports meteen meedoen). Zonder database,
+// of zolang de tabellen leeg zijn, blijft alles bij de waarden in deze code.
+// Elke route die met producten of prijzen werkt, roept eerst `await laadCatalogus()` aan.
+import { dbAan, db } from './_db.js';
+import { POSTERTEKSTEN } from './_posterteksten.js';
+
+/** Alle producten, ook niet-actieve (voor beheer en oude orders). POSTERS = alleen wat te koop is. */
+export const ALLE_POSTERS = { ...POSTERS };
+/** Teksten per product (naam, sub, zin, kleur) voor kanalen en catalogus. */
+export const TEKSTEN = Object.fromEntries(Object.entries(POSTERTEKSTEN).map(([id, t]) => [id, { ...t }]));
+/** Eigen productbeeld (opslagpaden) voor producten die niet als bestand in /posters staan. */
+export const BEELDEN = {};
+/** Producten waarvan het beeld als bestand in /posters/ staat (meegeleverd met de site). */
+export const VASTE_BEELDEN = new Set(Object.keys(POSTERS));
+export const CODE_FORMATEN = JSON.parse(JSON.stringify(ALLE_FORMATEN));
+
+const CACHE_MS = 60 * 1000;
+let geladenOp = 0, bron = 'code';
+export const catalogusBron = () => bron;
+
+function vervang(doel, nieuw) {
+  for (const k of Object.keys(doel)) delete doel[k];
+  Object.assign(doel, nieuw);
+}
+
+export async function laadCatalogus({ vers = false } = {}) {
+  if (!dbAan() || (!vers && Date.now() - geladenOp < CACHE_MS)) return bron;
+  geladenOp = Date.now();
+  try {
+    const [p, f] = await Promise.all([
+      db('catalogus_producten?select=*&order=volgorde.asc,id.asc'),
+      db('catalogus_formaten?select=*&order=volgorde.asc,id.asc'),
+    ]);
+    if (!p.length || !f.length) return (bron = 'code');
+    vervang(ALLE_FORMATEN, Object.fromEntries(f.map((x) => [x.id, {
+      label: x.label, prijs: Number(x.prijs), mm: [Number(x.breedte_mm), Number(x.hoogte_mm)], actief: !!x.actief,
+      standaard: !!x.standaard, prodigi_sku: x.prodigi_sku || null,
+    }])));
+    vervang(FORMATEN, Object.fromEntries(Object.entries(ALLE_FORMATEN).filter(([, x]) => x.actief)));
+    vervang(ALLE_POSTERS, Object.fromEntries(p.map((x) => [x.id, x.naam])));
+    vervang(POSTERS, Object.fromEntries(p.filter((x) => x.actief).map((x) => [x.id, x.naam])));
+    vervang(TEKSTEN, Object.fromEntries(p.map((x) => [x.id, { naam: x.naam, sub: x.sub, zin: x.zin, kleur: x.kleur }])));
+    vervang(BEELDEN, Object.fromEntries(p.filter((x) => x.beeld).map((x) => [x.id, { groot: x.beeld, klein: x.beeld_klein || x.beeld }])));
+    return (bron = 'database');
+  } catch {
+    return bron; // tabellen (nog) niet aanwezig of database even weg: laatst bekende stand houden
+  }
+}
