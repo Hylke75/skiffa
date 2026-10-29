@@ -131,3 +131,14 @@ ok(r.j.zendingen.length === 1 && r.j.zendingen[0].code === '3SABC' && r.j.annule
 const vb = nieuw('verzonden', { token: 'd'.repeat(36) });
 r = await call(bestel, { method: 'POST', body: { actie: 'annuleringsverzoek', nr: vb.nummer, t: vb.token } });
 ok(r.c === 400, 'annuleringsverzoek: verzonden bestelling niet meer via de pagina');
+
+// ---- auditlog ----
+const login = T.audit_log.find((a) => a.actie === 'login');
+ok(login && login.details.wachtwoord === '[verborgen]' && !JSON.stringify(T.audit_log).includes('zeer-geheim-wachtwoord'), 'audit: inlogpoging gelogd, wachtwoord nooit opgeslagen');
+ok(T.audit_log.some((a) => a.route === 'admin' && a.actie === 'service-nieuw' && a.ok === false) && T.audit_log.some((a) => a.actie === 'service-zet' && a.ok && a.details.oplossing === 'herdruk'), 'audit: geweigerde en gelukte beheeracties met details');
+const voorAudit = T.audit_log.length;
+await call(bestel, { method: 'GET', url: `/api/bestel?nr=${kb.nummer}&t=${kb.token}` });
+await A('dashboard');
+ok(T.audit_log.length === voorAudit, 'audit: lezen en klantverzoeken vullen het beheerlog niet');
+r = await A('audit');
+ok(r.c === 200 && r.j.log.length === voorAudit && r.j.log[0].op >= r.j.log.at(-1).op, 'audit: laatste acties op te vragen');

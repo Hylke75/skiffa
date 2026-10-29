@@ -159,3 +159,17 @@ alter table public.tiktok_koppeling enable row level security;
 alter table public.kanaal_instellingen drop constraint if exists kanaal_instellingen_kanaal_check;
 alter table public.kanaal_instellingen add constraint kanaal_instellingen_kanaal_check
   check (kanaal in ('bol','etsy','amazon','prodigi','tiktok','meta','buffer'));
+
+-- Auditlog: schrijfacties in de beheeromgeving (zonder wachtwoorden, tokens of sleutels).
+create table if not exists public.audit_log (
+  id       bigint generated always as identity primary key,
+  op       timestamptz not null default now(),
+  route    text not null,
+  actie    text not null,
+  ok       boolean not null,
+  status   int,
+  details  jsonb not null default '{}'::jsonb,
+  melding  text
+);
+create index if not exists audit_log_op_idx on public.audit_log (op desc);
+alter table public.audit_log enable row level security;

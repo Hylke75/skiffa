@@ -1,6 +1,6 @@
 // Nagebootste Supabase (PostgREST-subset + de RPC's uit supabase/migrations) voor de tests.
 import crypto from 'node:crypto';
-export const T = { bestellingen: [], bestelregels: [], bestelling_log: [], factuurteller: {}, poster_ean: [], kanaal_instellingen: [], kanaal_listings: [], kanaal_sync_log: [], etsy_koppeling: [], etsy_oauth_states: [], poster_visuals: [], producten: [], formaten: [], papiersoorten: [], varianten: [], drukbestand_versies: [], fulfilments: [], proefbestellingen: [], zendingen: [], kanaal_sjablonen: [], product_kanalen: [], serviceverzoeken: [], actie_afgehandeld: [], social_connections: [], social_posts: [], social_assets: [], social_post_targets: [], publishing_jobs: [], catalog_channels: [], campaign_links: [], tiktok_koppeling: [] };
+export const T = { bestellingen: [], bestelregels: [], bestelling_log: [], factuurteller: {}, poster_ean: [], kanaal_instellingen: [], kanaal_listings: [], kanaal_sync_log: [], etsy_koppeling: [], etsy_oauth_states: [], poster_visuals: [], producten: [], formaten: [], papiersoorten: [], varianten: [], drukbestand_versies: [], fulfilments: [], proefbestellingen: [], zendingen: [], kanaal_sjablonen: [], product_kanalen: [], serviceverzoeken: [], actie_afgehandeld: [], social_connections: [], social_posts: [], social_assets: [], social_post_targets: [], publishing_jobs: [], catalog_channels: [], campaign_links: [], tiktok_koppeling: [], audit_log: [] };
 // Nagebootste Supabase Storage: S[bucket][pad] = { size, type }
 export const S = { drukbestanden: {}, visuals: {} };
 let seq = 1;

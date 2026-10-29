@@ -267,6 +267,12 @@ Eén product, één keer ingevoerd; per kanaal vink je aan of het daar verschijn
   indienen doe je in Seller Center; daarna volgt SKIFFA de beoordeling (afgekeurd = melding met reden).
 - Niets hiervan is getest tegen de echte TikTok-API; begin met de proefmodus.
 
+## Auditlog
+
+Elke schrijfactie in de beheeromgeving (instellingen, publiceren, productie, terugbetalen, social, feeds) en elke
+inlogpoging komt in `audit_log`: route, actie, uitkomst en een samenvatting van de invoer. Wachtwoorden, tokens en
+sleutels worden nooit opgeslagen. Zichtbaar onderaan het dashboard.
+
 ## Hoe het in elkaar zit
 
 - **`index.html`** — het volledige ontwerp (HTML + CSS + JS, GSAP via CDN). Alle content

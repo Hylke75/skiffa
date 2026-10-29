@@ -9,6 +9,7 @@
 //   POST proef-offerte {regels:[{sku, aantal}], adres, verzendmethode} → kosten + adres
 //   POST proef-plaatsen {id, bevestigd: true}                     plaatst de (betaalde) proefbestelling
 //   POST aanmelden · opnieuw · annuleer · reset-sandbox {id} · vrijgeven {id, reden} · herdruk {id, reden, bevestigd}
+import { metAudit } from './_audit.js';
 import { dbAan } from './_db.js';
 import { isAdmin } from './_auth.js';
 import { laadCatalogus } from './_catalogus.js';
@@ -18,7 +19,7 @@ const param = (req, k) => String(req.query?.[k] ?? new URL(req.url || '/', 'http
 const fout = (res, code, melding) => res.status(code).json({ ok: false, melding });
 const isUuid = (s) => /^[0-9a-f-]{36}$/.test(String(s));
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   await laadCatalogus();
   res.setHeader('Cache-Control', 'no-store');
   const actie = param(req, 'actie');
@@ -71,3 +72,5 @@ export default async function handler(req, res) {
     return fout(res, 500, 'Er ging iets mis. Probeer het opnieuw.');
   }
 }
+
+export default metAudit('prodigi', handler);

@@ -14,6 +14,7 @@
 //   POST formaat {…} · papier {…}    aanmaken of bijwerken
 //   POST uitzondering {sku, reden} · uitzondering-intrekken {sku}      afgekeurd drukbestand toch toestaan
 //   POST beeld-upload {id, bytes} · beeld-bevestig {id, pad, pad_klein}  hoofdbeeld van een product
+import { metAudit } from './_audit.js';
 import * as feeds from './_feeds.js';
 import { dbAan, db } from './_db.js';
 import { isAdmin } from './_auth.js';
@@ -260,7 +261,7 @@ async function beeldBevestig(b) {
   return { ok: true, melding: 'Productbeeld opgeslagen' };
 }
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   await laadCatalogus();
   const actie = param(req, 'actie');
   let body = req.body;
@@ -304,3 +305,5 @@ export default async function handler(req, res) {
     return fout(res, 500, 'Er ging iets mis. Probeer het opnieuw.');
   }
 }
+
+export default metAudit('catalogus', handler);

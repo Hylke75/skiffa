@@ -11,6 +11,7 @@
 // POST ververs {id}               actuele betaalstatus bij Mollie ophalen
 // POST notitie {id, tekst}        interne notitie
 // POST mail {id, soort}           mail opnieuw sturen (bevestiging, verzonden)
+import { metAudit } from './_audit.js';
 import { laadCatalogus } from './_catalogus.js';
 import { dbAan, db, haalBestelling, werkBij, log } from './_db.js';
 import { isAdmin, wachtwoordKlopt, sessieCookie, uitlogCookie, adminIngesteld } from './_auth.js';
@@ -174,7 +175,7 @@ async function terugbetalen(id, body) {
   return { ok: true, gemaild };
 }
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   await laadCatalogus();
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('X-Robots-Tag', 'noindex');
@@ -210,6 +211,7 @@ export default async function handler(req, res) {
       if (actie === 'overzicht') return res.status(200).json({ ok: true, ...(await overzicht()) });
       if (actie === 'dashboard') return res.status(200).json({ ok: true, ...(await service.dashboard({ van: param(req, 'van'), tot: param(req, 'tot') })) });
       if (actie === 'actielijst') return res.status(200).json({ ok: true, ...(await service.actielijst()) });
+      if (actie === 'audit') return res.status(200).json({ ok: true, log: await db('audit_log?select=*&order=op.desc&limit=100').catch(() => []) });
       if (actie === 'bestellingen') return res.status(200).json({ ok: true, bestellingen: await lijst(req) });
       if (actie === 'bestelling') {
         const id = param(req, 'id');
@@ -263,3 +265,5 @@ export default async function handler(req, res) {
     return fout(res, 500, 'Er ging iets mis. Probeer het opnieuw.');
   }
 }
+
+export default metAudit('admin', handler);

@@ -11,8 +11,8 @@ const Dashboard = (() => {
   async function laad() {
     doos().innerHTML = '<div class="leeg">laden…</div>';
     try {
-      const [a, d] = await Promise.all([api('actielijst'), api('dashboard', { params: { van, tot } })]);
-      teken(a, d);
+      const [a, d, l] = await Promise.all([api('actielijst'), api('dashboard', { params: { van, tot } }), api('audit').catch(() => ({ log: [] }))]);
+      teken(a, d, l.log);
     } catch (e) { if (e.message !== 'uit') doos().innerHTML = `<div class="leeg">${esc(e.message)}</div>`; }
   }
 
@@ -33,7 +33,7 @@ const Dashboard = (() => {
     return rijen.map((r) => `<tr><td>${esc(r.naam)}</td><td style="width:45%"><div class="dbalk"><i style="width:${max ? Math.max(2, (r[veld] / max) * 100) : 0}%"></i></div></td><td class="r">${fmt(r[veld])}</td></tr>`).join('');
   }
 
-  function teken(a, d) {
+  function teken(a, d, audit = []) {
     const t = d.totaal, kanalen = Object.entries(d.perKanaal), dagen = Object.entries(d.perDag).sort();
     const leeg = !t.bestellingen;
     const pop = (titel, rijen) => `<div class="blok"><h3>${titel}</h3>${rijen.length ? `<table class="kaal">${balken(rijen, 'stuks', (v) => `${v}×`)}</table>` : '<p class="mini">Nog geen verkopen in deze periode.</p>'}</div>`;
@@ -60,6 +60,7 @@ const Dashboard = (() => {
         <div class="blok"><h3>omzet per dag</h3><table class="kaal">${balken(dagen.map(([dag, x]) => ({ naam: dag.split('-').reverse().slice(0, 2).join('-'), omzet: x.omzet_ex_btw })), 'omzet', euro)}</table></div>
         ${pop('populaire ontwerpen', d.populair.ontwerpen)}${pop('formaten', d.populair.formaten)}${pop('papier', d.populair.papieren)}
       </div>`}
+      <div class="blok"><h3>logboek beheer</h3>${audit.length ? `<details><summary class="mini" style="cursor:pointer">laatste ${Math.min(audit.length, 100)} acties (zonder wachtwoorden of sleutels)</summary><div class="log">${audit.map((x) => `<div class="${x.ok ? '' : 'fout'}"><span>${datum(x.op)}</span><span>${esc(x.route)} · ${esc(x.actie)}</span><span>${x.ok ? '' : 'mislukt: '}${esc(x.melding || Object.entries(x.details || {}).slice(0, 4).map(([k, v]) => `${k}: ${typeof v === 'object' ? '…' : v}`).join(', '))}</span></div>`).join('')}</div></details>` : '<p class="mini">Nog geen beheeracties.</p>'}</div>
       <div class="blok"><h3>hoe dit is berekend</h3><ul class="mini" style="margin-left:16px">${d.aannames.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>`;
   }
 

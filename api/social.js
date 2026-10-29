@@ -2,6 +2,7 @@
 //   GET  overzicht · kalender&van=&tot= (Europe/Amsterdam) · voorbeeld&id=
 //   POST instellingen · accounts-sync · account {id, gebruiken} · bewaar · van-product {product_id} · inplannen {id}
 //        annuleer {doel_id} · geplaatst {doel_id, link} · verwerk · media-upload · media-bevestig · verwijder {id}
+import { metAudit } from './_audit.js';
 import { isAdmin } from './_auth.js';
 import { dbAan, db } from './_db.js';
 import { laadCatalogus } from './_catalogus.js';
@@ -11,7 +12,7 @@ import { bufferIngesteld } from './_buffer.js';
 const param = (req, k) => String(req.query?.[k] ?? new URL(req.url || '/', 'http://x').searchParams.get(k) ?? '');
 const fout = (res, code, melding) => res.status(code).json({ ok: false, melding });
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('X-Robots-Tag', 'noindex');
   if (!isAdmin(req)) return fout(res, 401, 'Niet ingelogd.');
@@ -55,3 +56,5 @@ export default async function handler(req, res) {
     return fout(res, 500, String(e.message || 'Er ging iets mis.').slice(0, 300));
   }
 }
+
+export default metAudit('social', handler);

@@ -11,6 +11,7 @@
 // POST sync {kanaal, stap?}              · ping {kanaal}
 // GET  etsy-koppel → {url} · etsy-terug (OAuth-callback, via /etsy/terug) · etsy-profielen
 // GET/POST cron                          alle ingeschakelde kanalen, alle stappen
+import { metAudit } from './_audit.js';
 import { laadCatalogus } from './_catalogus.js';
 import crypto from 'node:crypto';
 import { dbAan, db } from './_db.js';
@@ -68,7 +69,7 @@ async function draaiKanaal(kanaal, stap, door, opties = {}) {
   return { ok, ...detail };
 }
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   await laadCatalogus();
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('X-Robots-Tag', 'noindex');
@@ -273,3 +274,5 @@ export default async function handler(req, res) {
     return fout(res, 500, String(e.message || 'Er ging iets mis.').slice(0, 300));
   }
 }
+
+export default metAudit('kanalen', handler);

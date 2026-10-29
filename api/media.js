@@ -13,6 +13,7 @@
 //   POST druk-verwijder {versie_id}       alleen versies die geen bestelling gebruikt
 //   POST beeld-upload {poster_id, positie, bytes} · beeld-bevestig {…} · beeld-bijwerken {…} · beeld-verwijder {…}
 //   POST drukker {id}                     drukopdracht van een bestelling (opnieuw) naar DRUKKER_EMAIL
+import { metAudit } from './_audit.js';
 import { dbAan, db, haalBestelling } from './_db.js';
 import { isAdmin } from './_auth.js';
 import { ALLE_POSTERS as POSTERS, ALLE_FORMATEN, PAPIER, laadCatalogus } from './_catalogus.js';
@@ -178,7 +179,7 @@ async function stuurDruk(res, versieId) {
   return res.status(302).end();
 }
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   await laadCatalogus();
   const actie = param(req, 'actie');
   let body = req.body;
@@ -230,3 +231,5 @@ export default async function handler(req, res) {
     return fout(res, 500, 'Er ging iets mis. Probeer het opnieuw.');
   }
 }
+
+export default metAudit('media', handler);
