@@ -4,7 +4,7 @@
 // GET  bestellingen&status=&q=   lijst, filter op status en zoekterm (nummer, naam, e-mail, factuur)
 // GET  bestelling&id=            één bestelling met regels en logboek
 // GET  export&van=&tot=          CSV voor de boekhouding (gefactureerde bestellingen in de periode)
-// POST login {wachtwoord} · uitloggen
+// POST login {email, wachtwoord} · uitloggen
 // POST status {id, status, track_trace?}   in_productie / verzonden (mail klant) / geleverd / geannuleerd (mail klant)
 // POST betaald {id}               handmatig betaald zetten (betaalverzoek/overboeking): factuur + mails
 // POST terugbetalen {id, bedrag?} via Mollie (of handmatig vastleggen bij betaalverzoek) + mail klant
@@ -14,7 +14,7 @@
 import { metAudit } from './_audit.js';
 import { laadCatalogus } from './_catalogus.js';
 import { dbAan, db, haalBestelling, werkBij, log } from './_db.js';
-import { isAdmin, wachtwoordKlopt, sessieCookie, uitlogCookie, adminIngesteld } from './_auth.js';
+import { isAdmin, wachtwoordKlopt, emailKlopt, emailVerplicht, sessieCookie, uitlogCookie, adminIngesteld } from './_auth.js';
 import { mollie, euro } from './_bestelling.js';
 import { btwDeel } from './_bedrijf.js';
 import { mails, vanRij, mailAan } from './_mails.js';
@@ -185,14 +185,15 @@ async function handler(req, res) {
   body = body && typeof body === 'object' ? body : {};
 
   if (actie === 'status-inlog') {
-    res.status(200).json({ ok: true, ingesteld: adminIngesteld(), database: dbAan(), mollie: !!process.env.MOLLIE_API_KEY, mail: mailAan(), ingelogd: isAdmin(req) });
+    res.status(200).json({ ok: true, ingesteld: adminIngesteld(), email: emailVerplicht(), database: dbAan(), mollie: !!process.env.MOLLIE_API_KEY, mail: mailAan(), ingelogd: isAdmin(req) });
     return;
   }
   if (actie === 'login' && req.method === 'POST') {
     if (!adminIngesteld()) return fout(res, 503, 'Zet eerst ADMIN_WACHTWOORD (minstens 12 tekens) in Vercel.');
-    if (!wachtwoordKlopt(body.wachtwoord)) {
+    const emailGoed = emailKlopt(body.email), wachtwoordGoed = wachtwoordKlopt(body.wachtwoord);
+    if (!emailGoed || !wachtwoordGoed) {
       await new Promise((r) => setTimeout(r, 800)); // remt raden af
-      return fout(res, 401, 'Onjuist wachtwoord.');
+      return fout(res, 401, emailVerplicht() ? 'Onjuist e-mailadres of wachtwoord.' : 'Onjuist wachtwoord.');
     }
     res.setHeader('Set-Cookie', sessieCookie());
     res.status(200).json({ ok: true });

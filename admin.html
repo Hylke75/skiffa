@@ -148,6 +148,7 @@ button.link{background:none;border:0;padding:0;text-decoration:underline;font-we
 <form id="login" class="verberg">
   <h1>SKIFFA</h1>
   <p style="margin-bottom:10px">Administratie</p>
+  <label>e-mailadres<input type="email" name="email" autocomplete="username"></label>
   <label>wachtwoord<input type="password" name="wachtwoord" autocomplete="current-password" required></label>
   <button class="vol" type="submit">inloggen</button>
   <p id="loginFout" style="color:var(--rood);margin-top:10px"></p>
@@ -223,9 +224,9 @@ async function api(actie,{method='GET',body,params}={}){
 }
 function meld(t,isFout){const m=$('#melding');m.textContent=t;m.className='aan'+(isFout?' fout':'');clearTimeout(m._t);m._t=setTimeout(()=>m.className='',2600);}
 
-function toonLogin(){$('#app').classList.add('verberg');$('#login').classList.remove('verberg');$('#login [name=wachtwoord]').focus();}
+function toonLogin(){$('#app').classList.add('verberg');$('#login').classList.remove('verberg');$('#login [name=email]').focus();}
 $('#login').addEventListener('submit',async e=>{e.preventDefault();$('#loginFout').textContent='';
-  try{await api('login',{method:'POST',body:{wachtwoord:e.target.wachtwoord.value}});e.target.reset();start();}
+  try{await api('login',{method:'POST',body:{email:e.target.email.value,wachtwoord:e.target.wachtwoord.value}});e.target.reset();start();}
   catch(err){$('#loginFout').textContent=err.message;}});
 $('#uitloggen').addEventListener('click',async()=>{await api('uitloggen').catch(()=>{});toonLogin();});
 

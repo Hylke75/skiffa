@@ -141,7 +141,8 @@ supabase link --project-ref <project-ref>
 supabase db push            # past de migraties in supabase/migrations toe (webshop, kanalen, media, catalogus, prodigi; nog op geen enkele database toegepast)
 ```
 
-Zet daarna in Vercel: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_WACHTWOORD`, `MOLLIE_API_KEY`,
+Zet daarna in Vercel: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_WACHTWOORD` (minstens 12 tekens) en optioneel
+`ADMIN_EMAIL` (dan vraagt /admin ook het e-mailadres), `MOLLIE_API_KEY`,
 `RESEND_API_KEY`, `RESEND_FROM` (op een in Resend geverifieerd domein), `BESTEL_EMAIL`, `SITE_URL`, `BEDRIJF_*` en
 eventueel `DRUKKER_EMAIL` en `PRODIGI_SANDBOX_API_KEY` / `PRODIGI_API_KEY`. Grote pdf's: verhoog in Supabase (Storage → Settings) de uploadlimiet; op het gratis plan
 is die 50 MB per bestand.

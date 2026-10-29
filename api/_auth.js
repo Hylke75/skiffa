@@ -1,4 +1,4 @@
-// Inloggen voor de administratie: één wachtwoord (ADMIN_WACHTWOORD, minstens 12 tekens) en een
+// Inloggen voor de administratie: e-mailadres (ADMIN_EMAIL, optioneel) + wachtwoord (ADMIN_WACHTWOORD, minstens 12 tekens) en een
 // ondertekende sessiecookie (HMAC, 12 uur geldig, HttpOnly + Secure + SameSite=Strict).
 import crypto from 'node:crypto';
 
@@ -20,6 +20,13 @@ export const adminIngesteld = () => (process.env.ADMIN_WACHTWOORD || '').length 
 
 export function wachtwoordKlopt(w) {
   return adminIngesteld() && typeof w === 'string' && gelijk(w, process.env.ADMIN_WACHTWOORD);
+}
+
+/** Staat ADMIN_EMAIL in Vercel, dan moet ook het e-mailadres kloppen (hoofdletters maken niet uit). */
+export const emailVerplicht = () => !!(process.env.ADMIN_EMAIL || '').trim();
+export function emailKlopt(e) {
+  if (!emailVerplicht()) return true;
+  return typeof e === 'string' && gelijk(e.trim().toLowerCase(), process.env.ADMIN_EMAIL.trim().toLowerCase());
 }
 
 export function sessieCookie() {

@@ -48,6 +48,10 @@ r=await call(factuur,{url:`/api/factuur?nr=${b.nummer}`});ok(r.c===404,'factuur 
 // 7. admin
 r=await call(admin,{url:'/api/admin?actie=overzicht'});ok(r.c===401,'admin zonder inlog geweigerd');
 r=await call(admin,{method:'POST',url:'/api/admin?actie=login',body:{wachtwoord:'fout'}});ok(r.c===401,'verkeerd wachtwoord geweigerd');
+process.env.ADMIN_EMAIL='Beheer@Voorbeeld.nl';
+r=await call(admin,{method:'POST',url:'/api/admin?actie=login',body:{email:'iemand@anders.nl',wachtwoord:'zeer-geheim-wachtwoord'}});ok(r.c===401&&/e-mailadres/.test(r.j.melding),'met ADMIN_EMAIL: verkeerd e-mailadres geweigerd (ook met juist wachtwoord)');
+r=await call(admin,{method:'POST',url:'/api/admin?actie=login',body:{email:' beheer@voorbeeld.NL',wachtwoord:'zeer-geheim-wachtwoord'}});ok(r.c===200&&r.j.ok,'met ADMIN_EMAIL: juist e-mailadres (hoofdletters/spaties maken niet uit) + wachtwoord = binnen');
+delete process.env.ADMIN_EMAIL;
 r=await call(admin,{method:'POST',url:'/api/admin?actie=login',body:{wachtwoord:'zeer-geheim-wachtwoord'}});const cookie=r.h['set-cookie'].split(';')[0];ok(r.j.ok&&/HttpOnly; Secure; SameSite=Strict/.test(r.h['set-cookie']),'inloggen: veilige sessiecookie');
 r=await call(admin,{url:'/api/admin?actie=overzicht',cookie});ok(r.j.teVerzenden===1&&r.j.omzetMaand===75.95,'overzicht: 1 te verzenden, omzet € 75,95');
 r=await call(admin,{url:'/api/admin?actie=bestellingen&status=actie',cookie});ok(r.j.bestellingen.length===1,'lijst "te verzenden"');
