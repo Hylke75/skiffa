@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Skiffa — made for the grey side of the sea. Losse frontend (exact ontwerp) op het centrale CMS.",
-  "license": "UNLICENSED"
+  "description": "Skiffa — posters van de Scheveningse surfcultuur. Webshop met Mollie, Resend, Supabase-administratie en koppelingen met bol.com, Etsy en Amazon.",
+  "license": "UNLICENSED",
+  "scripts": {
+    "test": "node scripts/check-catalogus.mjs && node scripts/test-webshop.mjs && node scripts/test-kanalen.mjs && node scripts/test-media.mjs"
+  }
 }

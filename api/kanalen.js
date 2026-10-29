@@ -1,0 +1,179 @@
+// Verkoopkanalen (bol.com, Etsy, Amazon): beheer en synchronisatie. Eén route, ?actie=…
+// Toegang: ingelogd in /admin, of de automatische run met `Authorization: Bearer CRON_SECRET`
+// (GitHub Actions / Vercel Cron). Een kanaal doet niets zolang het in de instellingen uit staat;
+// in proefmodus wordt er niets naar het kanaal geschreven.
+//
+// GET  overzicht                         per kanaal: sleutels aanwezig, instellingen, listings, laatste runs
+// GET  listings&kanaal=                  assortiment met EAN, kanaalprijs, status en fout
+// GET  log&kanaal=                       laatste synchronisaties
+// POST instellingen {kanaal, waarden}    · listing {id, ingeschakeld} · alles {kanaal, aan}
+// POST ean {poster_id, formaat, ean}     ('' = verwijderen)
+// POST sync {kanaal, stap?}              · ping {kanaal}
+// GET  etsy-koppel → {url} · etsy-terug (OAuth-callback, via /etsy/terug) · etsy-profielen
+// GET/POST cron                          alle ingeschakelde kanalen, alle stappen
+import crypto from 'node:crypto';
+import { dbAan, db } from './_db.js';
+import { isAdmin } from './_auth.js';
+import { POSTERS, FORMATEN } from './_catalogus.js';
+import { bedrijf } from './_bedrijf.js';
+import { KANALEN, STANDAARD, isGeldigeEan, kanaalPrijs } from './_kanalen/gemeen.js';
+import { instellingen, zetInstellingen, listings, zetListing, eans, logRun } from './_kanalen/opslag.js';
+import * as bol from './_kanalen/bol.js';
+import * as etsy from './_kanalen/etsy.js';
+import * as amazon from './_kanalen/amazon.js';
+
+const MOD = { bol, etsy, amazon };
+const INGESTELD = { bol: bol.bolIngesteld, etsy: etsy.etsyIngesteld, amazon: amazon.amazonIngesteld };
+const SLEUTELS = { bol: 'BOL_CLIENT_ID, BOL_CLIENT_SECRET', etsy: 'ETSY_KEYSTRING, ETSY_SHARED_SECRET', amazon: 'AMAZON_LWA_CLIENT_ID, AMAZON_LWA_CLIENT_SECRET, AMAZON_REFRESH_TOKEN, AMAZON_SELLER_ID' };
+const param = (req, k) => String(req.query?.[k] ?? new URL(req.url || '/', 'http://x').searchParams.get(k) ?? '');
+const fout = (res, code, melding) => res.status(code).json({ ok: false, melding });
+const viaCron = (req) => {
+  const geheim = process.env.CRON_SECRET || '';
+  const h = String(req.headers?.authorization || '');
+  if (geheim.length < 16 || !h.startsWith('Bearer ')) return false;
+  const a = crypto.createHash('sha256').update(h.slice(7)).digest(), b = crypto.createHash('sha256').update(geheim).digest();
+  return crypto.timingSafeEqual(a, b);
+};
+
+// Alleen bekende velden met het juiste type mogen in de instellingen.
+function schoon(kanaal, w) {
+  const uit = {};
+  for (const [k, std] of Object.entries(STANDAARD[kanaal])) {
+    if (!(k in w) || k === 'laatste_ordersync') continue;
+    const v = w[k];
+    if (typeof std === 'boolean') uit[k] = v === true || v === 'true';
+    else if (typeof std === 'number') { const n = Number(String(v).replace(',', '.')); if (Number.isFinite(n) && n >= 0 && n <= 1000) uit[k] = n; }
+    else if (std === null) uit[k] = v === '' || v == null ? null : (Number.isFinite(Number(v)) ? Number(v) : null);
+    else uit[k] = String(v ?? '').trim().slice(0, 60);
+  }
+  return uit;
+}
+
+async function draaiKanaal(kanaal, stap, door) {
+  const s = await instellingen(kanaal);
+  const mod = MOD[kanaal];
+  const stappen = stap ? mod.STAPPEN.filter((x) => x === stap) : mod.STAPPEN;
+  if (!stappen.length) throw new Error(`Onbekende stap: ${stap}`);
+  const start = Date.now();
+  const uit = await mod.draai(stappen, s);
+  const ok = uit.log.every((l) => l.ok);
+  const detail = { door, proef: s.proef, ms: Date.now() - start, ...uit };
+  await logRun(kanaal, stap || 'alles', ok, detail);
+  return { ok, ...detail };
+}
+
+export default async function handler(req, res) {
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('X-Robots-Tag', 'noindex');
+  const actie = param(req, 'actie');
+  let body = req.body;
+  if (typeof body === 'string') { try { body = JSON.parse(body); } catch { body = {}; } }
+  body = body && typeof body === 'object' ? body : {};
+  if (!dbAan()) return fout(res, 503, 'De administratie is nog niet gekoppeld (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY).');
+
+  // Automatische run.
+  if (actie === 'cron') {
+    if (!viaCron(req) && !isAdmin(req)) return fout(res, 401, 'Niet geautoriseerd.');
+    const resultaat = {};
+    for (const k of KANALEN) {
+      const s = await instellingen(k);
+      if (!s.aan) { resultaat[k] = 'uit'; continue; }
+      if (!INGESTELD[k]()) { resultaat[k] = `sleutels ontbreken (${SLEUTELS[k]})`; continue; }
+      try { const r = await draaiKanaal(k, '', 'automatisch'); resultaat[k] = r.ok ? 'ok' : r.log.filter((l) => !l.ok).map((l) => l.info).join(' · '); }
+      catch (e) { resultaat[k] = `fout: ${e.message}`; }
+    }
+    return res.status(200).json({ ok: true, resultaat });
+  }
+
+  // OAuth-callback van Etsy (de beheerder komt hier terug met een geldige sessie).
+  if (actie === 'etsy-terug') {
+    if (!isAdmin(req)) { res.setHeader('location', '/admin.html'); return res.status(302).end(); }
+    let melding;
+    try {
+      if (param(req, 'error')) throw new Error(param(req, 'error_description') || param(req, 'error'));
+      const k = await etsy.rondKoppelenAf(param(req, 'code'), param(req, 'state'));
+      melding = `Etsy gekoppeld: ${k.shop_naam || k.shop_id}`;
+    } catch (e) { melding = `Etsy koppelen mislukt: ${e.message}`; }
+    res.setHeader('location', `/admin.html?melding=${encodeURIComponent(melding)}#kanalen`);
+    return res.status(302).end();
+  }
+
+  if (!isAdmin(req)) return fout(res, 401, 'Niet ingelogd.');
+  const kanaal = String(body.kanaal || param(req, 'kanaal'));
+  const kanaalNodig = !['overzicht'].includes(actie) && !actie.startsWith('etsy') && actie !== 'ean' && actie !== 'listing';
+  if (kanaalNodig && !KANALEN.includes(kanaal)) return fout(res, 400, 'Kies een kanaal (bol, etsy of amazon).');
+
+  try {
+    if (actie === 'overzicht') {
+      const lijst = await db('kanaal_listings?select=kanaal,status,ingeschakeld');
+      const runs = await db('kanaal_sync_log?select=kanaal,actie,ok,op,detail&order=op.desc&limit=30');
+      const uit = {};
+      for (const k of KANALEN) {
+        const rijen = lijst.filter((r) => r.kanaal === k);
+        uit[k] = {
+          sleutels: INGESTELD[k](), sleutelnamen: SLEUTELS[k], instellingen: await instellingen(k),
+          listings: { totaal: rijen.length, aan: rijen.filter((r) => r.ingeschakeld).length, ...Object.fromEntries(['actief', 'wacht', 'fout', 'gepauzeerd', 'concept'].map((s) => [s, rijen.filter((r) => r.status === s).length])) },
+          laatste: runs.filter((r) => r.kanaal === k).slice(0, 5).map((r) => ({ actie: r.actie, ok: r.ok, op: r.op, proef: r.detail?.proef, log: r.detail?.log, proef_schrijfacties: r.detail?.proef_schrijfacties?.length || 0 })),
+        };
+      }
+      uit.etsy.koppeling = await etsy.koppeling();
+      uit.etsy.terugUrl = `${bedrijf().site}/etsy/terug`;
+      return res.status(200).json({ ok: true, kanalen: uit, cron: (process.env.CRON_SECRET || '').length >= 16 });
+    }
+    if (actie === 'listings') {
+      const s = await instellingen(kanaal), rijen = await listings(kanaal), e = await eans();
+      return res.status(200).json({
+        ok: true,
+        listings: rijen.map((r) => ({
+          ...r, poster_naam: POSTERS[r.poster_id], formaat_label: FORMATEN[r.formaat]?.label || 'alle formaten',
+          ean: r.formaat === 'alle' ? null : e.get(`${r.poster_id}|${r.formaat}`) || '',
+          prijs: r.formaat === 'alle' ? Object.values(FORMATEN).map((f) => kanaalPrijs(f.prijs, s.opslag_pct)) : kanaalPrijs(FORMATEN[r.formaat].prijs, s.opslag_pct),
+        })),
+      });
+    }
+    if (actie === 'log') return res.status(200).json({ ok: true, log: await db(`kanaal_sync_log?kanaal=eq.${kanaal}&order=op.desc&limit=20`) });
+    if (req.method !== 'POST' && !actie.startsWith('etsy')) return fout(res, 405, 'Gebruik POST.');
+
+    if (actie === 'instellingen') {
+      await zetInstellingen(kanaal, schoon(kanaal, body.waarden || {}));
+      return res.status(200).json({ ok: true, instellingen: await instellingen(kanaal) });
+    }
+    if (actie === 'listing') {
+      const id = Number(body.id);
+      if (!Number.isInteger(id)) return fout(res, 400, 'Geen listing gekozen.');
+      await zetListing(id, { ingeschakeld: body.ingeschakeld === true });
+      return res.status(200).json({ ok: true });
+    }
+    if (actie === 'alles') {
+      await listings(kanaal);
+      await db(`kanaal_listings?kanaal=eq.${kanaal}`, { method: 'PATCH', body: { ingeschakeld: body.aan === true, bijgewerkt_op: new Date().toISOString() } });
+      return res.status(200).json({ ok: true });
+    }
+    if (actie === 'ean') {
+      const { poster_id, formaat } = body, ean = String(body.ean || '').trim();
+      if (!POSTERS[poster_id] || !FORMATEN[formaat]) return fout(res, 400, 'Onbekende poster of formaat.');
+      if (!ean) { await db(`poster_ean?poster_id=eq.${poster_id}&formaat=eq.${formaat}`, { method: 'DELETE' }); return res.status(200).json({ ok: true }); }
+      if (!isGeldigeEan(ean)) return fout(res, 400, `${ean} is geen geldige EAN (controlecijfer klopt niet).`);
+      try { await db('poster_ean?on_conflict=poster_id,formaat', { method: 'POST', prefer: 'resolution=merge-duplicates', body: { poster_id, formaat, ean } }); }
+      catch (e) { return fout(res, 400, /duplicate|23505/.test(e.message) ? 'Deze EAN is al aan een andere poster gekoppeld.' : 'Opslaan mislukt.'); }
+      return res.status(200).json({ ok: true });
+    }
+    if (actie === 'sync') {
+      if (!INGESTELD[kanaal]()) return fout(res, 400, `Zet eerst in Vercel: ${SLEUTELS[kanaal]}.`);
+      return res.status(200).json(await draaiKanaal(kanaal, String(body.stap || ''), 'beheer'));
+    }
+    if (actie === 'ping') {
+      if (!INGESTELD[kanaal]()) return fout(res, 400, `Zet eerst in Vercel: ${SLEUTELS[kanaal]}.`);
+      return res.status(200).json({ ok: true, ...(await MOD[kanaal].ping()) });
+    }
+    if (actie === 'etsy-koppel') {
+      if (!etsy.etsyIngesteld()) return fout(res, 400, `Zet eerst in Vercel: ${SLEUTELS.etsy}.`);
+      return res.status(200).json({ ok: true, url: await etsy.startKoppelen(`${bedrijf().site}/etsy/terug`) });
+    }
+    if (actie === 'etsy-profielen') return res.status(200).json({ ok: true, ...(await etsy.profielen()) });
+    return fout(res, 400, 'Onbekende actie.');
+  } catch (e) {
+    console.error('kanalen', e);
+    return fout(res, 500, String(e.message || 'Er ging iets mis.').slice(0, 300));
+  }
+}

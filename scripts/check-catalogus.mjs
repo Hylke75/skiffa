@@ -5,7 +5,9 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { posters, formaten } from './lees-content.mjs';
+import { readFileSync } from 'node:fs';
 import { POSTERS, FORMATEN } from '../api/_catalogus.js';
+import { inhoud } from './maak-posterteksten.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const fouten = [];
@@ -22,6 +24,8 @@ for (const p of posters) {
   const bestanden = [`posters/${p.id}.webp`, `posters/${p.id}-klein.webp`];
   for (const b of bestanden) if (!existsSync(join(root, b))) fouten.push(`bestand ontbreekt: ${b}`);
 }
+if (readFileSync(join(root, 'api/_posterteksten.js'), 'utf8') !== inhoud()) fouten.push('api/_posterteksten.js loopt achter op index.html: draai node scripts/maak-posterteksten.mjs');
+for (const p of posters) if (!existsSync(join(root, `posters/${p.id}.jpg`))) fouten.push(`bestand ontbreekt: posters/${p.id}.jpg (nodig voor Etsy/Amazon)`);
 if (fouten.length) {
   console.error(fouten.map((f) => '✗ ' + f).join('\n'));
   process.exit(1);

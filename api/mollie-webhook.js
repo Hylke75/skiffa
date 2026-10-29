@@ -1,8 +1,11 @@
 // Mollie-webhook: Mollie POST hier `id=tr_…` bij elke statuswijziging van een betaling.
-// We vertrouwen de melding zelf niet, maar halen de betaling op bij Mollie. Is hij betaald,
-// dan gaat de bestelling (uit de metadata, prijzen opnieuw uit de catalogus) per mail naar de
-// winkel en de klant — als RESEND_API_KEY is ingesteld. Zonder Resend staat alles in het Mollie-dashboard.
+// We vertrouwen de melding zelf niet, maar halen de betaling op bij Mollie.
+// - Met administratie (Supabase): status, factuurnummer en mails via api/_verwerk.js (idempotent).
+// - Zonder administratie: de bestelling komt uit de Mollie-metadata (prijzen opnieuw uit de
+//   catalogus) en gaat per mail naar winkel en klant als RESEND_API_KEY is ingesteld.
 import { mollie, uitMetadata, overzichtHtml, mail, euro, esc, winkelMail } from './_bestelling.js';
+import { dbAan } from './_db.js';
+import { verwerkMollie } from './_verwerk.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -13,6 +16,16 @@ export default async function handler(req, res) {
   if (!id && typeof req.body === 'string') id = new URLSearchParams(req.body).get('id');
   if (!process.env.MOLLIE_API_KEY || !/^tr_[A-Za-z0-9]{4,40}$/.test(String(id || ''))) {
     res.status(200).end(); // onbekend id: niets doen, Mollie niet laten herhalen
+    return;
+  }
+  if (dbAan()) {
+    try {
+      await verwerkMollie(id);
+      res.status(200).end();
+    } catch (e) {
+      console.error('mollie-webhook', e);
+      res.status(500).end(); // Mollie probeert het later opnieuw
+    }
     return;
   }
   let p;

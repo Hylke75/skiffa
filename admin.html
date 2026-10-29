@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Skiffa administratie</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--papier:#F6F3ED;--zee:#E9EEF0;--lijn:rgba(0,0,0,.14);--rood:#a3261a;--groen:#2f6b3a;--mono:"DM Mono",ui-monospace,Menlo,monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--papier);color:#111;font-family:var(--mono);font-size:12px;letter-spacing:.03em;line-height:1.6}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:1px solid #111;border-radius:999px;padding:5px 14px}
+button.vol{background:#111;color:#fff}
+button:disabled{opacity:.4;cursor:default}
+input,select,textarea{border:1px solid #111;border-radius:8px;padding:7px 10px;background:#fff}
+a{color:inherit}
+header{display:flex;justify-content:space-between;align-items:center;padding:16px 22px;border-bottom:1px solid var(--lijn);gap:12px;flex-wrap:wrap}
+header b{letter-spacing:.3em;font-size:14px}
+main{padding:22px;max-width:1280px;margin:0 auto}
+.kaarten{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:22px}
+.kaart{background:#fff;border:1px solid var(--lijn);border-radius:12px;padding:14px 16px}
+.kaart small{display:block;font-size:10px;letter-spacing:.14em;opacity:.6;text-transform:uppercase}
+.kaart b{font-size:20px;font-weight:500}
+.balk{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.balk .tab{border-color:var(--lijn)}
+.balk .tab[aria-pressed=true]{background:#111;color:#fff;border-color:#111}
+.balk input[type=search]{min-width:240px;flex:1;max-width:360px}
+table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--lijn);border-radius:12px;overflow:hidden}
+th{text-align:left;font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.6;padding:9px 10px;border-bottom:1px solid var(--lijn);font-weight:400}
+td{padding:9px 10px;border-bottom:1px solid var(--lijn);vertical-align:top}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--zee)}
+.r{text-align:right}
+.st{display:inline-block;padding:1px 8px;border-radius:999px;font-size:10px;letter-spacing:.08em;border:1px solid currentColor;white-space:nowrap}
+.st.open{color:#8a6d00}.st.betaald,.st.in_productie{color:#1d4ed8}.st.verzonden,.st.geleverd{color:var(--groen)}
+.st.geannuleerd,.st.mislukt{color:#777}.st.terugbetaald{color:var(--rood)}
+.leeg{padding:30px;text-align:center;opacity:.6;background:#fff;border:1px solid var(--lijn);border-radius:12px}
+#paneel{position:fixed;inset:0;background:rgba(0,0,0,.3);display:none;z-index:10}
+#paneel.open{display:block}
+#paneel .vak{position:absolute;top:0;right:0;bottom:0;width:min(620px,100vw);background:var(--papier);overflow:auto;padding:22px 24px 40px;box-shadow:-10px 0 30px rgba(0,0,0,.12)}
+.vak h2{font-size:15px;font-weight:500;letter-spacing:.06em;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.blok{background:#fff;border:1px solid var(--lijn);border-radius:12px;padding:14px 16px;margin-top:14px}
+.blok h3{font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;font-weight:400;margin-bottom:8px}
+.blok table{border:0}
+.blok td{border-bottom:1px dashed var(--lijn);padding:5px 0}
+.acties{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.acties input{width:auto;flex:1;min-width:160px}
+.log{font-size:11px}
+.log div{padding:4px 0;border-bottom:1px dashed var(--lijn);display:grid;grid-template-columns:118px 90px 1fr;gap:8px}
+.log .fout{color:var(--rood)}
+#melding{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#111;color:#fff;padding:9px 16px;border-radius:999px;opacity:0;transition:opacity .3s;z-index:20;pointer-events:none}
+#melding.aan{opacity:1}#melding.fout{background:var(--rood)}
+#login{max-width:340px;margin:12vh auto;background:#fff;border:1px solid var(--lijn);border-radius:16px;padding:28px}
+#login h1{font-size:14px;letter-spacing:.3em;margin-bottom:18px}
+#login input{width:100%;margin:6px 0 12px}
+.waarschuw{background:#fff7e0;border:1px solid #e5c76b;border-radius:10px;padding:10px 14px;margin-bottom:16px}
+.verberg{display:none!important}
+.nav{display:flex;gap:6px}
+.nav button[aria-current=true]{background:#111;color:#fff}
+.kb{display:inline-block;font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:0 6px;border-radius:4px;background:var(--zee);margin-left:6px}
+.kb.bol{background:#e6efff}.kb.etsy{background:#ffe9dc}.kb.amazon{background:#fff3cc}
+.kanalen{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:14px}
+.kanaal{background:#fff;border:1px solid var(--lijn);border-radius:12px;padding:16px}
+.kanaal h3{font-size:13px;font-weight:500;letter-spacing:.1em;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.kanaal .rij{display:grid;grid-template-columns:1fr 130px;gap:6px 10px;align-items:center;margin:4px 0}
+.kanaal .rij input:not(.schakel),.kanaal .rij select{width:100%}
+.kanaal .rij .schakel{justify-self:end}
+#assortLijst{overflow-x:auto;-webkit-overflow-scrolling:touch}
+#assortLijst table{min-width:720px}
+.ok{color:var(--groen)}.nok{color:var(--rood)}
+.mini{font-size:10px;opacity:.7}
+.assort{margin-top:22px}
+.assort td input[type=text]{width:150px;font-size:11px;padding:4px 8px}
+.assort tbody tr{cursor:default}
+.schakel{appearance:none;width:30px;height:16px;border-radius:999px;background:#ccc;position:relative;cursor:pointer;vertical-align:middle;border:0;padding:0}
+.schakel:checked{background:#111}
+.schakel::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#fff;transition:left .2s}
+.schakel:checked::after{left:16px}
+.drop{display:block;background:#fff;border:1.5px dashed #999;border-radius:12px;padding:22px;text-align:center;cursor:pointer;margin-bottom:14px}
+.drop.over{border-color:#111;background:var(--zee)}
+.drop code,.mini code{background:var(--zee);padding:0 4px;border-radius:4px}
+#wachtrij table{margin-bottom:14px}#wachtrij tbody tr{cursor:default}#wachtrij select{font-size:11px;padding:3px 6px}
+.balkje{height:3px;background:var(--zee);border-radius:2px;overflow:hidden;margin-top:4px}.balkje i{display:block;height:100%;background:#111;width:0}
+.posterkaarten{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(380px,100%),1fr));gap:14px}
+.pk{background:#fff;border:1px solid var(--lijn);border-radius:12px;padding:14px 16px}
+.pk h3{font-size:13px;font-weight:500;letter-spacing:.08em;display:flex;justify-content:space-between;gap:8px;margin-bottom:8px}
+.pk .sub{font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin:10px 0 6px}
+.druklijst{display:grid;gap:5px}
+.drukrij{display:grid;grid-template-columns:110px 1fr auto;gap:8px;align-items:center;font-size:11px;padding:4px 8px;border-radius:8px;background:var(--papier)}
+.drukrij.later{opacity:.6}.drukrij.sleep{outline:1.5px dashed #111}
+.drukrij .acties{gap:4px;flex-wrap:nowrap}.drukrij button{padding:1px 9px;font-size:10px}
+.vis{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.vis .slot{position:relative;aspect-ratio:4/5;border:1px dashed #aaa;border-radius:8px;display:grid;place-items:center;font-size:10px;color:#777;cursor:pointer;overflow:hidden;background:var(--papier)}
+.vis .slot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.vis .slot.sleep{border-color:#111;background:var(--zee)}
+.vis .slot .x{position:absolute;top:3px;right:3px;width:18px;height:18px;padding:0;border-radius:50%;background:rgba(255,255,255,.9);border:0;font-size:11px;line-height:18px;display:none}
+.vis .slot:hover .x,.vis .slot:focus-within .x{display:block}
+.vis .slot .nr{position:absolute;left:4px;bottom:2px;font-size:9px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+@media (max-width:760px){.drukrij{grid-template-columns:80px 1fr}.drukrij .acties{grid-column:1/-1}.vb{display:none}main{padding:14px}.log div{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<form id="login" class="verberg">
+  <h1>SKIFFA</h1>
+  <p style="margin-bottom:10px">Administratie</p>
+  <label>wachtwoord<input type="password" name="wachtwoord" autocomplete="current-password" required></label>
+  <button class="vol" type="submit">inloggen</button>
+  <p id="loginFout" style="color:var(--rood);margin-top:10px"></p>
+</form>
+
+<div id="app" class="verberg">
+  <header>
+    <b>SKIFFA</b>
+    <div class="nav"><button data-view="bestellingen" aria-current="true">bestellingen</button><button data-view="kanalen">kanalen</button><button data-view="posters">posters</button></div>
+    <span style="flex:1"></span>
+    <a href="/" target="_blank" rel="noopener">winkel ↗</a>
+    <button id="uitloggen">uitloggen</button>
+  </header>
+  <main>
+    <div id="instellingen"></div>
+    <section id="viewKanalen" class="verberg">
+      <div class="kanalen" id="kanaalKaarten"></div>
+      <div class="assort">
+        <div class="balk"><b style="margin-right:8px">assortiment</b>
+          <select id="assortKanaal"><option value="bol">bol.com</option><option value="etsy">Etsy</option><option value="amazon">Amazon</option></select>
+          <button id="allesAan">alles aanbieden</button><button id="allesUit">niets aanbieden</button>
+          <span class="mini" id="assortUitleg"></span></div>
+        <div id="assortLijst"></div>
+      </div>
+    </section>
+    <section id="viewPosters" class="verberg">
+      <div class="kaarten" id="mediaTellers"></div>
+      <label class="drop" id="drop"><input type="file" id="dropInput" multiple accept=".pdf,application/pdf,image/jpeg,image/png,image/webp" hidden>
+        <b>Sleep al je drukbestanden en visuals hierheen</b> (of klik om te kiezen). De bestandsnaam bepaalt de koppeling:
+        <span class="mini" style="display:block;margin-top:4px">drukbestand: <code>golf-50x70.pdf</code> · <code>pier-en-strand-30x40.pdf</code> · <code>regatta-18x24in.pdf</code> &nbsp;—&nbsp; visuals: <code>golf-1.jpg</code> t/m <code>golf-6.jpg</code></span></label>
+      <div id="wachtrij"></div>
+      <div class="posterkaarten" id="posterKaarten"></div>
+    </section>
+    <section id="viewBestellingen">
+    <div class="kaarten" id="kaarten"></div>
+    <div class="balk" id="filters">
+      <button class="tab" data-f="actie" aria-pressed="true">te verzenden</button>
+      <button class="tab" data-f="">alles</button>
+      <button class="tab" data-f="open">open</button>
+      <button class="tab" data-f="verzonden">verzonden</button>
+      <button class="tab" data-f="geannuleerd">geannuleerd</button>
+      <button class="tab" data-f="terugbetaald">terugbetaald</button>
+      <select id="kanaalFilter"><option value="">alle kanalen</option><option value="webshop">webshop</option><option value="bol">bol.com</option><option value="etsy">Etsy</option><option value="amazon">Amazon</option></select>
+      <input type="search" id="zoek" placeholder="zoek op nummer, naam, e-mail, factuur…">
+      <span style="flex:1"></span>
+      <label>van <input type="date" id="van"></label>
+      <label>tot <input type="date" id="tot"></label>
+      <button id="export">export csv</button>
+    </div>
+    <div id="lijst"></div>
+    </section>
+  </main>
+</div>
+
+<div id="paneel"><div class="vak" id="vak"></div></div>
+<div id="melding"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const euro=v=>'€ '+Number(v||0).toFixed(2).replace('.',',');
+const datum=d=>d?new Date(d).toLocaleString('nl-NL',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Amsterdam'}):'';
+const LABEL={open:'open',betaald:'betaald',in_productie:'in productie',verzonden:'verzonden',geleverd:'geleverd',geannuleerd:'geannuleerd',mislukt:'mislukt',terugbetaald:'terugbetaald'};
+const st=s=>`<span class="st ${esc(s)}">${esc(LABEL[s]||s)}</span>`;
+let filter='actie',zoekTimer=null,huidig=null;
+
+async function api(actie,{method='GET',body,params}={}){
+  const q=new URLSearchParams({actie,...(params||{})});
+  const r=await fetch('/api/admin?'+q,{method,headers:body?{'content-type':'application/json'}:{},body:body?JSON.stringify(body):undefined,credentials:'same-origin'});
+  const j=await r.json().catch(()=>({ok:false,melding:'Onverwacht antwoord van de server.'}));
+  if(r.status===401&&actie!=='login'){toonLogin();throw new Error('uit');}
+  if(!j.ok)throw new Error(j.melding||'Mislukt');
+  return j;
+}
+function meld(t,isFout){const m=$('#melding');m.textContent=t;m.className='aan'+(isFout?' fout':'');clearTimeout(m._t);m._t=setTimeout(()=>m.className='',2600);}
+
+function toonLogin(){$('#app').classList.add('verberg');$('#login').classList.remove('verberg');$('#login [name=wachtwoord]').focus();}
+$('#login').addEventListener('submit',async e=>{e.preventDefault();$('#loginFout').textContent='';
+  try{await api('login',{method:'POST',body:{wachtwoord:e.target.wachtwoord.value}});e.target.reset();start();}
+  catch(err){$('#loginFout').textContent=err.message;}});
+$('#uitloggen').addEventListener('click',async()=>{await api('uitloggen').catch(()=>{});toonLogin();});
+
+async function start(){
+  const s=await fetch('/api/admin?actie=status-inlog').then(r=>r.json()).catch(()=>({}));
+  if(!s.ingelogd){toonLogin();if(!s.ingesteld)$('#loginFout').textContent='Zet eerst ADMIN_WACHTWOORD (min. 12 tekens) in Vercel.';return;}
+  $('#login').classList.add('verberg');$('#app').classList.remove('verberg');
+  const mist=[!s.database&&'SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (administratie)',!s.mollie&&'MOLLIE_API_KEY (betalen)',!s.mail&&'RESEND_API_KEY (mails)'].filter(Boolean);
+  $('#instellingen').innerHTML=mist.length?`<div class="waarschuw">Nog niet ingesteld in Vercel: ${mist.map(esc).join(', ')}.</div>`:'';
+  if(!s.database)return;
+  laadOverzicht();laadLijst();
+  const h=decodeURIComponent(location.hash.slice(1));if(h&&!['kanalen','posters'].includes(h))open(h);
+}
+
+async function laadOverzicht(){
+  try{const o=await api('overzicht');
+    $('#kaarten').innerHTML=[['te verzenden',o.teVerzenden],['omzet deze maand',euro(o.omzetMaand)],['omzet dit jaar',euro(o.omzetJaar)],['betaalde bestellingen',o.aantalBetaald],['open (onbetaald)',o.perStatus.open],['omzet per kanaal (jaar)',Object.entries(o.omzetPerKanaal||{}).filter(([,v])=>v).map(([k,v])=>`<span style="font-size:11px;display:block">${k} ${euro(v)}</span>`).join('')||'—']]
+      .map(([k,v])=>`<div class="kaart"><small>${k}</small><b>${v}</b></div>`).join('');
+  }catch(e){if(e.message!=='uit')meld(e.message,true);}
+}
+async function laadLijst(){
+  try{const {bestellingen}=await api('bestellingen',{params:{status:filter,q:$('#zoek').value,kanaal:$('#kanaalFilter').value}});
+    $('#lijst').innerHTML=bestellingen.length?`<table><thead><tr><th>bestelling</th><th>datum</th><th>klant</th><th class="vb">plaats</th><th>status</th><th class="r">totaal</th><th class="vb">factuur</th></tr></thead><tbody>${
+      bestellingen.map(b=>`<tr data-id="${esc(b.id)}"><td><b>${esc(b.nummer)}</b>${b.kanaal&&b.kanaal!=='webshop'?`<span class="kb ${esc(b.kanaal)}">${esc(b.kanaal)}</span>`:''}</td><td>${datum(b.aangemaakt_op)}</td><td>${esc(b.naam)}<br><span style="opacity:.6">${esc(b.email)}</span></td><td class="vb">${esc(b.plaats)} (${esc(b.land)})</td><td>${st(b.status)}</td><td class="r">${euro(b.totaal)}</td><td class="vb">${esc(b.factuurnummer||'')}</td></tr>`).join('')}</tbody></table>`
+      :`<div class="leeg">Geen bestellingen${filter==='actie'?' om te verzenden':''}.</div>`;
+  }catch(e){if(e.message!=='uit')meld(e.message,true);}
+}
+$('#filters').addEventListener('click',e=>{const b=e.target.closest('.tab');if(!b)return;filter=b.dataset.f;document.querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));laadLijst();});
+$('#zoek').addEventListener('input',()=>{clearTimeout(zoekTimer);zoekTimer=setTimeout(laadLijst,250);});
+$('#kanaalFilter').addEventListener('change',laadLijst);
+$('#lijst').addEventListener('click',e=>{const tr=e.target.closest('tr[data-id]');if(tr)open(tr.dataset.id);});
+$('#export').addEventListener('click',()=>{const q=new URLSearchParams({actie:'export',van:$('#van').value,tot:$('#tot').value});location.href='/api/admin?'+q;});
+{const n=new Date();$('#van').value=new Date(n.getFullYear(),n.getMonth(),1).toLocaleDateString('sv-SE');$('#tot').value=n.toLocaleDateString('sv-SE');}
+
+async function open(id){
+  try{const {bestelling:b}=await api('bestelling',{params:{id}});huidig=b;tekenPaneel(b);$('#paneel').classList.add('open');history.replaceState(null,'','#'+b.nummer);}
+  catch(e){if(e.message!=='uit')meld(e.message,true);}
+}
+function sluit(){$('#paneel').classList.remove('open');huidig=null;history.replaceState(null,'',location.pathname);}
+$('#paneel').addEventListener('click',e=>{if(e.target.id==='paneel')sluit();if(e.target.closest('[data-naarposters]')){e.preventDefault();sluit();toonView('posters');}});
+addEventListener('keydown',e=>{if(e.key==='Escape')sluit();});
+
+function tekenPaneel(b){
+  const druk=r=>r.druk?`<a href="${esc(r.druk.link)}" target="_blank" rel="noopener" class="${r.druk.status==='afwijkend'?'nok':'ok'}">drukbestand ↓${r.druk.status==='afwijkend'?' (maat wijkt af)':''}</a>`:`<span class="nok">drukbestand ontbreekt</span> · <a href="#posters" data-naarposters>uploaden</a>`;
+  const regels=(b.bestelregels||[]).map(r=>`<tr><td>${r.aantal}× ${esc(r.poster_naam)} <span style="opacity:.6">${esc(r.formaat_label)}</span><div class="mini">${druk(r)}</div></td><td class="r">${euro(r.prijs*r.aantal)}</td></tr>`).join('');
+  const kan=s=>({
+    betaald:['open','mislukt'].includes(b.status),
+    productie:b.status==='betaald',
+    verzenden:['betaald','in_productie'].includes(b.status),
+    geleverd:b.status==='verzonden',
+    annuleren:['open','mislukt','betaald','in_productie'].includes(b.status),
+    terug:b.kanaal==='webshop'&&!!b.betaald_op&&Number(b.terugbetaald)<Number(b.totaal),
+  })[s];
+  $('#vak').innerHTML=`
+  <div style="display:flex;justify-content:space-between;align-items:center"><h2>${esc(b.nummer)} ${st(b.status)}</h2><button data-a="sluit">sluiten</button></div>
+  ${b.kanaal!=='webshop'?`<p style="margin-top:6px"><span class="kb ${esc(b.kanaal)}">${esc(b.kanaal)}</span> ordernummer ${esc(b.extern_id)}${b.extern_verzonden_op?` · track-and-trace doorgegeven ${datum(b.extern_verzonden_op)}`:b.track_trace?' · track-and-trace wordt bij de volgende sync doorgegeven':''}${b.extern_meta?.verzend_fout?` · <span class="nok">fout: ${esc(b.extern_meta.verzend_fout)}</span>`:''}</p>`:''}
+  <p style="opacity:.6;margin-top:4px">besteld ${datum(b.aangemaakt_op)}${b.betaald_op?` · betaald ${datum(b.betaald_op)}${b.mollie_methode?' via '+esc(b.mollie_methode):''}`:''}</p>
+
+  <div class="blok"><h3>acties</h3><div class="acties">
+    ${kan('verzenden')?`<select id="vervoerder">${['postnl','dhl','dpd','ups','gls','bpost'].map(v=>`<option ${v===(b.vervoerder||'postnl')?'selected':''}>${v}</option>`).join('')}</select><input id="tt" placeholder="track-and-trace (code${b.kanaal==='webshop'?' of link':''})" value="${esc(b.track_trace||'')}"><button class="vol" data-a="verzonden">markeer verzonden${b.kanaal==='webshop'?' + mail':` + door naar ${esc(b.kanaal)}`}</button>`:''}
+    ${kan('productie')?`<button data-a="in_productie">in productie</button>`:''}
+    ${b.betaald_op&&b.drukker&&!['verzonden','geleverd','geannuleerd','terugbetaald'].includes(b.status)?`<button data-a="drukker">drukopdracht ${(b.log||[]).some(l=>l.soort==='drukker')?'opnieuw ':''}naar drukker</button>`:''}
+    ${kan('geleverd')?`<button data-a="geleverd">geleverd</button>`:''}
+    ${kan('betaald')?`<button data-a="betaald">markeer betaald (overboeking)</button>`:''}
+    ${b.mollie_id?`<button data-a="ververs">ververs betaalstatus</button>`:''}
+    ${b.factuurnummer?`<a href="/api/factuur?nr=${encodeURIComponent(b.nummer)}" target="_blank" rel="noopener"><button>factuur ${esc(b.factuurnummer)}</button></a>`:''}
+    ${b.factuurnummer?`<a href="/api/factuur?nr=${encodeURIComponent(b.nummer)}&pdf=1" target="_blank" rel="noopener"><button>pdf</button></a>`:''}
+    ${b.factuurnummer&&b.kanaal==='webshop'?`<button data-a="mail-bevestiging">bevestiging opnieuw</button>`:''}
+    ${b.status==='verzonden'&&b.kanaal==='webshop'?`<button data-a="mail-verzonden">verzendmail opnieuw</button>`:''}
+    ${kan('annuleren')&&b.kanaal==='webshop'?`<button data-a="geannuleerd">annuleren</button>`:''}
+  </div>
+  ${kan('terug')?`<div class="acties" style="margin-top:10px"><input id="terugBedrag" placeholder="bedrag (leeg = alles: ${euro(b.totaal-b.terugbetaald)})" inputmode="decimal"><button data-a="terugbetalen">terugbetalen${b.mollie_id?' via Mollie':''}</button></div>`:''}
+  </div>
+
+  <div class="blok"><h3>bestelling</h3><table>${regels}
+    <tr><td>verzending</td><td class="r">${Number(b.verzending)?euro(b.verzending):'gratis'}</td></tr>
+    <tr><td><b>totaal</b> (waarvan btw ${euro(b.totaal-b.totaal/1.21)})</td><td class="r"><b>${euro(b.totaal)}</b></td></tr>
+    ${Number(b.terugbetaald)?`<tr><td>teruggestort</td><td class="r" style="color:var(--rood)">− ${euro(b.terugbetaald)}</td></tr>`:''}</table></div>
+
+  <div class="blok"><h3>klant en verzendadres</h3>
+    ${esc(b.naam)}<br>${esc(b.straat)}<br>${esc(b.postcode)} ${esc(b.plaats)}<br>${b.land==='BE'?'België':'Nederland'}<br><a href="mailto:${esc(b.email)}?subject=${encodeURIComponent('Je Skiffa-bestelling '+b.nummer)}">${esc(b.email)}</a>
+    ${b.opmerking?`<p style="margin-top:8px"><b>opmerking klant:</b> ${esc(b.opmerking)}</p>`:''}
+    ${b.track_trace?`<p style="margin-top:8px">track-and-trace: ${esc(b.track_trace)}</p>`:''}</div>
+
+  <div class="blok"><h3>interne notitie</h3><textarea id="notitie" rows="3" style="width:100%">${esc(b.notitie||'')}</textarea><div style="margin-top:8px"><button data-a="notitie">notitie opslaan</button></div></div>
+
+  <div class="blok"><h3>logboek</h3><div class="log">${(b.log||[]).map(l=>`<div class="${l.soort==='fout'?'fout':''}"><span>${datum(l.op)}</span><span>${esc(l.soort)} · ${esc(l.door)}</span><span>${esc(l.tekst)}</span></div>`).join('')||'<p>Nog niets.</p>'}</div></div>`;
+}
+
+$('#vak').addEventListener('click',async e=>{
+  const k=e.target.closest('button[data-a]');if(!k||!huidig)return;const a=k.dataset.a,id=huidig.id;
+  if(a==='sluit')return sluit();
+  const bevestig={geannuleerd:'Bestelling annuleren? De klant krijgt een mail.',terugbetalen:'Geld terugstorten naar de klant?',betaald:'Markeren als betaald? Er wordt een factuurnummer toegekend en de klant krijgt de bevestiging.'};
+  if(bevestig[a]&&!confirm(bevestig[a]))return;
+  k.disabled=true;
+  try{
+    let res;
+    if(['verzonden','in_productie','geleverd','geannuleerd'].includes(a))res=await api('status',{method:'POST',body:{id,status:a,track_trace:$('#tt')?.value,vervoerder:$('#vervoerder')?.value}});
+    else if(a==='betaald')res=await api('betaald',{method:'POST',body:{id}});
+    else if(a==='terugbetalen')res=await api('terugbetalen',{method:'POST',body:{id,bedrag:$('#terugBedrag').value}});
+    else if(a==='ververs')res=await api('ververs',{method:'POST',body:{id}});
+    else if(a==='notitie')res=await api('notitie',{method:'POST',body:{id,tekst:$('#notitie').value}});
+    else if(a.startsWith('mail-'))res=await api('mail',{method:'POST',body:{id,soort:a.slice(5)}});
+    else if(a==='drukker'){res=await mapi('drukker',{id});meld(res.melding);await open(id);return;}
+    meld(res.gemaild?'Opgeslagen, klant gemaild':res.mollie?`Mollie: ${res.mollie}`:res.kanaal?`Opgeslagen; gaat bij de volgende sync naar ${res.kanaal}`:'Opgeslagen');
+    await open(id);laadOverzicht();laadLijst();
+  }catch(err){if(err.message!=='uit')meld(err.message,true);k.disabled=false;}
+});
+/* ---------- Kanalen ---------- */
+const KNAAM={bol:'bol.com',etsy:'Etsy',amazon:'Amazon'};
+const VELDEN={
+  bol:[['opslag_pct','opslag t.o.v. webshop (%)'],['voorraad','voorraad tonen (stuks)'],['levertijd_min','levertijd min. (dagen)'],['levertijd_max','levertijd max. (dagen)']],
+  etsy:[['opslag_pct','opslag t.o.v. webshop (%)'],['voorraad','voorraad tonen (stuks)'],['verzendprofiel_id','verzendprofiel-id'],['verwerkingsprofiel_id','verwerkingsprofiel-id'],['retourbeleid_id','retourbeleid-id (optioneel)'],['taxonomy_id','categorie (taxonomy-id)']],
+  amazon:[['opslag_pct','opslag t.o.v. webshop (%)'],['voorraad','voorraad tonen (stuks)'],['verwerkingsdagen','verwerkingstijd (dagen)'],['producttype','producttype'],['merk','merk'],['marketplace_id','marketplace-id']],
+};
+function toonView(v){document.querySelectorAll('.nav button').forEach(b=>b.setAttribute('aria-current',String(b.dataset.view===v)));
+  $('#viewBestellingen').classList.toggle('verberg',v!=='bestellingen');$('#viewKanalen').classList.toggle('verberg',v!=='kanalen');$('#viewPosters').classList.toggle('verberg',v!=='posters');
+  if(v==='kanalen'){laadKanalen();laadAssort();}if(v==='posters')laadMedia();history.replaceState(null,'',v==='bestellingen'?location.pathname:'#'+v);}
+document.querySelector('.nav').addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(b)toonView(b.dataset.view);});
+async function kapi(actie,{method='GET',body,params}={}){
+  const q=new URLSearchParams({actie,...(params||{})});
+  const r=await fetch('/api/kanalen?'+q,{method,headers:body?{'content-type':'application/json'}:{},body:body?JSON.stringify(body):undefined});
+  const j=await r.json().catch(()=>({ok:false,melding:'Onverwacht antwoord'}));
+  if(r.status===401){toonLogin();throw new Error('uit');}
+  if(!j.ok&&j.melding)throw new Error(j.melding);return j;
+}
+function logTekst(l){return (l||[]).map(x=>`<div class="${x.ok?'':'nok'}">${esc(x.stap)}: ${esc(x.info)}</div>`).join('');}
+async function laadKanalen(){
+  try{const {kanalen,cron}=await kapi('overzicht');
+    $('#kanaalKaarten').innerHTML=['bol','etsy','amazon'].map(k=>{const c=kanalen[k],s=c.instellingen,l=c.listings,laatste=c.laatste[0];
+      return `<div class="kanaal" data-k="${k}">
+      <h3>${KNAAM[k]} <span class="${s.aan?'ok':''}">${s.aan?(s.proef?'aan · proefmodus':'aan · live'):'uit'}</span></h3>
+      <p class="mini">${c.sleutels?'<span class="ok">sleutels aanwezig</span>':`<span class="nok">nog in Vercel zetten: ${esc(c.sleutelnamen)}</span>`}${k==='etsy'?` · ${c.koppeling?`<span class="ok">gekoppeld met ${esc(c.koppeling.shop_naam||c.koppeling.shop_id)}</span>`:'<span class="nok">nog niet gekoppeld</span>'}`:''}</p>
+      <p class="mini" style="margin-bottom:8px">listings: ${l.aan} aangeboden · ${l.actief} actief · ${l.wacht} in behandeling · ${l.fout} met fout</p>
+      <div class="rij"><label>kanaal aan</label><input type="checkbox" class="schakel" data-v="aan" ${s.aan?'checked':''}></div>
+      <div class="rij"><label>proefmodus (niets naar ${KNAAM[k]} sturen)</label><input type="checkbox" class="schakel" data-v="proef" ${s.proef?'checked':''}></div>
+      ${VELDEN[k].map(([v,lab])=>`<div class="rij"><label>${lab}</label><input data-v="${v}" value="${esc(s[v]??'')}"></div>`).join('')}
+      <div class="acties" style="margin-top:10px">
+        <button class="vol" data-ka="opslaan">opslaan</button><button data-ka="ping">test verbinding</button><button data-ka="sync">nu synchroniseren</button>
+        ${k==='etsy'?`<button data-ka="koppel">${c.koppeling?'opnieuw koppelen':'koppel Etsy'}</button>${c.koppeling?'<button data-ka="profielen">profielen ophalen</button>':''}`:''}
+      </div>
+      ${k==='etsy'?`<p class="mini" style="margin-top:6px">Callback-URL voor je Etsy-app: ${esc(c.terugUrl)}</p>`:''}
+      <div class="mini" id="uit-${k}" style="margin-top:8px">${laatste?`laatste run ${datum(laatste.op)} (${esc(laatste.actie)}${laatste.proef?', proef':''}): ${logTekst(laatste.log)}`:'nog niet gesynchroniseerd'}</div>
+      </div>`;}).join('')+(cron?'':`<div class="waarschuw" style="grid-column:1/-1">Automatisch synchroniseren staat nog uit: zet CRON_SECRET (min. 16 tekens) in Vercel én als GitHub-secret (zie README). Tot die tijd: "nu synchroniseren".</div>`);
+  }catch(e){if(e.message!=='uit')meld(e.message,true);}
+}
+$('#kanaalKaarten').addEventListener('click',async e=>{
+  const b=e.target.closest('[data-ka]');if(!b)return;const kaart=b.closest('.kanaal'),k=kaart.dataset.k,a=b.dataset.ka,uit=$('#uit-'+k);b.disabled=true;
+  try{
+    if(a==='opslaan'){const w={};kaart.querySelectorAll('[data-v]').forEach(i=>w[i.dataset.v]=i.type==='checkbox'?i.checked:i.value);
+      if(w.aan&&!w.proef&&!confirm(`${KNAAM[k]} live zetten? Listings, prijzen en verzendingen gaan dan echt naar ${KNAAM[k]}.`)){b.disabled=false;return;}
+      await kapi('instellingen',{method:'POST',body:{kanaal:k,waarden:w}});meld('Instellingen opgeslagen');laadKanalen();}
+    if(a==='ping'){const r=await kapi('ping',{method:'POST',body:{kanaal:k}});uit.innerHTML=`<span class="${r.ok?'ok':'nok'}">verbinding ${r.ok?'in orde':'mislukt'}: ${esc(r.info||r.status)}</span>`;}
+    if(a==='sync'){uit.textContent='bezig…';const r=await kapi('sync',{method:'POST',body:{kanaal:k}});
+      uit.innerHTML=`${r.proef?'proefmodus · ':''}${logTekst(r.log)}${r.proef_schrijfacties?.length?`<div>zou versturen: ${r.proef_schrijfacties.slice(0,8).map(esc).join(', ')}${r.proef_schrijfacties.length>8?' …':''}</div>`:''}`;laadAssort();laadOverzicht();laadLijst();}
+    if(a==='koppel'){const r=await kapi('etsy-koppel');location.href=r.url;}
+    if(a==='profielen'){const r=await kapi('etsy-profielen');
+      uit.innerHTML=['verzendprofielen','verwerkingsprofielen','retourbeleid'].map(x=>`<div><b>${x}:</b> ${(r[x]||[]).map(p=>`${esc(p.id)} (${esc(p.naam)})`).join(', ')||'geen'}</div>`).join('');}
+  }catch(err){if(err.message!=='uit'){uit.innerHTML=`<span class="nok">${esc(err.message)}</span>`;meld(err.message,true);}}
+  b.disabled=false;
+});
+async function laadAssort(){
+  const k=$('#assortKanaal').value;
+  $('#assortUitleg').textContent=k==='etsy'?'Etsy: één listing per poster, met de drie formaten als keuze.':`${KNAAM[k]} eist per formaat een eigen EAN-code (te koop bij GS1 Nederland).`;
+  try{const {listings}=await kapi('listings',{params:{kanaal:k}});
+    $('#assortLijst').innerHTML=`<table><thead><tr><th>aanbieden</th><th>poster</th><th>formaat</th>${k!=='etsy'?'<th>EAN</th>':''}<th class="r">prijs op ${KNAAM[k]}</th><th>status</th><th>melding</th></tr></thead><tbody>${listings.map(l=>`<tr>
+      <td><input type="checkbox" class="schakel" data-lid="${l.id}" ${l.ingeschakeld?'checked':''}></td><td>${esc(l.poster_naam)}</td><td>${esc(l.formaat_label)}</td>
+      ${k!=='etsy'?`<td><input type="text" inputmode="numeric" data-ean="${esc(l.poster_id)}|${esc(l.formaat)}" value="${esc(l.ean||'')}" placeholder="13 cijfers"></td>`:''}
+      <td class="r">${Array.isArray(l.prijs)?l.prijs.map(euro).join(' / '):euro(l.prijs)}</td><td>${esc(l.status)}${l.extern_id?`<div class="mini">${esc(l.extern_id)}</div>`:''}</td><td class="mini ${l.laatste_fout?'nok':''}">${esc(l.laatste_fout||'')}</td></tr>`).join('')}</tbody></table>`;
+  }catch(e){if(e.message!=='uit')$('#assortLijst').innerHTML=`<div class="leeg">${esc(e.message)}</div>`;}
+}
+$('#assortKanaal').addEventListener('change',laadAssort);
+$('#assortLijst').addEventListener('change',async e=>{
+  const t=e.target;
+  try{
+    if(t.dataset.lid){await kapi('listing',{method:'POST',body:{id:Number(t.dataset.lid),ingeschakeld:t.checked}});meld(t.checked?'Wordt bij de volgende sync aangeboden':'Wordt bij de volgende sync gepauzeerd');}
+    if(t.dataset.ean!==undefined){const [poster_id,formaat]=t.dataset.ean.split('|');await kapi('ean',{method:'POST',body:{poster_id,formaat,ean:t.value}});meld('EAN opgeslagen');t.style.borderColor='';}
+  }catch(err){if(err.message!=='uit'){meld(err.message,true);if(t.dataset.ean!==undefined)t.style.borderColor='var(--rood)';else t.checked=!t.checked;}}
+});
+for(const [id,aan] of [['#allesAan',true],['#allesUit',false]])$(id).addEventListener('click',async()=>{const k=$('#assortKanaal').value;
+  if(!confirm(aan?`Alle posters op ${KNAAM[k]} aanbieden?`:`Alle posters op ${KNAAM[k]} pauzeren?`))return;
+  try{await kapi('alles',{method:'POST',body:{kanaal:k,aan}});laadAssort();}catch(e){if(e.message!=='uit')meld(e.message,true);}});
+/* ---------- Posters: drukbestanden en visuals ---------- */
+let media=null;
+async function mapi(actie,body,params){
+  const q=new URLSearchParams({actie,...(params||{})});
+  const r=await fetch('/api/media?'+q,{method:body?'POST':'GET',headers:body?{'content-type':'application/json'}:{},body:body?JSON.stringify(body):undefined});
+  const j=await r.json().catch(()=>({ok:false,melding:'Onverwacht antwoord'}));
+  if(r.status===401){toonLogin();throw new Error('uit');}
+  if(!j.ok)throw new Error(j.melding||'Mislukt');return j;
+}
+const mb=b=>b>=1e9?(b/1e9).toFixed(1).replace('.',',')+' GB':(b/1e6).toFixed(b<1e7?1:0).replace('.',',')+' MB';
+async function laadMedia(){
+  try{media=await mapi('overzicht');tekenMedia();}
+  catch(e){if(e.message!=='uit')$('#posterKaarten').innerHTML=`<div class="leeg">${esc(e.message)}</div>`;}
+}
+function tekenMedia(){
+  const t=media.tellers;
+  $('#mediaTellers').innerHTML=[['drukbestanden (te koop)',`${t.druk} / ${t.drukNodig}`],['maat wijkt af',t.afwijkend],['visuals',`${t.visuals} / ${t.visualsNodig}`],['drukopdracht per mail',media.drukker?'aan':'uit']]
+    .map(([k,v])=>`<div class="kaart"><small>${k}</small><b class="${k==='maat wijkt af'&&v?'nok':''}">${v}</b></div>`).join('')
+    +(media.drukker?'':`<div class="waarschuw" style="grid-column:1/-1;margin:0">Zet DRUKKER_EMAIL in Vercel om na elke betaling automatisch een drukopdracht (verzendadres + drukbestanden) naar je drukker te sturen.</div>`);
+  $('#posterKaarten').innerHTML=media.posters.map(p=>{
+    const n=media.formaten.filter(f=>f.actief&&p.druk[f.id]).length,na=media.formaten.filter(f=>f.actief).length;
+    return `<div class="pk" data-p="${esc(p.id)}"><h3><span>${esc(p.naam)}</span><span class="mini ${n===na&&p.visuals.length===media.aantalVisuals?'ok':''}">druk ${n}/${na} · visuals ${p.visuals.length}/${media.aantalVisuals}</span></h3>
+      <div class="sub">drukbestanden (pdf, hoge resolutie)</div><div class="druklijst">${media.formaten.map(f=>{const d=p.druk[f.id];
+        return `<div class="drukrij ${f.actief?'':'later'}" data-f="${f.id}"><span>${esc(f.label)}${f.actief?'':' <span class="kb">later</span>'}</span>
+        <span>${d?`<span class="${d.status==='ok'?'ok':d.status==='afwijkend'?'nok':''}">${d.status==='ok'?'✓ maat klopt':d.status==='afwijkend'?`⚠ ${d.breedte} × ${d.hoogte} mm`:'maat onbekend'}</span> <span class="mini">${d.afloop?`${String(d.afloop).replace('.',',')} mm afloop · `:''}${d.bytes?mb(d.bytes):''}</span>`:`<span class="mini">nog geen bestand · ${f.mm.map(x=>String(x).replace('.',',')).join(' × ')} mm</span>`}</span>
+        <span class="acties">${d?`<a href="/api/media?actie=druk&p=${encodeURIComponent(p.id)}&f=${encodeURIComponent(f.id)}" target="_blank" rel="noopener"><button>↓</button></a>`:''}<button data-m="kies-druk">${d?'vervang':'upload'}</button>${d?'<button data-m="weg-druk" aria-label="verwijder">×</button>':''}</span></div>`;}).join('')}</div>
+      <div class="sub">visuals voor de webshop (1 = eerste beeld)</div><div class="vis">${[1,2,3,4,5,6].map(i=>{const v=p.visuals.find(x=>x.positie===i);
+        return `<div class="slot" data-pos="${i}" tabindex="0" role="button" aria-label="visual ${i} ${v?'vervangen':'uploaden'}">${v?`<img src="${esc(v.klein)}" alt="${esc(v.alt)}" loading="lazy"><span class="nr">${i}</span><button class="x" data-m="weg-visual" aria-label="verwijder visual ${i}">×</button>`:`+ ${i}`}</div>`;}).join('')}</div>
+    </div>`;}).join('');
+}
+
+// PDF-maat uitlezen in de browser (MediaBox/TrimBox van de eerste pagina, in mm). Leest in stukken,
+// dus ook bestanden van honderden MB. Staat de maat in gecomprimeerde objecten, dan blijft hij onbekend.
+async function meetPdf(file){
+  const box=n=>new RegExp('/'+n+'\\s*\\[\\s*(-?[\\d.]+)\\s+(-?[\\d.]+)\\s+(-?[\\d.]+)\\s+(-?[\\d.]+)\\s*\\]');
+  const mm=m=>m?[(m[3]-m[1])*25.4/72,(m[4]-m[2])*25.4/72].map(x=>Math.abs(Math.round(x*10)/10)):null;
+  const kop=new TextDecoder('latin1').decode(await file.slice(0,8).arrayBuffer());
+  if(!kop.startsWith('%PDF-'))throw new Error(`${file.name} is geen pdf`);
+  let media=null,trim=null,paginas=0,rest='';const STUK=8*1024*1024;
+  for(let i=0;i<file.size;i+=STUK){
+    const t=rest+new TextDecoder('latin1').decode(await file.slice(i,i+STUK).arrayBuffer());
+    if(!media){const m=t.match(box('MediaBox'));if(m)media=mm(m);}
+    if(!trim){const m=t.match(box('TrimBox'));if(m)trim=mm(m);}
+    paginas+=(t.slice(rest.length?200:0).match(/\/Type\s*\/Page(?![a-zA-Z])/g)||[]).length;
+    rest=t.slice(-200);
+  }
+  return {media,trim,paginas:paginas||null};
+}
+function verklein(file,max){return createImageBitmap(file).then(bmp=>{
+  const s=Math.min(1,max/Math.max(bmp.width,bmp.height)),w=Math.round(bmp.width*s),h=Math.round(bmp.height*s);
+  const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,w,h);x.drawImage(bmp,0,0,w,h);
+  return new Promise(r=>c.toBlob(b=>r({blob:b,w,h}),'image/jpeg',.86));});}
+function put(url,body,type,voortgang){return new Promise((ok,nok)=>{const x=new XMLHttpRequest();x.open('PUT',url);x.setRequestHeader('content-type',type);x.setRequestHeader('x-upsert','true');
+  x.upload.onprogress=e=>{if(e.lengthComputable&&voortgang)voortgang(e.loaded/e.total);};
+  x.onload=()=>x.status<300?ok():nok(new Error(x.status===413?'Bestand te groot voor de uploadlimiet van je Supabase-project (Storage → Settings).':`Upload mislukt (${x.status})`));
+  x.onerror=()=>nok(new Error('Upload mislukt (verbinding)'));x.send(body);});}
+
+async function uploadBestand(file,doel,voortgang){
+  if(doel.soort==='druk'){
+    const meting=await meetPdf(file);
+    const u=await mapi('upload',{soort:'druk',poster_id:doel.poster_id,formaat:doel.formaat,bytes:file.size});
+    await put(u.url,file,'application/pdf',voortgang);
+    return mapi('bevestig',{soort:'druk',poster_id:doel.poster_id,formaat:doel.formaat,...meting,bestandsnaam:file.name});
+  }
+  if(!/^image\/(jpeg|png|webp)$/.test(file.type))throw new Error(`${file.name}: alleen jpg, png of webp`);
+  const [groot,klein]=await Promise.all([verklein(file,2000),verklein(file,900)]);
+  const u=await mapi('upload',{soort:'visual',poster_id:doel.poster_id,positie:doel.positie,bytes:groot.blob.size});
+  await put(u.url,groot.blob,'image/jpeg',f=>voortgang&&voortgang(f*.85));
+  await put(u.url_klein,klein.blob,'image/jpeg');voortgang&&voortgang(1);
+  return mapi('bevestig',{soort:'visual',poster_id:doel.poster_id,positie:doel.positie,pad:u.pad,pad_klein:u.pad_klein,breedte:groot.w,hoogte:groot.h});
+}
+const naamVan=id=>media?.posters.find(p=>p.id===id)?.naam||id;
+const labelVan=id=>media?.formaten.find(f=>f.id===id)?.label||id;
+
+// Eén bestand op een vaste plek (knop of slepen op een rij/vakje).
+async function losseUpload(file,doel,el){
+  el?.classList.add('sleep');meld('Bezig met uploaden…');
+  try{const r=await uploadBestand(file,doel,f=>{if(el)el.style.background=`linear-gradient(90deg,var(--zee) ${f*100}%,transparent ${f*100}%)`;});meld(r.melding||'Opgeslagen',r.status==='afwijkend');}
+  catch(e){if(e.message!=='uit')meld(e.message,true);}
+  await laadMedia();
+}
+function kiesBestand(accept,fn){const i=document.createElement('input');i.type='file';i.accept=accept;i.onchange=()=>i.files[0]&&fn(i.files[0]);i.click();}
+$('#posterKaarten').addEventListener('click',async e=>{
+  const pk=e.target.closest('.pk');if(!pk)return;const p=pk.dataset.p,m=e.target.closest('[data-m]')?.dataset.m,rij=e.target.closest('.drukrij'),slot=e.target.closest('.slot');
+  if(m==='kies-druk')return kiesBestand('.pdf,application/pdf',f=>losseUpload(f,{soort:'druk',poster_id:p,formaat:rij.dataset.f},rij));
+  if(m==='weg-druk'){if(!confirm(`Drukbestand ${naamVan(p)} ${labelVan(rij.dataset.f)} verwijderen?`))return;try{await mapi('verwijder',{soort:'druk',poster_id:p,formaat:rij.dataset.f});meld('Verwijderd');}catch(x){if(x.message!=='uit')meld(x.message,true);}return laadMedia();}
+  if(m==='weg-visual'){e.stopPropagation();if(!confirm(`Visual ${slot.dataset.pos} van ${naamVan(p)} verwijderen?`))return;try{await mapi('verwijder',{soort:'visual',poster_id:p,positie:+slot.dataset.pos});meld('Verwijderd');}catch(x){if(x.message!=='uit')meld(x.message,true);}return laadMedia();}
+  if(slot)return kiesBestand('image/jpeg,image/png,image/webp',f=>losseUpload(f,{soort:'visual',poster_id:p,positie:+slot.dataset.pos},slot));
+});
+$('#posterKaarten').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('slot')){e.preventDefault();e.target.click();}});
+for(const t of ['dragover','dragleave','drop'])$('#posterKaarten').addEventListener(t,e=>{
+  const doelEl=e.target.closest('.drukrij,.slot');if(!doelEl)return;e.preventDefault();e.stopPropagation();
+  doelEl.classList.toggle('sleep',t==='dragover');
+  if(t==='drop'&&e.dataTransfer.files[0]){const p=doelEl.closest('.pk').dataset.p;
+    losseUpload(e.dataTransfer.files[0],doelEl.classList.contains('slot')?{soort:'visual',poster_id:p,positie:+doelEl.dataset.pos}:{soort:'druk',poster_id:p,formaat:doelEl.dataset.f},doelEl);}
+});
+
+// Alles tegelijk: namen herkennen → wachtrij → één voor één uploaden.
+let wachtrij=[];
+async function nieuweBestanden(files){
+  files=[...files];if(!files.length)return;
+  try{const {bestanden}=await mapi('herken',{namen:files.map(f=>f.name)});
+    wachtrij=bestanden.map((b,i)=>({...b,file:files[i],klaar:false}));tekenWachtrij();}
+  catch(e){if(e.message!=='uit')meld(e.message,true);}
+}
+function tekenWachtrij(){
+  if(!wachtrij.length){$('#wachtrij').innerHTML='';return;}
+  const opties=(lijst,w)=>lijst.map(([v,l])=>`<option value="${esc(v)}" ${String(v)===String(w)?'selected':''}>${esc(l)}</option>`).join('');
+  const goed=wachtrij.filter(b=>b.poster_id&&(b.formaat||b.positie)&&!b.klaar).length;
+  $('#wachtrij').innerHTML=`<table><thead><tr><th>bestand</th><th>poster</th><th>formaat / positie</th><th>status</th></tr></thead><tbody>${wachtrij.map((b,i)=>`<tr data-i="${i}">
+    <td>${esc(b.naam)}<div class="mini">${mb(b.file.size)}</div></td>
+    <td>${b.soort?`<select data-w="poster_id"><option value="">kies…</option>${opties(media.posters.map(p=>[p.id,p.naam]),b.poster_id)}</select>`:''}</td>
+    <td>${b.soort==='druk'?`<select data-w="formaat"><option value="">kies…</option>${opties(media.formaten.map(f=>[f.id,f.label]),b.formaat)}</select>`:b.soort==='visual'?`<select data-w="positie"><option value="">kies…</option>${opties([1,2,3,4,5,6].map(n=>[n,'visual '+n]),b.positie)}</select>`:''}</td>
+    <td class="mini ${b.fout&&!b.poster_id?'nok':''}">${b.status||(b.poster_id&&(b.formaat||b.positie)?'klaar om te uploaden':esc(b.fout||'kies poster'))}<div class="balkje"><i style="width:${(b.voortgang||0)*100}%"></i></div></td></tr>`).join('')}</tbody></table>
+    <div class="acties" style="margin:-4px 0 18px"><button class="vol" id="uploadAlles" ${goed?'':'disabled'}>koppel en upload ${goed} bestand${goed===1?'':'en'}</button><button id="wisWachtrij">wis lijst</button><span class="mini">Bestaande bestanden op dezelfde plek worden vervangen. Houd deze pagina open tot alles klaar is.</span></div>`;
+}
+$('#wachtrij').addEventListener('change',e=>{const s=e.target.closest('select[data-w]');if(!s)return;const b=wachtrij[+s.closest('tr').dataset.i];b[s.dataset.w]=s.dataset.w==='positie'?Number(s.value)||null:s.value||null;b.fout=null;tekenWachtrij();});
+$('#wachtrij').addEventListener('click',async e=>{
+  if(e.target.id==='wisWachtrij'){wachtrij=[];return tekenWachtrij();}
+  if(e.target.id!=='uploadAlles')return;e.target.disabled=true;
+  const zet=(i,velden)=>{Object.assign(wachtrij[i],velden);const tr=$(`#wachtrij tr[data-i="${i}"]`);if(tr){tr.querySelector('td:last-child').firstChild.textContent=wachtrij[i].status;tr.querySelector('.balkje i').style.width=(wachtrij[i].voortgang||0)*100+'%';}};
+  let ok=0,mis=0;
+  for(const [i,b] of wachtrij.entries()){
+    if(b.klaar||!b.poster_id||!(b.formaat||b.positie))continue;
+    zet(i,{status:'bezig…',voortgang:0});
+    try{const r=await uploadBestand(b.file,b,f=>zet(i,{voortgang:f}));zet(i,{status:r.status==='afwijkend'?'⚠ '+r.melding:'✓ '+(r.melding||'opgeslagen'),voortgang:1,klaar:true});ok++;}
+    catch(x){if(x.message==='uit')return;zet(i,{status:'✗ '+x.message});mis++;}
+  }
+  meld(`${ok} bestand${ok===1?'':'en'} gekoppeld${mis?`, ${mis} mislukt`:''}`,!!mis);await laadMedia();tekenWachtrij();
+});
+const drop=$('#drop');
+drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('over');});
+drop.addEventListener('dragleave',()=>drop.classList.remove('over'));
+drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('over');nieuweBestanden(e.dataTransfer.files);});
+$('#dropInput').addEventListener('change',e=>{nieuweBestanden(e.target.files);e.target.value='';});
+{const m=new URLSearchParams(location.search).get('melding');if(m){setTimeout(()=>meld(m,/mislukt/.test(m)),600);history.replaceState(null,'',location.pathname+location.hash);}}
+start().then(()=>{if(['#kanalen','#posters'].includes(location.hash))toonView(location.hash.slice(1));});
+</script>
+</body>
+</html>
