@@ -8,7 +8,8 @@
 import crypto from 'node:crypto';
 import { POSTERS, FORMATEN } from '../_catalogus.js';
 import { db } from '../_db.js';
-import { MAX_SCHRIJFACTIES, MAX_VERZENDPOGINGEN, foutTekst, kanaalPrijs, sku, titelEn, omschrijving, afbeelding, vervoerderCode } from './gemeen.js';
+import { MAX_SCHRIJFACTIES, MAX_VERZENDPOGINGEN, foutTekst, kanaalPrijs, sku, titelEn, omschrijving, vervoerderCode } from './gemeen.js';
+import { kanaalBeelden } from '../_media.js';
 import { listings, zetListing, bekendeOrders, regel, importeer, teMelden, gemeld, meldenMislukt, annuleerVanKanaal, zetInstellingen } from './opslag.js';
 
 const API = 'https://api.etsy.com/v3/application';
@@ -158,13 +159,18 @@ async function stapListings(etsy, s, log) {
       } else { if (etsy.proef) { etsy.schrijf.push(`listing ${id} afmaken`); continue; } af++; }
       const meta = { ...(r.meta || {}) };
       if (!meta.foto) {
-        const img = await fetch(afbeelding(r.poster_id));
-        if (!img.ok) throw new Error(`Foto ophalen mislukt (${img.status})`);
-        const form = new FormData();
-        form.append('image', new Blob([Buffer.from(await img.arrayBuffer())], { type: 'image/jpeg' }), `${r.poster_id}.jpg`);
-        form.append('rank', '1');
-        const up = await etsy.call('POST', `/shops/${etsy.shop}/listings/${id}/images`, { multipart: form });
-        if (!ok(up.status)) throw new Error(`Foto uploaden (${up.status}): ${foutTekst(up.data)}`);
+        // De poster als eerste foto, daarna de visuals (max. 10 op Etsy). Bij een fout gaat de volgende run verder.
+        const urls = (await kanaalBeelden(r.poster_id)).slice(0, 10);
+        for (let i = Number(meta.fotos || 0); i < urls.length; i++) {
+          const img = await fetch(urls[i]);
+          if (!img.ok) throw new Error(`Foto ${i + 1} ophalen mislukt (${img.status})`);
+          const form = new FormData();
+          form.append('image', new Blob([Buffer.from(await img.arrayBuffer())], { type: 'image/jpeg' }), `${r.poster_id}-${i + 1}.jpg`);
+          form.append('rank', String(i + 1));
+          const up = await etsy.call('POST', `/shops/${etsy.shop}/listings/${id}/images`, { multipart: form });
+          if (!ok(up.status)) throw new Error(`Foto ${i + 1} uploaden (${up.status}): ${foutTekst(up.data)}`);
+          meta.fotos = i + 1; await zetListing(r.id, { meta });
+        }
         meta.foto = true; await zetListing(r.id, { meta });
       }
       const ir = await etsy.call('PUT', `/listings/${id}/inventory`, { json: inv });

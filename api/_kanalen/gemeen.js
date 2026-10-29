@@ -27,7 +27,7 @@ export function varianten() {
 }
 export const sku = (poster, formaat) => `SKF-${poster}-${formaat}`.toUpperCase();
 export function vanSku(s) {
-  const m = String(s || '').toUpperCase().match(/^SKF-(.+)-(\d+X\d+)$/);
+  const m = String(s || '').toUpperCase().match(/^SKF-(.+)-(\d+X\d+(?:IN)?)$/);
   if (!m) return null;
   const poster_id = Object.keys(POSTERS).find((p) => p.toUpperCase() === m[1]);
   const formaat = Object.keys(FORMATEN).find((f) => f.toUpperCase() === m[2]);
@@ -58,12 +58,11 @@ export function omschrijving(poster_id, taal = 'nl') {
   const t = POSTERTEKSTEN[poster_id] || {};
   if (taal === 'en')
     return `${t.naam || poster_id} — a poster from Skiffa, a small studio from Scheveningen (The Hague, Netherlands) about the surf culture of its own beach.\n\n` +
-      'Giclée print on 250 gsm matte fine-art paper, printed in The Hague. Ratio 2:3, fits standard frames. Shipped rolled in a sturdy tube, frame not included.\n\n' +
-      'Sizes: 30 × 45 cm, 50 × 75 cm, 70 × 105 cm.';
-  return `${t.zin || ''}\n\n${t.sub ? `Stijl: ${t.sub}. ` : ''}Giclée op 250 grams mat fine-art papier, gedrukt in Den Haag. Verhouding 2:3, past in een standaardlijst. Opgerold verstuurd in een stevige koker, zonder lijst.`.trim();
+      'Giclée print on 250 gsm matte fine-art paper, printed in The Hague. Standard frame sizes. Shipped rolled in a sturdy tube, frame not included.\n\n' +
+      `Sizes: ${Object.values(FORMATEN).map((f) => f.label).join(', ')}.`;
+  return `${t.zin || ''}\n\n${t.sub ? `Stijl: ${t.sub}. ` : ''}Giclée op 250 grams mat fine-art papier, gedrukt in Den Haag. Standaard lijstmaten. Opgerold verstuurd in een stevige koker, zonder lijst.`.trim();
 }
 
-export const afbeelding = (poster_id) => `${bedrijf().site}/posters/${poster_id}.jpg`;
 
 // Vervoerders: onze naam → code per kanaal.
 export function vervoerderCode(kanaal, v, land = 'NL') {

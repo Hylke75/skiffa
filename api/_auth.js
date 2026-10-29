@@ -12,6 +12,10 @@ const gelijk = (a, b) => {
   return crypto.timingSafeEqual(x, y);
 };
 
+// Ondertekenen van links (drukbestanden) met hetzelfde geheim als de sessie.
+export const onderteken = (s) => hmac(`link|${s}`);
+export const handtekeningKlopt = (s, sig) => !!geheim() && typeof sig === 'string' && gelijk(sig, onderteken(s));
+
 export const adminIngesteld = () => (process.env.ADMIN_WACHTWOORD || '').length >= 12 && !!geheim();
 
 export function wachtwoordKlopt(w) {

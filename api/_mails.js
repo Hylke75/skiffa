@@ -11,7 +11,7 @@ export function vanRij(r) {
     naam: r.naam, email: r.email, straat: r.straat, postcode: r.postcode, plaats: r.plaats, land: r.land, opmerking: r.opmerking || '',
     subtotaal: Number(r.subtotaal), verzending: Number(r.verzending), totaal: Number(r.totaal),
     factuurnummer: r.factuurnummer, track_trace: r.track_trace,
-    regels: (r.bestelregels || []).map((x) => ({ naam: x.poster_naam, formaatLabel: x.formaat_label, prijs: Number(x.prijs), aantal: x.aantal })),
+    regels: (r.bestelregels || []).map((x) => ({ poster_id: x.poster_id, formaat: x.formaat, naam: x.poster_naam, formaatLabel: x.formaat_label, prijs: Number(x.prijs), aantal: x.aantal })),
   };
 }
 
@@ -72,7 +72,8 @@ ${o.track_trace ? `<p>Track-and-trace: ${/^https?:\/\//.test(o.track_trace) ? `<
     `<p>Bestelling ${esc(o.nummer)} is geannuleerd. Had je al betaald, dan krijg je daarover een aparte mail. Was dit niet de bedoeling? Beantwoord deze mail.</p>`), winkelMail()),
 
   // Aan de winkel.
-  winkelNieuw: (o, extra = '') => stuur(winkelMail(), `${o.factuurnummer ? 'Betaald' : 'Nieuwe bestelling'}: ${o.nummer} — ${euro(o.totaal)}`, opmaak(`Bestelling ${esc(o.nummer)}`,
-    `${extra ? `<p>${extra}</p>` : ''}${overzicht(o)}<p style="margin-top:20px">${adres(o)}<br>${esc(o.email)}</p>${o.opmerking ? `<p>Opmerking: ${esc(o.opmerking)}</p>` : ''}
+  // `druk`: de drukbestanden per regel (html uit api/_media.js), zodat je direct kunt laten drukken.
+  winkelNieuw: (o, extra = '', druk = '') => stuur(winkelMail(), `${o.factuurnummer ? 'Betaald' : 'Nieuwe bestelling'}: ${o.nummer} — ${euro(o.totaal)}`, opmaak(`Bestelling ${esc(o.nummer)}`,
+    `${extra ? `<p>${extra}</p>` : ''}${overzicht(o)}${druk ? `<h2 style="font-size:13px;margin:22px 0 6px">Drukbestanden</h2>${druk}` : ''}<p style="margin-top:20px">${adres(o)}<br>${esc(o.email)}</p>${o.opmerking ? `<p>Opmerking: ${esc(o.opmerking)}</p>` : ''}
 ${knop(`${bedrijf().site}/admin.html#${encodeURIComponent(o.nummer)}`, 'open in de administratie')}`), o.email),
 };

@@ -16,11 +16,42 @@ een scène die met de tijd in Scheveningen meebeweegt (uitsneden uit de posters)
   Het productvenster toont de poster, de poster in een houten lijst en in een zwarte lijst met passe-partout.
 - **Catalogus**: `posters` en `formaten` in `index.html` (teksten, beelden), en `api/_catalogus.js`
   (ids en prijzen; de server rekent altijd zelf). Check: `node scripts/check-catalogus.mjs`.
-- **Formaten**: 30 × 45 (€ 29), 50 × 75 (€ 45), 70 × 105 (€ 69). Verzending € 6,95 (BE € 9,95), gratis vanaf € 75.
+- **Formaten** (standaard lijstmaten): **50 × 70 cm** (€ 45, hoofdproduct en standaard geselecteerd), 30 × 40 cm
+  (€ 29, instap/cadeau), 70 × 100 cm (€ 69, grote uitvoering). Klaargezet voor Noord-Amerika, nog niet te koop:
+  18 × 24 inch en 24 × 36 inch (`actief: false` in `api/_catalogus.js`; prijzen voorlopig). Verzending € 6,95
+  (BE € 9,95), gratis vanaf € 75.
 - **Nieuwe poster toevoegen**: `python3 scripts/maak-beelden.py <bestand> <id>`, dan in `index.html` bij die
   poster `actief:true` zetten en de id toevoegen aan `api/_catalogus.js`.
 - **Mandje**: wordt in de browser bewaard (`localStorage`).
 - **Afrekenen**: zie [Webshop en administratie](#webshop-en-administratie).
+
+## Drukbestanden en visuals
+
+Per poster hoort bij **elk formaat een eigen drukbestand** (hoge-resolutie pdf) en heeft de poster **zes visuals**
+voor de presentatie in de webshop. Beheer alles in **/admin → posters**.
+
+- **Uploaden**: sleep een hele map tegelijk naar het vak bovenaan. De bestandsnaam bepaalt de koppeling:
+  `golf-50x70.pdf`, `pier-en-strand-30x40.pdf`, `regatta-18x24in.pdf` (drukbestanden) en `golf-1.jpg` t/m
+  `golf-6.jpg` (visuals). Niet herkend? Kies poster en formaat in de lijst. Losse bestanden kun je ook op een rij of
+  vakje slepen. Bestanden gaan rechtstreeks naar Supabase Storage (privé bucket `drukbestanden`, publieke bucket
+  `visuals`); de Vercel-functie geeft alleen een ondertekende upload-URL.
+- **Maatcontrole**: de browser leest de MediaBox/TrimBox uit de pdf. Goed = precies het formaat, eventueel met
+  0–5 mm afloop rondom. Wijkt de maat af, dan wordt het bestand wel gekoppeld maar rood gemarkeerd.
+- **Automatisch gekoppeld aan bestellingen**: elke orderregel (webshop, bol, Etsy, Amazon) wijst via poster +
+  formaat naar het drukbestand: in de administratie (download per regel), in de mail aan de winkel, en met
+  `DRUKKER_EMAIL` gaat na elke betaling vanzelf een **drukopdracht** (verzendadres + downloadlinks, 30 dagen geldig,
+  ondertekend) naar de drukker. Ontbreekt een drukbestand, dan gaat er niets naar de drukker en zie je een
+  waarschuwing; na uploaden stuur je de opdracht met één knop vanuit de bestelling.
+- **Visuals**: verkleind in de browser (2000 px + 900 px, jpg) en in volgorde 1–6 getoond in het productvenster.
+  Zolang een poster geen visuals heeft, toont het venster de poster en de twee lijst-dia's. Etsy en Amazon krijgen
+  de poster als hoofdfoto en de visuals als extra foto's.
+- **Drukbestanden maken uit een hr-beeld**: `python3 scripts/maak-drukbestanden.py <bron> <poster-id>` schrijft
+  `drukbestanden/<id>-<formaat>.pdf` voor alle formaten (ware grootte + 3 mm afloop, max. 300 dpi, bijgesneden vanuit
+  het midden; `--passend` vult aan met wit, `--afloop 5` voor meer afloop). Sleep die map daarna in /admin.
+  Let op: 30 × 40 (3:4), 50 × 70 (5:7) en 70 × 100 (7:10) hebben elk een andere verhouding dan de 2:3-posters;
+  heb je per formaat een eigen ontwerp, exporteer dat dan als pdf met dezelfde namen.
+- **Code**: `api/media.js` (route), `api/_media.js` (koppelen, maat, links, drukopdracht), `api/_opslag.js`
+  (Storage), migratie `supabase/migrations/20261029020000_media.sql`.
 
 ## Webshop en administratie
 
@@ -51,13 +82,15 @@ Juridisch: `voorwaarden.html` (incl. herroepingsrecht en modelformulier) en `pri
 
 ```bash
 supabase link --project-ref <project-ref>
-supabase db push            # past supabase/migrations/20261029000000_webshop.sql toe
+supabase db push            # past de migraties in supabase/migrations toe (webshop, kanalen, media)
 ```
 
 Zet daarna in Vercel: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_WACHTWOORD`, `MOLLIE_API_KEY`,
-`RESEND_API_KEY`, `RESEND_FROM` (op een in Resend geverifieerd domein), `BESTEL_EMAIL`, `SITE_URL`, `BEDRIJF_*`.
+`RESEND_API_KEY`, `RESEND_FROM` (op een in Resend geverifieerd domein), `BESTEL_EMAIL`, `SITE_URL`, `BEDRIJF_*` en
+eventueel `DRUKKER_EMAIL`. Grote pdf's: verhoog in Supabase (Storage → Settings) de uploadlimiet; op het gratis plan
+is die 50 MB per bestand.
 
-**Testen**: `npm test` (catalogus, de hele bestelstroom en de drie kanalen, met nagebootste Supabase, Mollie, Resend, bol, Etsy en Amazon).
+**Testen**: `npm test` (catalogus, de hele bestelstroom, de drie kanalen en de drukbestanden/visuals, met nagebootste Supabase, Storage, Mollie, Resend, bol, Etsy en Amazon).
 
 ## Verkoopkanalen: bol.com, Etsy en Amazon
 

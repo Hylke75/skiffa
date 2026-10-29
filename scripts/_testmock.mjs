@@ -1,6 +1,8 @@
 // Nagebootste Supabase (PostgREST-subset + de RPC's uit supabase/migrations) voor de tests.
 import crypto from 'node:crypto';
-export const T = { bestellingen: [], bestelregels: [], bestelling_log: [], factuurteller: {}, poster_ean: [], kanaal_instellingen: [], kanaal_listings: [], kanaal_sync_log: [], etsy_koppeling: [], etsy_oauth_states: [] };
+export const T = { bestellingen: [], bestelregels: [], bestelling_log: [], factuurteller: {}, poster_ean: [], kanaal_instellingen: [], kanaal_listings: [], kanaal_sync_log: [], etsy_koppeling: [], etsy_oauth_states: [], drukbestanden: [], poster_visuals: [] };
+// Nagebootste Supabase Storage: S[bucket][pad] = { size, type }
+export const S = { drukbestanden: {}, visuals: {} };
 let seq = 1;
 const nu = () => new Date(Date.now() + seq++).toISOString();
 const STANDAARD = {
@@ -8,7 +10,7 @@ const STANDAARD = {
   kanaal_listings: () => ({ id: seq++, ingeschakeld: false, extern_id: null, status: 'concept', laatste_fout: null, laatste_prijs: null, laatste_voorraad: null, meta: {} }),
   etsy_oauth_states: () => ({ aangemaakt_op: nu() }),
 };
-const UNIEK = { kanaal_listings: ['kanaal', 'poster_id', 'formaat'], poster_ean: ['poster_id', 'formaat'], kanaal_instellingen: ['kanaal'], etsy_koppeling: ['id'] };
+const UNIEK = { kanaal_listings: ['kanaal', 'poster_id', 'formaat'], poster_ean: ['poster_id', 'formaat'], kanaal_instellingen: ['kanaal'], etsy_koppeling: ['id'], drukbestanden: ['poster_id', 'formaat'], poster_visuals: ['poster_id', 'positie'] };
 function voldoet(x, k, v) {
   if (k === 'or') {
     const conds = v.slice(1, -1).split(',').map((c) => { const [f, op, ...r] = c.split('.'); return [f, op, r.join('.')]; });
@@ -57,8 +59,21 @@ function importeer({ p }) {
   markeerBetaald({ p_id: b.id, p_methode: p.kanaal, p_door: p.kanaal });
   return { id: b.id, nieuw: true, nummer: b.nummer };
 }
+function opslag(u, o) {
+  const p = decodeURIComponent(u.pathname.replace('/storage/v1/', '')), body = o.body && typeof o.body === 'string' && o.body.startsWith('{') ? JSON.parse(o.body) : null;
+  let m = p.match(/^object\/upload\/sign\/([^/]+)\/(.+)$/);
+  if (m && o.method === 'PUT') { S[m[1]][m[2]] = { size: Number(o.headers?.['content-length'] || o.body?.length || 1), type: o.headers?.['content-type'] || '' }; return { Key: m[2] }; }
+  if (m) return { url: `/object/upload/sign/${m[1]}/${m[2]}?token=tok-${m[2]}` };
+  m = p.match(/^object\/sign\/([^/]+)\/(.+)$/); if (m) return { signedURL: `/object/sign/${m[1]}/${m[2]}?token=dl&exp=${body.expiresIn}` };
+  m = p.match(/^object\/list\/([^/]+)$/);
+  if (m) return Object.entries(S[m[1]]).filter(([k]) => k === body.prefix + body.search).map(([k, v]) => ({ name: k.slice(body.prefix.length), metadata: { size: v.size, mimetype: v.type } }));
+  m = p.match(/^object\/([^/]+)$/); if (m && o.method === 'DELETE') { for (const k of body.prefixes) delete S[m[1]][k]; return []; }
+  throw new Error('opslag? ' + p);
+}
 export function supabase(url, o) {
-  const u = new URL(url); const pad = u.pathname.replace('/rest/v1/', ''); const body = o.body ? JSON.parse(o.body) : undefined;
+  const u = new URL(url);
+  if (u.pathname.startsWith('/storage/v1/')) return opslag(u, o);
+  const pad = u.pathname.replace('/rest/v1/', ''); const body = o.body ? JSON.parse(o.body) : undefined;
   if (pad === 'rpc/skiffa_markeer_betaald') return markeerBetaald(body);
   if (pad === 'rpc/skiffa_importeer_kanaalorder') return importeer(body);
   const rows = T[pad]; if (!rows) throw new Error('onbekende tabel ' + pad);

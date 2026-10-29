@@ -17,6 +17,7 @@ import { mollie, euro } from './_bestelling.js';
 import { btwDeel } from './_bedrijf.js';
 import { mails, vanRij, mailAan } from './_mails.js';
 import { betaald, verwerkMollie } from './_verwerk.js';
+import { drukbestanden } from './_media.js';
 
 const STATUSSEN = ['open', 'betaald', 'in_productie', 'verzonden', 'geleverd', 'geannuleerd', 'mislukt', 'terugbetaald'];
 const param = (req, k) => String(req.query?.[k] ?? new URL(req.url || '/', 'http://x').searchParams.get(k) ?? '');
@@ -69,6 +70,15 @@ async function bestelling(id) {
   const r = await haalBestelling('id', id);
   if (!r) return null;
   r.log = await db(`bestelling_log?bestelling_id=eq.${id}&order=op.asc`);
+  // Drukbestand per regel (vast gekoppeld via poster + formaat).
+  try {
+    const m = await drukbestanden((r.bestelregels || []).map((x) => x.poster_id));
+    r.bestelregels = (r.bestelregels || []).map((x) => {
+      const d = m.get(`${x.poster_id}|${x.formaat}`);
+      return { ...x, druk: d ? { status: d.maat_status, link: `/api/media?actie=druk&p=${encodeURIComponent(x.poster_id)}&f=${encodeURIComponent(x.formaat)}` } : null };
+    });
+  } catch { /* zonder media-migratie: geen drukbestanden */ }
+  r.drukker = !!process.env.DRUKKER_EMAIL;
   return r;
 }
 

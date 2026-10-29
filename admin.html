@@ -79,7 +79,27 @@ tbody tr:hover{background:var(--zee)}
 .schakel:checked{background:#111}
 .schakel::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#fff;transition:left .2s}
 .schakel:checked::after{left:16px}
-@media (max-width:760px){.vb{display:none}main{padding:14px}.log div{grid-template-columns:1fr}}
+.drop{display:block;background:#fff;border:1.5px dashed #999;border-radius:12px;padding:22px;text-align:center;cursor:pointer;margin-bottom:14px}
+.drop.over{border-color:#111;background:var(--zee)}
+.drop code,.mini code{background:var(--zee);padding:0 4px;border-radius:4px}
+#wachtrij table{margin-bottom:14px}#wachtrij tbody tr{cursor:default}#wachtrij select{font-size:11px;padding:3px 6px}
+.balkje{height:3px;background:var(--zee);border-radius:2px;overflow:hidden;margin-top:4px}.balkje i{display:block;height:100%;background:#111;width:0}
+.posterkaarten{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(380px,100%),1fr));gap:14px}
+.pk{background:#fff;border:1px solid var(--lijn);border-radius:12px;padding:14px 16px}
+.pk h3{font-size:13px;font-weight:500;letter-spacing:.08em;display:flex;justify-content:space-between;gap:8px;margin-bottom:8px}
+.pk .sub{font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin:10px 0 6px}
+.druklijst{display:grid;gap:5px}
+.drukrij{display:grid;grid-template-columns:110px 1fr auto;gap:8px;align-items:center;font-size:11px;padding:4px 8px;border-radius:8px;background:var(--papier)}
+.drukrij.later{opacity:.6}.drukrij.sleep{outline:1.5px dashed #111}
+.drukrij .acties{gap:4px;flex-wrap:nowrap}.drukrij button{padding:1px 9px;font-size:10px}
+.vis{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.vis .slot{position:relative;aspect-ratio:4/5;border:1px dashed #aaa;border-radius:8px;display:grid;place-items:center;font-size:10px;color:#777;cursor:pointer;overflow:hidden;background:var(--papier)}
+.vis .slot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.vis .slot.sleep{border-color:#111;background:var(--zee)}
+.vis .slot .x{position:absolute;top:3px;right:3px;width:18px;height:18px;padding:0;border-radius:50%;background:rgba(255,255,255,.9);border:0;font-size:11px;line-height:18px;display:none}
+.vis .slot:hover .x,.vis .slot:focus-within .x{display:block}
+.vis .slot .nr{position:absolute;left:4px;bottom:2px;font-size:9px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+@media (max-width:760px){.drukrij{grid-template-columns:80px 1fr}.drukrij .acties{grid-column:1/-1}.vb{display:none}main{padding:14px}.log div{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -94,7 +114,7 @@ tbody tr:hover{background:var(--zee)}
 <div id="app" class="verberg">
   <header>
     <b>SKIFFA</b>
-    <div class="nav"><button data-view="bestellingen" aria-current="true">bestellingen</button><button data-view="kanalen">kanalen</button></div>
+    <div class="nav"><button data-view="bestellingen" aria-current="true">bestellingen</button><button data-view="kanalen">kanalen</button><button data-view="posters">posters</button></div>
     <span style="flex:1"></span>
     <a href="/" target="_blank" rel="noopener">winkel ↗</a>
     <button id="uitloggen">uitloggen</button>
@@ -110,6 +130,14 @@ tbody tr:hover{background:var(--zee)}
           <span class="mini" id="assortUitleg"></span></div>
         <div id="assortLijst"></div>
       </div>
+    </section>
+    <section id="viewPosters" class="verberg">
+      <div class="kaarten" id="mediaTellers"></div>
+      <label class="drop" id="drop"><input type="file" id="dropInput" multiple accept=".pdf,application/pdf,image/jpeg,image/png,image/webp" hidden>
+        <b>Sleep al je drukbestanden en visuals hierheen</b> (of klik om te kiezen). De bestandsnaam bepaalt de koppeling:
+        <span class="mini" style="display:block;margin-top:4px">drukbestand: <code>golf-50x70.pdf</code> · <code>pier-en-strand-30x40.pdf</code> · <code>regatta-18x24in.pdf</code> &nbsp;—&nbsp; visuals: <code>golf-1.jpg</code> t/m <code>golf-6.jpg</code></span></label>
+      <div id="wachtrij"></div>
+      <div class="posterkaarten" id="posterKaarten"></div>
     </section>
     <section id="viewBestellingen">
     <div class="kaarten" id="kaarten"></div>
@@ -168,7 +196,7 @@ async function start(){
   $('#instellingen').innerHTML=mist.length?`<div class="waarschuw">Nog niet ingesteld in Vercel: ${mist.map(esc).join(', ')}.</div>`:'';
   if(!s.database)return;
   laadOverzicht();laadLijst();
-  const h=decodeURIComponent(location.hash.slice(1));if(h&&h!=='kanalen')open(h);
+  const h=decodeURIComponent(location.hash.slice(1));if(h&&!['kanalen','posters'].includes(h))open(h);
 }
 
 async function laadOverzicht(){
@@ -196,11 +224,12 @@ async function open(id){
   catch(e){if(e.message!=='uit')meld(e.message,true);}
 }
 function sluit(){$('#paneel').classList.remove('open');huidig=null;history.replaceState(null,'',location.pathname);}
-$('#paneel').addEventListener('click',e=>{if(e.target.id==='paneel')sluit();});
+$('#paneel').addEventListener('click',e=>{if(e.target.id==='paneel')sluit();if(e.target.closest('[data-naarposters]')){e.preventDefault();sluit();toonView('posters');}});
 addEventListener('keydown',e=>{if(e.key==='Escape')sluit();});
 
 function tekenPaneel(b){
-  const regels=(b.bestelregels||[]).map(r=>`<tr><td>${r.aantal}× ${esc(r.poster_naam)} <span style="opacity:.6">${esc(r.formaat_label)}</span></td><td class="r">${euro(r.prijs*r.aantal)}</td></tr>`).join('');
+  const druk=r=>r.druk?`<a href="${esc(r.druk.link)}" target="_blank" rel="noopener" class="${r.druk.status==='afwijkend'?'nok':'ok'}">drukbestand ↓${r.druk.status==='afwijkend'?' (maat wijkt af)':''}</a>`:`<span class="nok">drukbestand ontbreekt</span> · <a href="#posters" data-naarposters>uploaden</a>`;
+  const regels=(b.bestelregels||[]).map(r=>`<tr><td>${r.aantal}× ${esc(r.poster_naam)} <span style="opacity:.6">${esc(r.formaat_label)}</span><div class="mini">${druk(r)}</div></td><td class="r">${euro(r.prijs*r.aantal)}</td></tr>`).join('');
   const kan=s=>({
     betaald:['open','mislukt'].includes(b.status),
     productie:b.status==='betaald',
@@ -217,6 +246,7 @@ function tekenPaneel(b){
   <div class="blok"><h3>acties</h3><div class="acties">
     ${kan('verzenden')?`<select id="vervoerder">${['postnl','dhl','dpd','ups','gls','bpost'].map(v=>`<option ${v===(b.vervoerder||'postnl')?'selected':''}>${v}</option>`).join('')}</select><input id="tt" placeholder="track-and-trace (code${b.kanaal==='webshop'?' of link':''})" value="${esc(b.track_trace||'')}"><button class="vol" data-a="verzonden">markeer verzonden${b.kanaal==='webshop'?' + mail':` + door naar ${esc(b.kanaal)}`}</button>`:''}
     ${kan('productie')?`<button data-a="in_productie">in productie</button>`:''}
+    ${b.betaald_op&&b.drukker&&!['verzonden','geleverd','geannuleerd','terugbetaald'].includes(b.status)?`<button data-a="drukker">drukopdracht ${(b.log||[]).some(l=>l.soort==='drukker')?'opnieuw ':''}naar drukker</button>`:''}
     ${kan('geleverd')?`<button data-a="geleverd">geleverd</button>`:''}
     ${kan('betaald')?`<button data-a="betaald">markeer betaald (overboeking)</button>`:''}
     ${b.mollie_id?`<button data-a="ververs">ververs betaalstatus</button>`:''}
@@ -258,6 +288,7 @@ $('#vak').addEventListener('click',async e=>{
     else if(a==='ververs')res=await api('ververs',{method:'POST',body:{id}});
     else if(a==='notitie')res=await api('notitie',{method:'POST',body:{id,tekst:$('#notitie').value}});
     else if(a.startsWith('mail-'))res=await api('mail',{method:'POST',body:{id,soort:a.slice(5)}});
+    else if(a==='drukker'){res=await mapi('drukker',{id});meld(res.melding);await open(id);return;}
     meld(res.gemaild?'Opgeslagen, klant gemaild':res.mollie?`Mollie: ${res.mollie}`:res.kanaal?`Opgeslagen; gaat bij de volgende sync naar ${res.kanaal}`:'Opgeslagen');
     await open(id);laadOverzicht();laadLijst();
   }catch(err){if(err.message!=='uit')meld(err.message,true);k.disabled=false;}
@@ -270,8 +301,8 @@ const VELDEN={
   amazon:[['opslag_pct','opslag t.o.v. webshop (%)'],['voorraad','voorraad tonen (stuks)'],['verwerkingsdagen','verwerkingstijd (dagen)'],['producttype','producttype'],['merk','merk'],['marketplace_id','marketplace-id']],
 };
 function toonView(v){document.querySelectorAll('.nav button').forEach(b=>b.setAttribute('aria-current',String(b.dataset.view===v)));
-  $('#viewBestellingen').classList.toggle('verberg',v!=='bestellingen');$('#viewKanalen').classList.toggle('verberg',v!=='kanalen');
-  if(v==='kanalen'){laadKanalen();laadAssort();}history.replaceState(null,'',v==='kanalen'?'#kanalen':location.pathname);}
+  $('#viewBestellingen').classList.toggle('verberg',v!=='bestellingen');$('#viewKanalen').classList.toggle('verberg',v!=='kanalen');$('#viewPosters').classList.toggle('verberg',v!=='posters');
+  if(v==='kanalen'){laadKanalen();laadAssort();}if(v==='posters')laadMedia();history.replaceState(null,'',v==='bestellingen'?location.pathname:'#'+v);}
 document.querySelector('.nav').addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(b)toonView(b.dataset.view);});
 async function kapi(actie,{method='GET',body,params}={}){
   const q=new URLSearchParams({actie,...(params||{})});
@@ -336,8 +367,143 @@ $('#assortLijst').addEventListener('change',async e=>{
 for(const [id,aan] of [['#allesAan',true],['#allesUit',false]])$(id).addEventListener('click',async()=>{const k=$('#assortKanaal').value;
   if(!confirm(aan?`Alle posters op ${KNAAM[k]} aanbieden?`:`Alle posters op ${KNAAM[k]} pauzeren?`))return;
   try{await kapi('alles',{method:'POST',body:{kanaal:k,aan}});laadAssort();}catch(e){if(e.message!=='uit')meld(e.message,true);}});
+/* ---------- Posters: drukbestanden en visuals ---------- */
+let media=null;
+async function mapi(actie,body,params){
+  const q=new URLSearchParams({actie,...(params||{})});
+  const r=await fetch('/api/media?'+q,{method:body?'POST':'GET',headers:body?{'content-type':'application/json'}:{},body:body?JSON.stringify(body):undefined});
+  const j=await r.json().catch(()=>({ok:false,melding:'Onverwacht antwoord'}));
+  if(r.status===401){toonLogin();throw new Error('uit');}
+  if(!j.ok)throw new Error(j.melding||'Mislukt');return j;
+}
+const mb=b=>b>=1e9?(b/1e9).toFixed(1).replace('.',',')+' GB':(b/1e6).toFixed(b<1e7?1:0).replace('.',',')+' MB';
+async function laadMedia(){
+  try{media=await mapi('overzicht');tekenMedia();}
+  catch(e){if(e.message!=='uit')$('#posterKaarten').innerHTML=`<div class="leeg">${esc(e.message)}</div>`;}
+}
+function tekenMedia(){
+  const t=media.tellers;
+  $('#mediaTellers').innerHTML=[['drukbestanden (te koop)',`${t.druk} / ${t.drukNodig}`],['maat wijkt af',t.afwijkend],['visuals',`${t.visuals} / ${t.visualsNodig}`],['drukopdracht per mail',media.drukker?'aan':'uit']]
+    .map(([k,v])=>`<div class="kaart"><small>${k}</small><b class="${k==='maat wijkt af'&&v?'nok':''}">${v}</b></div>`).join('')
+    +(media.drukker?'':`<div class="waarschuw" style="grid-column:1/-1;margin:0">Zet DRUKKER_EMAIL in Vercel om na elke betaling automatisch een drukopdracht (verzendadres + drukbestanden) naar je drukker te sturen.</div>`);
+  $('#posterKaarten').innerHTML=media.posters.map(p=>{
+    const n=media.formaten.filter(f=>f.actief&&p.druk[f.id]).length,na=media.formaten.filter(f=>f.actief).length;
+    return `<div class="pk" data-p="${esc(p.id)}"><h3><span>${esc(p.naam)}</span><span class="mini ${n===na&&p.visuals.length===media.aantalVisuals?'ok':''}">druk ${n}/${na} · visuals ${p.visuals.length}/${media.aantalVisuals}</span></h3>
+      <div class="sub">drukbestanden (pdf, hoge resolutie)</div><div class="druklijst">${media.formaten.map(f=>{const d=p.druk[f.id];
+        return `<div class="drukrij ${f.actief?'':'later'}" data-f="${f.id}"><span>${esc(f.label)}${f.actief?'':' <span class="kb">later</span>'}</span>
+        <span>${d?`<span class="${d.status==='ok'?'ok':d.status==='afwijkend'?'nok':''}">${d.status==='ok'?'✓ maat klopt':d.status==='afwijkend'?`⚠ ${d.breedte} × ${d.hoogte} mm`:'maat onbekend'}</span> <span class="mini">${d.afloop?`${String(d.afloop).replace('.',',')} mm afloop · `:''}${d.bytes?mb(d.bytes):''}</span>`:`<span class="mini">nog geen bestand · ${f.mm.map(x=>String(x).replace('.',',')).join(' × ')} mm</span>`}</span>
+        <span class="acties">${d?`<a href="/api/media?actie=druk&p=${encodeURIComponent(p.id)}&f=${encodeURIComponent(f.id)}" target="_blank" rel="noopener"><button>↓</button></a>`:''}<button data-m="kies-druk">${d?'vervang':'upload'}</button>${d?'<button data-m="weg-druk" aria-label="verwijder">×</button>':''}</span></div>`;}).join('')}</div>
+      <div class="sub">visuals voor de webshop (1 = eerste beeld)</div><div class="vis">${[1,2,3,4,5,6].map(i=>{const v=p.visuals.find(x=>x.positie===i);
+        return `<div class="slot" data-pos="${i}" tabindex="0" role="button" aria-label="visual ${i} ${v?'vervangen':'uploaden'}">${v?`<img src="${esc(v.klein)}" alt="${esc(v.alt)}" loading="lazy"><span class="nr">${i}</span><button class="x" data-m="weg-visual" aria-label="verwijder visual ${i}">×</button>`:`+ ${i}`}</div>`;}).join('')}</div>
+    </div>`;}).join('');
+}
+
+// PDF-maat uitlezen in de browser (MediaBox/TrimBox van de eerste pagina, in mm). Leest in stukken,
+// dus ook bestanden van honderden MB. Staat de maat in gecomprimeerde objecten, dan blijft hij onbekend.
+async function meetPdf(file){
+  const box=n=>new RegExp('/'+n+'\\s*\\[\\s*(-?[\\d.]+)\\s+(-?[\\d.]+)\\s+(-?[\\d.]+)\\s+(-?[\\d.]+)\\s*\\]');
+  const mm=m=>m?[(m[3]-m[1])*25.4/72,(m[4]-m[2])*25.4/72].map(x=>Math.abs(Math.round(x*10)/10)):null;
+  const kop=new TextDecoder('latin1').decode(await file.slice(0,8).arrayBuffer());
+  if(!kop.startsWith('%PDF-'))throw new Error(`${file.name} is geen pdf`);
+  let media=null,trim=null,paginas=0,rest='';const STUK=8*1024*1024;
+  for(let i=0;i<file.size;i+=STUK){
+    const t=rest+new TextDecoder('latin1').decode(await file.slice(i,i+STUK).arrayBuffer());
+    if(!media){const m=t.match(box('MediaBox'));if(m)media=mm(m);}
+    if(!trim){const m=t.match(box('TrimBox'));if(m)trim=mm(m);}
+    paginas+=(t.slice(rest.length?200:0).match(/\/Type\s*\/Page(?![a-zA-Z])/g)||[]).length;
+    rest=t.slice(-200);
+  }
+  return {media,trim,paginas:paginas||null};
+}
+function verklein(file,max){return createImageBitmap(file).then(bmp=>{
+  const s=Math.min(1,max/Math.max(bmp.width,bmp.height)),w=Math.round(bmp.width*s),h=Math.round(bmp.height*s);
+  const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,w,h);x.drawImage(bmp,0,0,w,h);
+  return new Promise(r=>c.toBlob(b=>r({blob:b,w,h}),'image/jpeg',.86));});}
+function put(url,body,type,voortgang){return new Promise((ok,nok)=>{const x=new XMLHttpRequest();x.open('PUT',url);x.setRequestHeader('content-type',type);x.setRequestHeader('x-upsert','true');
+  x.upload.onprogress=e=>{if(e.lengthComputable&&voortgang)voortgang(e.loaded/e.total);};
+  x.onload=()=>x.status<300?ok():nok(new Error(x.status===413?'Bestand te groot voor de uploadlimiet van je Supabase-project (Storage → Settings).':`Upload mislukt (${x.status})`));
+  x.onerror=()=>nok(new Error('Upload mislukt (verbinding)'));x.send(body);});}
+
+async function uploadBestand(file,doel,voortgang){
+  if(doel.soort==='druk'){
+    const meting=await meetPdf(file);
+    const u=await mapi('upload',{soort:'druk',poster_id:doel.poster_id,formaat:doel.formaat,bytes:file.size});
+    await put(u.url,file,'application/pdf',voortgang);
+    return mapi('bevestig',{soort:'druk',poster_id:doel.poster_id,formaat:doel.formaat,...meting,bestandsnaam:file.name});
+  }
+  if(!/^image\/(jpeg|png|webp)$/.test(file.type))throw new Error(`${file.name}: alleen jpg, png of webp`);
+  const [groot,klein]=await Promise.all([verklein(file,2000),verklein(file,900)]);
+  const u=await mapi('upload',{soort:'visual',poster_id:doel.poster_id,positie:doel.positie,bytes:groot.blob.size});
+  await put(u.url,groot.blob,'image/jpeg',f=>voortgang&&voortgang(f*.85));
+  await put(u.url_klein,klein.blob,'image/jpeg');voortgang&&voortgang(1);
+  return mapi('bevestig',{soort:'visual',poster_id:doel.poster_id,positie:doel.positie,pad:u.pad,pad_klein:u.pad_klein,breedte:groot.w,hoogte:groot.h});
+}
+const naamVan=id=>media?.posters.find(p=>p.id===id)?.naam||id;
+const labelVan=id=>media?.formaten.find(f=>f.id===id)?.label||id;
+
+// Eén bestand op een vaste plek (knop of slepen op een rij/vakje).
+async function losseUpload(file,doel,el){
+  el?.classList.add('sleep');meld('Bezig met uploaden…');
+  try{const r=await uploadBestand(file,doel,f=>{if(el)el.style.background=`linear-gradient(90deg,var(--zee) ${f*100}%,transparent ${f*100}%)`;});meld(r.melding||'Opgeslagen',r.status==='afwijkend');}
+  catch(e){if(e.message!=='uit')meld(e.message,true);}
+  await laadMedia();
+}
+function kiesBestand(accept,fn){const i=document.createElement('input');i.type='file';i.accept=accept;i.onchange=()=>i.files[0]&&fn(i.files[0]);i.click();}
+$('#posterKaarten').addEventListener('click',async e=>{
+  const pk=e.target.closest('.pk');if(!pk)return;const p=pk.dataset.p,m=e.target.closest('[data-m]')?.dataset.m,rij=e.target.closest('.drukrij'),slot=e.target.closest('.slot');
+  if(m==='kies-druk')return kiesBestand('.pdf,application/pdf',f=>losseUpload(f,{soort:'druk',poster_id:p,formaat:rij.dataset.f},rij));
+  if(m==='weg-druk'){if(!confirm(`Drukbestand ${naamVan(p)} ${labelVan(rij.dataset.f)} verwijderen?`))return;try{await mapi('verwijder',{soort:'druk',poster_id:p,formaat:rij.dataset.f});meld('Verwijderd');}catch(x){if(x.message!=='uit')meld(x.message,true);}return laadMedia();}
+  if(m==='weg-visual'){e.stopPropagation();if(!confirm(`Visual ${slot.dataset.pos} van ${naamVan(p)} verwijderen?`))return;try{await mapi('verwijder',{soort:'visual',poster_id:p,positie:+slot.dataset.pos});meld('Verwijderd');}catch(x){if(x.message!=='uit')meld(x.message,true);}return laadMedia();}
+  if(slot)return kiesBestand('image/jpeg,image/png,image/webp',f=>losseUpload(f,{soort:'visual',poster_id:p,positie:+slot.dataset.pos},slot));
+});
+$('#posterKaarten').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('slot')){e.preventDefault();e.target.click();}});
+for(const t of ['dragover','dragleave','drop'])$('#posterKaarten').addEventListener(t,e=>{
+  const doelEl=e.target.closest('.drukrij,.slot');if(!doelEl)return;e.preventDefault();e.stopPropagation();
+  doelEl.classList.toggle('sleep',t==='dragover');
+  if(t==='drop'&&e.dataTransfer.files[0]){const p=doelEl.closest('.pk').dataset.p;
+    losseUpload(e.dataTransfer.files[0],doelEl.classList.contains('slot')?{soort:'visual',poster_id:p,positie:+doelEl.dataset.pos}:{soort:'druk',poster_id:p,formaat:doelEl.dataset.f},doelEl);}
+});
+
+// Alles tegelijk: namen herkennen → wachtrij → één voor één uploaden.
+let wachtrij=[];
+async function nieuweBestanden(files){
+  files=[...files];if(!files.length)return;
+  try{const {bestanden}=await mapi('herken',{namen:files.map(f=>f.name)});
+    wachtrij=bestanden.map((b,i)=>({...b,file:files[i],klaar:false}));tekenWachtrij();}
+  catch(e){if(e.message!=='uit')meld(e.message,true);}
+}
+function tekenWachtrij(){
+  if(!wachtrij.length){$('#wachtrij').innerHTML='';return;}
+  const opties=(lijst,w)=>lijst.map(([v,l])=>`<option value="${esc(v)}" ${String(v)===String(w)?'selected':''}>${esc(l)}</option>`).join('');
+  const goed=wachtrij.filter(b=>b.poster_id&&(b.formaat||b.positie)&&!b.klaar).length;
+  $('#wachtrij').innerHTML=`<table><thead><tr><th>bestand</th><th>poster</th><th>formaat / positie</th><th>status</th></tr></thead><tbody>${wachtrij.map((b,i)=>`<tr data-i="${i}">
+    <td>${esc(b.naam)}<div class="mini">${mb(b.file.size)}</div></td>
+    <td>${b.soort?`<select data-w="poster_id"><option value="">kies…</option>${opties(media.posters.map(p=>[p.id,p.naam]),b.poster_id)}</select>`:''}</td>
+    <td>${b.soort==='druk'?`<select data-w="formaat"><option value="">kies…</option>${opties(media.formaten.map(f=>[f.id,f.label]),b.formaat)}</select>`:b.soort==='visual'?`<select data-w="positie"><option value="">kies…</option>${opties([1,2,3,4,5,6].map(n=>[n,'visual '+n]),b.positie)}</select>`:''}</td>
+    <td class="mini ${b.fout&&!b.poster_id?'nok':''}">${b.status||(b.poster_id&&(b.formaat||b.positie)?'klaar om te uploaden':esc(b.fout||'kies poster'))}<div class="balkje"><i style="width:${(b.voortgang||0)*100}%"></i></div></td></tr>`).join('')}</tbody></table>
+    <div class="acties" style="margin:-4px 0 18px"><button class="vol" id="uploadAlles" ${goed?'':'disabled'}>koppel en upload ${goed} bestand${goed===1?'':'en'}</button><button id="wisWachtrij">wis lijst</button><span class="mini">Bestaande bestanden op dezelfde plek worden vervangen. Houd deze pagina open tot alles klaar is.</span></div>`;
+}
+$('#wachtrij').addEventListener('change',e=>{const s=e.target.closest('select[data-w]');if(!s)return;const b=wachtrij[+s.closest('tr').dataset.i];b[s.dataset.w]=s.dataset.w==='positie'?Number(s.value)||null:s.value||null;b.fout=null;tekenWachtrij();});
+$('#wachtrij').addEventListener('click',async e=>{
+  if(e.target.id==='wisWachtrij'){wachtrij=[];return tekenWachtrij();}
+  if(e.target.id!=='uploadAlles')return;e.target.disabled=true;
+  const zet=(i,velden)=>{Object.assign(wachtrij[i],velden);const tr=$(`#wachtrij tr[data-i="${i}"]`);if(tr){tr.querySelector('td:last-child').firstChild.textContent=wachtrij[i].status;tr.querySelector('.balkje i').style.width=(wachtrij[i].voortgang||0)*100+'%';}};
+  let ok=0,mis=0;
+  for(const [i,b] of wachtrij.entries()){
+    if(b.klaar||!b.poster_id||!(b.formaat||b.positie))continue;
+    zet(i,{status:'bezig…',voortgang:0});
+    try{const r=await uploadBestand(b.file,b,f=>zet(i,{voortgang:f}));zet(i,{status:r.status==='afwijkend'?'⚠ '+r.melding:'✓ '+(r.melding||'opgeslagen'),voortgang:1,klaar:true});ok++;}
+    catch(x){if(x.message==='uit')return;zet(i,{status:'✗ '+x.message});mis++;}
+  }
+  meld(`${ok} bestand${ok===1?'':'en'} gekoppeld${mis?`, ${mis} mislukt`:''}`,!!mis);await laadMedia();tekenWachtrij();
+});
+const drop=$('#drop');
+drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('over');});
+drop.addEventListener('dragleave',()=>drop.classList.remove('over'));
+drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('over');nieuweBestanden(e.dataTransfer.files);});
+$('#dropInput').addEventListener('change',e=>{nieuweBestanden(e.target.files);e.target.value='';});
 {const m=new URLSearchParams(location.search).get('melding');if(m){setTimeout(()=>meld(m,/mislukt/.test(m)),600);history.replaceState(null,'',location.pathname+location.hash);}}
-start().then(()=>{if(location.hash==='#kanalen')toonView('kanalen');});
+start().then(()=>{if(['#kanalen','#posters'].includes(location.hash))toonView(location.hash.slice(1));});
 </script>
 </body>
 </html>

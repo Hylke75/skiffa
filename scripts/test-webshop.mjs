@@ -21,7 +21,7 @@ const call=async(h,{method='GET',url='/',body,cookie}={})=>{const u=new URL(url,
   const out={c:200,h:{}};const res={status(c){out.c=c;return res},setHeader(k,v){out.h[k.toLowerCase()]=v},json(x){out.j=x},send(x){out.s=x},end(){}};await h(req,res);return out;};
 const ok=(cond,msg)=>{console.log((cond?'✓ ':'✗ ')+msg);if(!cond)process.exitCode=1;};
 const klant={naam:'Ann de Vries',email:'ann@voorbeeld.nl',straat:'Strandweg 1',postcode:'2586 aa',plaats:'Den Haag',land:'NL',opmerking:'<script>x</script>'};
-const regels=[{id:'golf',formaat:'50x75',aantal:1},{id:'zon',formaat:'30x45',aantal:1}];
+const regels=[{id:'golf',formaat:'50x70',aantal:1},{id:'zon',formaat:'30x40',aantal:1}];
 
 // 1. zonder akkoord
 let r=await call(bestel,{method:'POST',body:{klant,regels,t:5000}});ok(r.c===400&&/voorwaarden/.test(r.j.melding),'zonder akkoord geweigerd');
@@ -61,7 +61,7 @@ const nm=mails.length;await call(hook,{method:'POST',body:'id='+b.mollie_id});ok
 r=await call(admin,{url:'/api/admin?actie=export&van=2026-10-01&tot=2026-10-31',cookie});const csv=r.s.split('\r\n');ok(r.h['content-type'].includes('csv')&&csv.length===2&&csv[1].startsWith('2026-0001;2026-10-29;'+b.nummer)&&csv[1].includes('66,90;14,05;80,95;6,95;29,00'),'CSV-export voor de boekhouding');
 // 8. zonder Mollie: betaalverzoek
 delete process.env.MOLLIE_API_KEY;
-r=await call(bestel,{method:'POST',body:{klant:{...klant,email:'bob@voorbeeld.be',land:'BE'},regels:[{id:'regatta',formaat:'70x105',aantal:2}],akkoord:true,t:5000}});
+r=await call(bestel,{method:'POST',body:{klant:{...klant,email:'bob@voorbeeld.be',land:'BE'},regels:[{id:'regatta',formaat:'70x100',aantal:2}],akkoord:true,t:5000}});
 const b2=T.bestellingen[1];ok(r.j.ok&&r.j.modus==='mail'&&b2.betaalwijze==='betaalverzoek'&&b2.totaal===138&&b2.verzending===0,'zonder Mollie: betaalverzoek, gratis verzending boven € 75');
 ok(/ontvangen/.test(mails.at(-2).onderwerp)&&mails.at(-2).aan==='bob@voorbeeld.be','klant krijgt "ontvangen"-mail');
 r=await call(admin,{method:'POST',url:'/api/admin?actie=betaald',cookie,body:{id:b2.id}});ok(r.j.ok&&b2.factuurnummer==='2026-0002'&&/Bedankt/.test(mails.at(-2).onderwerp),'handmatig betaald: factuur 2026-0002 + bevestiging');

@@ -139,6 +139,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 .carrousel .dia{flex:0 0 100%;display:grid;place-items:center;position:relative}
 .carrousel .dia img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .carrousel .dia.poster{background:var(--papier)}
+.carrousel .dia.foto{background:var(--papier)}
 .carrousel .dia.poster img{inset:0;margin:auto;width:auto;height:84%;max-width:84%;object-fit:contain;box-shadow:0 18px 40px rgba(0,0,0,.2)}
 .carrousel .dia.poster small{color:#000;text-shadow:none;opacity:.55}
 /* dia 2 en 3: de poster in een lijst op een witte muur. Breedte volgt uit de hoogte, zodat de poster precies 2:3 blijft. */
@@ -329,7 +330,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 <div id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitel" aria-hidden="true" inert>
   <div class="kader">
     <button class="sluit" id="modalSluit" aria-label="Sluiten">+</button>
-    <div class="carrousel"><div class="voortgang"><i></i><i></i><i></i></div><div class="baan" id="baan"></div></div>
+    <div class="carrousel"><div class="voortgang"><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="baan" id="baan"></div></div>
     <div class="modaltekst" id="modaltekst"></div>
   </div>
   <button class="pijl vorige" id="vorigePoster" aria-label="Vorige poster">←</button>
@@ -356,7 +357,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
       <p>Elke poster is een hoofdstuk: <b>Surfcultuur</b>, de eerste surfers bij de pier in de jaren zeventig. <b>Windsurf</b>, de zeilen bij de vuurtoren in de jaren tachtig. <b>Golf</b>, de zee zoals je hem 's avonds onthoudt. En de pier door de jaren heen: <b>Pier en Strand</b>, <b>Boulevard</b>, <b>De Pier</b>, <b>Surf</b>, <b>Havenpier</b>, <b>Skiffa</b>, <b>Skyview</b>, <b>Havenhoofden</b>, <b>Noordzee Surf</b>, <b>Regatta</b>, <b>Zon</b>, <b>Vuurtoren</b> en <b>Reuzenrad</b>. Drie formaten, kleine oplages.</p>
     </div>
     <div class="kol">
-      <p>We drukken ze op <b>250 grams mat fine-art papier</b>, in Den Haag. Alle posters hebben de verhouding 2:3, zodat ze in een standaardlijst passen. Ze gaan opgerold de deur uit, in een stevige koker en zonder lijst: hoe hij aan de muur komt, kies je zelf.</p>
+      <p>We drukken ze op <b>250 grams mat fine-art papier</b>, in Den Haag. Alle formaten zijn standaard lijstmaten (30 × 40, 50 × 70 en 70 × 100 cm), dus een lijst vind je overal. Ze gaan opgerold de deur uit, in een stevige koker en zonder lijst: hoe hij aan de muur komt, kies je zelf.</p>
       <p>De scène op deze site volgt de tijd in Scheveningen. 's Ochtends, 's middags en 's avonds zie je een uitsnede uit een van de posters; die wisselt bij zonsopkomst, om twaalf uur en bij zonsondergang. De balk onderaan is het getij van vandaag, met hoog- en laagwater. Daarboven staat het strandbericht: wind, temperatuur, zeewater en of het een grijze dag is. Beweeg over de balk om zelf door de dag te gaan.</p>
     </div>
   </div>
@@ -396,7 +397,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
     </div>
     <div class="kol">
       <div class="label">veelgestelde vragen</div>
-      <div class="vraag"><b>Welk formaat moet ik nemen?</b><p>30 × 45 cm voor boven je bureau, 50 × 75 cm voor een gewone wand, 70 × 105 cm als hij de kamer mag dragen. Alle formaten zijn 2:3 en passen in een standaardlijst.</p></div>
+      <div class="vraag"><b>Welk formaat moet ik nemen?</b><p>50 × 70 cm is de maat die het meest gekozen wordt: groot genoeg voor een gewone wand. 30 × 40 cm voor boven je bureau, als cadeau of om er een paar te combineren, 70 × 100 cm als hij de kamer mag dragen. Alle drie zijn standaard lijstmaten.</p></div>
       <div class="vraag"><b>Zit er een lijst bij?</b><p>Nee. De poster komt opgerold in een koker. Leg hem een nacht plat onder een paar boeken, dan ligt hij weer recht.</p></div>
       <div class="vraag"><b>Hoe snel wordt er verzonden?</b><p>Voor 15:00 besteld gaat de volgende werkdag op de post. Verzenden kost € 6,95 (België € 9,95) en is gratis vanaf € 75.</p></div>
       <div class="vraag"><b>Kan ik retourneren?</b><p>Ja, je hebt 14 dagen bedenktijd na ontvangst. Meld het via dit formulier en stuur de poster onbeschadigd in de koker terug; het terugsturen is voor eigen rekening. Zie de <a href="/voorwaarden.html" style="border-bottom:1px solid currentColor">voorwaarden</a>.</p></div>
@@ -442,11 +443,11 @@ const rm=matchMedia('(prefers-reduced-motion: reduce)').matches;
 /* Catalogus. De prijzen staan ook in api/_catalogus.js (de server rekent altijd zelf);
    controleer met: node scripts/check-catalogus.mjs */
 const formaten=[
-  {id:'30x45',label:'30 × 45 cm',prijs:29},
-  {id:'50x75',label:'50 × 75 cm',prijs:45},
-  {id:'70x105',label:'70 × 105 cm',prijs:69},
+  {id:'30x40',label:'30 × 40 cm',prijs:29},
+  {id:'50x70',label:'50 × 70 cm',prijs:45,standaard:true},
+  {id:'70x100',label:'70 × 100 cm',prijs:69},
 ];
-const PUNTEN=['giclée op 250 grams mat fine-art papier','gedrukt in Den Haag','verhouding 2:3, past in een standaardlijst','opgerold verstuurd in een koker, zonder lijst'];
+const PUNTEN=['giclée op 250 grams mat fine-art papier','gedrukt in Den Haag','standaard lijstmaten: 30 × 40, 50 × 70 en 70 × 100 cm','opgerold verstuurd in een koker, zonder lijst'];
 /* actief:false = klaargezet, nog niet zichtbaar (beeld volgt). Zet op true zodra /posters/<id>.webp er staat
    en voeg hem ook toe aan api/_catalogus.js. */
 let posters=[
@@ -467,6 +468,10 @@ let posters=[
   {id:'reuzenrad',naam:'Reuzenrad',kleur:'#C99A2E',actief:true,sub:'paletmes · schilderij',zin:'Het reuzenrad aan het eind van de pier, in dikke verf tegen een gouden zon. Scheveningen zoals het nu is.',punten:PUNTEN},
   {id:'zon',naam:'Zon',kleur:'#E8571E',actief:true,sub:'linodrukstijl · illustratie',zin:'Een oranje zon, een muur van blauw water en de vuurtoren klein in de verte. Een surfer loopt terug naar het strand; de zee mag even rusten.',punten:PUNTEN},
 ];
+/* Zes visuals per poster (geüpload in /admin → posters). Zolang er geen zijn, toont het productvenster
+   de poster en de twee lijst-dia's. */
+let visuals={};
+fetch('/api/media?actie=visuals').then(r=>r.ok?r.json():null).then(j=>{if(j&&j.ok&&j.visuals)visuals=j.visuals;}).catch(()=>{});
 const beeld=id=>`/posters/${id}.webp`,klein=id=>`/posters/${id}-klein.webp`;
 const zichtbaar=()=>posters.filter(p=>p.actief!==false);
 const vind=id=>posters.find(p=>p.id===id);
@@ -593,8 +598,9 @@ function bladerPoster(stap){const lijst=zichtbaar();if(!huidigePoster||!lijst.le
   openModal(lijst[(i+stap+lijst.length)%lijst.length]);if(uitNav)mt.querySelector(`[data-blader="${stap}"]`)?.focus();}
 function openModal(s){
   huidigePoster=s;const lijst=zichtbaar(),nr=lijst.findIndex(p=>p.id===s.id)+1;
-  let formaat=formaten[1].id;
-  const dias=[`<div class="dia poster"><img src="${beeld(s.id)}" alt="Poster ${s.naam}"><small>poster ${s.naam.toLowerCase()} — 2:3</small></div>`,
+  let formaat=(formaten.find(f=>f.standaard)||formaten[0]).id;
+  const vis=visuals[s.id]||[];
+  const dias=vis.length?vis.map((v,k)=>`<div class="dia foto"><img src="${v.url}" alt="${(v.alt||`Poster ${s.naam}, beeld ${k+1}`).replace(/"/g,'&quot;')}"${k?' loading="lazy"':''}></div>`):[`<div class="dia poster"><img src="${beeld(s.id)}" alt="Poster ${s.naam}"><small>poster ${s.naam.toLowerCase()}</small></div>`,
     `<div class="dia lijst hout"><div class="lijstje"><img src="${klein(s.id)}" alt="Poster ${s.naam} in een houten lijst"></div><small>in een houten lijst — lijst niet meegeleverd</small></div>`,
     `<div class="dia lijst zwart"><div class="lijstje"><div class="pp"><img src="${klein(s.id)}" alt="Poster ${s.naam} in een zwarte lijst met passe-partout"></div></div><small>in een zwarte lijst met passe-partout — lijst niet meegeleverd</small></div>`];
   baan.innerHTML=dias.join('');vg.forEach((i,k)=>i.style.display=k<dias.length?'':'none');aantalDias=dias.length;

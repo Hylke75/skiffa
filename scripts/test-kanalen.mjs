@@ -22,7 +22,7 @@ globalThis.fetch = async (url, o = {}) => {
     if (p === '/retailer/orders' && o.method === 'GET') return antwoord({ orders: B.orders });
     if (p === '/retailer/orders/BOL-1001') return antwoord({ orderId: 'BOL-1001', orderPlacedDateTime: '2026-10-29T08:00:00Z',
       shipmentDetails: { firstName: 'Piet', surname: 'Jansen', streetName: 'Dorpsstraat', houseNumber: 12, houseNumberExtension: 'A', zipCode: '1234ab', city: 'Ede', countryCode: 'NL', email: 'xyz@verkopen.bol.com' },
-      orderItems: [{ orderItemId: 'OI-1', quantity: 2, unitPrice: 51.95, commission: 7.5, offer: { offerId: 'offer-8712345678906', reference: 'SKF-GOLF-50X75' }, product: { ean: '8712345678906', title: 'Poster Golf' }, fulfilment: { method: 'FBR', latestDeliveryDate: '2026-11-02' } }] });
+      orderItems: [{ orderItemId: 'OI-1', quantity: 2, unitPrice: 51.95, commission: 7.5, offer: { offerId: 'offer-8712345678906', reference: 'SKF-GOLF-50X70' }, product: { ean: '8712345678906', title: 'Poster Golf' }, fulfilment: { method: 'FBR', latestDeliveryDate: '2026-11-02' } }] });
     if (p === '/retailer/shipments' && o.method === 'POST') { B.zending = body; return antwoord({ processStatusId: 'proc-1' }, 202); }
     if (p === '/retailer/shipments/invoices/requests') return antwoord({ invoiceRequests: B.facturen });
     if (p.startsWith('/retailer/shipments/invoices/') && o.method === 'POST') { B.factuurUpload = o.body; return antwoord({ processStatusId: 'p2' }, 202); }
@@ -71,11 +71,11 @@ r = await call(kanalen, { method: 'POST', url: '/api/kanalen?actie=cron', header
 r = await K('overzicht'); ok(r.j.kanalen.bol.sleutels && r.j.kanalen.bol.instellingen.proef === true && r.j.cron, 'overzicht: sleutels aanwezig, standaard proefmodus');
 
 // ---- bol ----
-r = await K('ean', { poster_id: 'golf', formaat: '50x75', ean: '8712345678907' }); ok(r.c === 400 && /controlecijfer/.test(r.j.melding), 'EAN met fout controlecijfer geweigerd');
-r = await K('ean', { poster_id: 'golf', formaat: '50x75', ean: '8712345678906' }); ok(r.j.ok, 'geldige EAN opgeslagen');
-r = await K('ean', { poster_id: 'zon', formaat: '50x75', ean: '8712345678906' }); ok(r.c === 400 && /andere poster/.test(r.j.melding), 'dubbele EAN geweigerd');
+r = await K('ean', { poster_id: 'golf', formaat: '50x70', ean: '8712345678907' }); ok(r.c === 400 && /controlecijfer/.test(r.j.melding), 'EAN met fout controlecijfer geweigerd');
+r = await K('ean', { poster_id: 'golf', formaat: '50x70', ean: '8712345678906' }); ok(r.j.ok, 'geldige EAN opgeslagen');
+r = await K('ean', { poster_id: 'zon', formaat: '50x70', ean: '8712345678906' }); ok(r.c === 400 && /andere poster/.test(r.j.melding), 'dubbele EAN geweigerd');
 r = await K('listings', null, { q: '&kanaal=bol' }); ok(r.j.listings.length === 48, 'bol-assortiment: 16 posters × 3 formaten');
-const golf = r.j.listings.find((l) => l.poster_id === 'golf' && l.formaat === '50x75'), zon = r.j.listings.find((l) => l.poster_id === 'zon' && l.formaat === '30x45');
+const golf = r.j.listings.find((l) => l.poster_id === 'golf' && l.formaat === '50x70'), zon = r.j.listings.find((l) => l.poster_id === 'zon' && l.formaat === '30x40');
 ok(golf.prijs === 51.95 && golf.ean === '8712345678906', 'kanaalprijs € 45 + 15% → € 51,95');
 await K('listing', { id: golf.id, ingeschakeld: true }); await K('listing', { id: zon.id, ingeschakeld: true });
 await K('instellingen', { kanaal: 'bol', waarden: { aan: true, proef: true, opslag_pct: '15', onzin: 'x' } });
@@ -83,7 +83,7 @@ r = await K('sync', { kanaal: 'bol', stap: 'aanbiedingen' }); ok(r.j.proef && r.
 await K('instellingen', { kanaal: 'bol', waarden: { proef: false } });
 r = await K('sync', { kanaal: 'bol', stap: 'aanbiedingen' });
 const offer = B.offers['offer-8712345678906'];
-ok(offer && offer.pricing.bundlePrices[0].unitPrice === 51.95 && offer.reference === 'SKF-GOLF-50X75' && offer.fulfilment.method === 'FBR' && offer.stock.amount === 20, 'aanbieding aangemaakt: prijs, referentie, FBR en voorraad');
+ok(offer && offer.pricing.bundlePrices[0].unitPrice === 51.95 && offer.reference === 'SKF-GOLF-50X70' && offer.fulfilment.method === 'FBR' && offer.stock.amount === 20, 'aanbieding aangemaakt: prijs, referentie, FBR en voorraad');
 const lijst = (await K('listings', null, { q: '&kanaal=bol' })).j.listings;
 ok(lijst.find((l) => l.id === golf.id).status === 'actief' && /EAN/.test(lijst.find((l) => l.id === zon.id).laatste_fout), 'listing actief; zonder EAN een duidelijke fout');
 await K('instellingen', { kanaal: 'bol', waarden: { opslag_pct: 20 } });
@@ -117,26 +117,26 @@ await K('instellingen', { kanaal: 'etsy', waarden: { verzendprofiel_id: '111', v
 await K('sync', { kanaal: 'etsy', stap: 'listings' });
 const L = Object.values(E.listings)[0];
 ok(L && L.foto && L.state === 'active' && L.velden.when_made === 'made_to_order' && L.velden.taxonomy_id === '1027', 'Etsy-listing: concept → foto → voorraad → actief');
-ok(JSON.stringify(L.inventaris.products.map((p) => p.offerings[0].price)) === '[33.95,51.95,79.95]' && L.inventaris.products[1].sku === 'SKF-GOLF-50X75', 'Etsy-variaties: drie formaten met eigen prijs en SKU');
-E.receipts = [{ receipt_id: 4242, status: 'paid', is_paid: true, name: 'Anna Smith', buyer_email: 'anna@example.com', first_line: '1 High St', city: 'London', zip: 'sw1a 1aa', country_iso: 'GB', message_from_buyer: 'Mooi!', grandtotal: { amount: 5795, divisor: 100, currency_code: 'EUR' }, total_shipping_cost: { amount: 600, divisor: 100, currency_code: 'EUR' }, transactions: [{ transaction_id: 1, sku: 'SKF-GOLF-50X75', title: 'Scheveningen poster Golf', quantity: 1, price: { amount: 5195, divisor: 100, currency_code: 'EUR' } }], updated_timestamp: 1793260000 }];
+ok(JSON.stringify(L.inventaris.products.map((p) => p.offerings[0].price)) === '[33.95,51.95,79.95]' && L.inventaris.products[1].sku === 'SKF-GOLF-50X70', 'Etsy-variaties: drie formaten met eigen prijs en SKU');
+E.receipts = [{ receipt_id: 4242, status: 'paid', is_paid: true, name: 'Anna Smith', buyer_email: 'anna@example.com', first_line: '1 High St', city: 'London', zip: 'sw1a 1aa', country_iso: 'GB', message_from_buyer: 'Mooi!', grandtotal: { amount: 5795, divisor: 100, currency_code: 'EUR' }, total_shipping_cost: { amount: 600, divisor: 100, currency_code: 'EUR' }, transactions: [{ transaction_id: 1, sku: 'SKF-GOLF-50X70', title: 'Scheveningen poster Golf', quantity: 1, price: { amount: 5195, divisor: 100, currency_code: 'EUR' } }], updated_timestamp: 1793260000 }];
 await K('sync', { kanaal: 'etsy', stap: 'orders' });
 const eo = T.bestellingen.find((b) => b.kanaal === 'etsy');
-ok(eo && eo.land === 'GB' && eo.totaal === 57.95 && eo.verzending === 6 && eo.factuurnummer === '2026-0002' && T.bestelregels.find((x) => x.bestelling_id === eo.id).formaat === '50x75', 'Etsy-order geïmporteerd (VK, € 51,95 + € 6 verzending), regel via SKU');
+ok(eo && eo.land === 'GB' && eo.totaal === 57.95 && eo.verzending === 6 && eo.factuurnummer === '2026-0002' && T.bestelregels.find((x) => x.bestelling_id === eo.id).formaat === '50x70', 'Etsy-order geïmporteerd (VK, € 51,95 + € 6 verzending), regel via SKU');
 ok(T.bestelling_log.some((l) => l.bestelling_id === eo.id && /Mooi!/.test(l.tekst)), 'bericht van de koper in het logboek');
 await call(admin, { method: 'POST', url: '/api/admin?actie=status', cookie, body: { id: eo.id, status: 'verzonden', track_trace: 'LX123NL', vervoerder: 'postnl' } });
 await K('sync', { kanaal: 'etsy', stap: 'verzendingen' }); ok(E.tracking?.tracking_code === 'LX123NL' && E.tracking.carrier_name === 'postnl-international', 'Etsy: track-and-trace met postnl-international doorgegeven');
 // ---- Amazon ----
-await K('ean', { poster_id: 'zon', formaat: '70x105', ean: '4006381333931' });
-const al = (await K('listings', null, { q: '&kanaal=amazon' })).j.listings; const az = al.find((l) => l.poster_id === 'zon' && l.formaat === '70x105');
+await K('ean', { poster_id: 'zon', formaat: '70x100', ean: '4006381333931' });
+const al = (await K('listings', null, { q: '&kanaal=amazon' })).j.listings; const az = al.find((l) => l.poster_id === 'zon' && l.formaat === '70x100');
 await K('listing', { id: az.id, ingeschakeld: true });
 await K('instellingen', { kanaal: 'amazon', waarden: { aan: true, proef: true } });
 await K('sync', { kanaal: 'amazon', stap: 'listings' });
-ok(A.listings['SKF-ZON-70X105']?.mode === 'VALIDATION_PREVIEW' && T.kanaal_listings.find((l) => l.id === az.id).meta.gevalideerd, 'Amazon-proef: listing alleen gevalideerd (VALIDATION_PREVIEW)');
+ok(A.listings['SKF-ZON-70X100']?.mode === 'VALIDATION_PREVIEW' && T.kanaal_listings.find((l) => l.id === az.id).meta.gevalideerd, 'Amazon-proef: listing alleen gevalideerd (VALIDATION_PREVIEW)');
 await K('instellingen', { kanaal: 'amazon', waarden: { proef: false } });
 await K('sync', { kanaal: 'amazon', stap: 'listings' });
-const ab = A.listings['SKF-ZON-70X105'];
+const ab = A.listings['SKF-ZON-70X100'];
 ok(!ab.mode && ab.body.productType === 'POSTER' && ab.body.attributes.purchasable_offer[0].our_price[0].schedule[0].value_with_tax === 79.95 && ab.body.attributes.main_product_image_locator[0].media_location.endsWith('/posters/zon.jpg'), 'Amazon-listing: producttype POSTER, € 79,95, JPEG-foto');
-A.orders = [{ orderId: '403-1234567-1234567', createdTime: '2026-10-29T09:00:00Z', salesChannel: { marketplaceId: 'A1805IZSGTT6HS' }, buyer: { buyerEmail: 'x@marketplace.amazon.nl' }, recipient: { deliveryAddress: { name: 'Kees de Boer', addressLine1: 'Laan 5', city: 'Utrecht', postalCode: '3511aa', countryCode: 'NL' } }, fulfillment: { fulfillmentStatus: 'UNSHIPPED', fulfilledBy: 'MERCHANT', shipByWindow: { endTime: '2026-11-01T23:00:00Z' } }, orderItems: [{ orderItemId: 'AI-1', quantityOrdered: 1, product: { sellerSku: 'SKF-ZON-70X105', title: 'Poster Zon', price: { unitPrice: { amount: '79.95', currencyCode: 'EUR' } } } }] }];
+A.orders = [{ orderId: '403-1234567-1234567', createdTime: '2026-10-29T09:00:00Z', salesChannel: { marketplaceId: 'A1805IZSGTT6HS' }, buyer: { buyerEmail: 'x@marketplace.amazon.nl' }, recipient: { deliveryAddress: { name: 'Kees de Boer', addressLine1: 'Laan 5', city: 'Utrecht', postalCode: '3511aa', countryCode: 'NL' } }, fulfillment: { fulfillmentStatus: 'UNSHIPPED', fulfilledBy: 'MERCHANT', shipByWindow: { endTime: '2026-11-01T23:00:00Z' } }, orderItems: [{ orderItemId: 'AI-1', quantityOrdered: 1, product: { sellerSku: 'SKF-ZON-70X100', title: 'Poster Zon', price: { unitPrice: { amount: '79.95', currencyCode: 'EUR' } } } }] }];
 await K('sync', { kanaal: 'amazon', stap: 'orders' });
 const ao = T.bestellingen.find((b) => b.kanaal === 'amazon'); ok(ao && ao.totaal === 79.95 && ao.factuurnummer === '2026-0003' && ao.postcode === '3511AA', 'Amazon-order geïmporteerd');
 await call(admin, { method: 'POST', url: '/api/admin?actie=status', cookie, body: { id: ao.id, status: 'verzonden', track_trace: '3SAMZ9', vervoerder: 'postnl' } });

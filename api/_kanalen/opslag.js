@@ -2,6 +2,7 @@
 import { db, rpc, log as orderLog } from '../_db.js';
 import { POSTERS, FORMATEN } from '../_catalogus.js';
 import { mails, vanRij } from '../_mails.js';
+import { drukOverzicht, drukopdracht } from '../_verwerk.js';
 import { haalBestelling } from '../_db.js';
 import { STANDAARD, varianten, vanSku } from './gemeen.js';
 
@@ -81,8 +82,9 @@ export async function importeer(payload, notities = []) {
     for (const n of notities) await orderLog(res.id, 'waarschuwing', n, payload.kanaal);
     try {
       const o = vanRij(await haalBestelling('id', res.id));
-      if (await mails.winkelNieuw(o, `Nieuwe ${payload.kanaal}-bestelling (${payload.extern_id}). Verstuur binnen de levertijd en vul de track-and-trace in; die gaat automatisch naar ${payload.kanaal}.`))
+      if (await mails.winkelNieuw(o, `Nieuwe ${payload.kanaal}-bestelling (${payload.extern_id}). Verstuur binnen de levertijd en vul de track-and-trace in; die gaat automatisch naar ${payload.kanaal}.`, await drukOverzicht(o)))
         await orderLog(res.id, 'mail', 'winkel', payload.kanaal);
+      if (!ongekoppeld) await drukopdracht(o, payload.kanaal, payload.kanaal);
     } catch (e) { await orderLog(res.id, 'fout', `mail winkel: ${e.message}`, payload.kanaal); }
   }
   return res;

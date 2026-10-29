@@ -3,10 +3,22 @@
 import { mollie } from './_bestelling.js';
 import { rpc, haalBestelling, werkBij, log } from './_db.js';
 import { mails, vanRij } from './_mails.js';
+import { metDrukbestanden, drukLijstHtml, naarDrukker } from './_media.js';
 
 async function probeer(id, soort, fn) {
   try { if (await fn()) await log(id, 'mail', soort); }
   catch (e) { await log(id, 'fout', `mail ${soort} mislukt: ${e.message}`); }
+}
+
+// Drukbestanden bij de regels (voor de mail aan de winkel); mag een betaling nooit laten mislukken.
+export async function drukOverzicht(o) {
+  try { return drukLijstHtml(await metDrukbestanden(o.regels)); } catch { return ''; }
+}
+
+// Productieopdracht naar de drukker (alleen met DRUKKER_EMAIL).
+export async function drukopdracht(o, door = 'systeem', kanaal) {
+  try { return await naarDrukker(o, { door, kanaal }); }
+  catch (e) { await log(o.id, 'fout', `drukopdracht mislukt: ${e.message}`, door); return { verstuurd: false, reden: e.message }; }
 }
 
 // Zet een bestelling op betaald (idempotent) en stuurt alleen de eerste keer de mails.
@@ -15,7 +27,9 @@ export async function betaald(bestelling, methode, door = 'systeem') {
   if (res?.nieuw) {
     const o = vanRij(await haalBestelling('id', bestelling.id));
     await probeer(o.id, 'bevestiging', () => mails.bevestiging(o));
-    await probeer(o.id, 'winkel', () => mails.winkelNieuw(o, `Betaald${methode ? ` via ${methode}` : ''}.`));
+    const druk = await drukOverzicht(o);
+    await probeer(o.id, 'winkel', () => mails.winkelNieuw(o, `Betaald${methode ? ` via ${methode}` : ''}.`, druk));
+    await drukopdracht(o, door);
   }
   return res;
 }

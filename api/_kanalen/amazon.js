@@ -5,7 +5,8 @@
 //   orders        gewijzigde FBM-orders importeren (Orders API 2026-01-01), annuleringen verwerken
 //   verzendingen  verzending bevestigen met track-and-trace (Orders v0 confirmShipment)
 // Secrets (Vercel): AMAZON_LWA_CLIENT_ID, AMAZON_LWA_CLIENT_SECRET, AMAZON_REFRESH_TOKEN, AMAZON_SELLER_ID.
-import { MAX_SCHRIJFACTIES, MAX_VERZENDPOGINGEN, foutTekst, isGeldigeEan, kanaalPrijs, sku, titel, omschrijving, afbeelding, vervoerderCode, varianten } from './gemeen.js';
+import { MAX_SCHRIJFACTIES, MAX_VERZENDPOGINGEN, foutTekst, isGeldigeEan, kanaalPrijs, sku, titel, omschrijving, vervoerderCode, varianten } from './gemeen.js';
+import { kanaalBeelden } from '../_media.js';
 import { listings, zetListing, eans, bekendeOrders, regel, importeer, teMelden, gemeld, meldenMislukt, annuleerVanKanaal, zetInstellingen } from './opslag.js';
 
 const API = 'https://sellingpartnerapi-eu.amazon.com';
@@ -49,6 +50,10 @@ function aanbod(s, prijs, aantal) {
     fulfillment_availability: [{ fulfillment_channel_code: 'DEFAULT', quantity: aantal, lead_time_to_ship_max_days: s.verwerkingsdagen }],
   };
 }
+// Poster als hoofdfoto, visuals als extra foto's (Amazon: max. 8 extra).
+const beeldAttributen = (urls, mid) => Object.fromEntries(urls.slice(0, 9).map((u, i) => [
+  i === 0 ? 'main_product_image_locator' : `other_product_image_locator_${i}`, [{ media_location: u, marketplace_id: mid }],
+]));
 const problemen = (issues) => {
   const fout = (issues || []).filter((i) => i.severity === 'ERROR');
   return fout.length ? fout.map((i) => `${i.message}${i.attributeNames?.length ? ` (${i.attributeNames.join(', ')})` : ''}`).join(' · ').slice(0, 500) : null;
@@ -77,8 +82,8 @@ async function stapListings(sp, s, log) {
           item_name: [nl(titel(variant).slice(0, 200))], brand: [nl(s.merk)],
           externally_assigned_product_identifier: [{ type: 'ean', value: code, marketplace_id: mid }],
           product_description: [nl(omschrijving(l.poster_id).slice(0, 2000))],
-          bullet_point: ['Giclée op 250 grams mat fine-art papier, gedrukt in Den Haag', `Formaat ${variant.formaat_label}, verhouding 2:3: past in een standaardlijst`, 'Opgerold verstuurd in een stevige koker, zonder lijst', 'Ontworpen in Scheveningen: de surfcultuur van de Noordzee'].map(nl),
-          main_product_image_locator: [{ media_location: afbeelding(l.poster_id), marketplace_id: mid }],
+          bullet_point: ['Giclée op 250 grams mat fine-art papier, gedrukt in Den Haag', `Formaat ${variant.formaat_label}: een standaard lijstmaat`, 'Opgerold verstuurd in een stevige koker, zonder lijst', 'Ontworpen in Scheveningen: de surfcultuur van de Noordzee'].map(nl),
+          ...beeldAttributen(await kanaalBeelden(l.poster_id), mid),
           ...aanbod(s, prijs, s.voorraad),
         },
       };
