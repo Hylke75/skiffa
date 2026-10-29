@@ -8,7 +8,8 @@ const KEY = () => process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 async function st(pad, { method = 'POST', body, headers = {} } = {}) {
   const r = await fetch(`${URL_()}/storage/v1/${pad}`, {
     method,
-    headers: { apikey: KEY(), authorization: `Bearer ${KEY()}`, 'content-type': 'application/json', ...headers },
+    // content-type alleen mét body: Supabase Storage weigert een lege body met content-type JSON (400).
+    headers: { apikey: KEY(), authorization: `Bearer ${KEY()}`, ...(body === undefined ? {} : { 'content-type': 'application/json' }), ...headers },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   const tekst = await r.text();

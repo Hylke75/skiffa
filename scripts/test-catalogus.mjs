@@ -63,6 +63,8 @@ ok(JSON.stringify(leesKop(png(10, 20))) === '{"mime":"image/png","breedte_px":10
 zaaiCatalogus(cat.TEKSTEN);
 await cat.laadCatalogus({ vers: true });
 ok(cat.catalogusBron() === 'database' && Object.keys(cat.VARIANTEN).length === 48 && !Object.keys(cat.POSTERS).length, 'startvulling: 48 varianten, maar nog niets bestelbaar (niet bevestigd, geen drukbestanden)');
+r = await call(catalogus, { url: '/api/catalogus' });
+ok(!r.j.producten.length && r.j.binnenkort.length === 16 && r.j.binnenkort.every((p) => p.titel && 'beeld' in p) && !r.j.binnenkort[0].varianten, 'webshop: actief maar nog niet bestelbaar = "binnenkort" (zonder prijzen of varianten)');
 ok(cat.VARIANTEN['SKF-GOLF-50X70'].ontbreekt.some((o) => /leverbaarheid/.test(o)) && cat.VARIANTEN['SKF-GOLF-50X70'].ontbreekt.some((o) => /drukbestand ontbreekt/.test(o)), 'wat ontbreekt staat er in gewone taal bij');
 r = await call(catalogus, { url: '/api/catalogus' }); ok(r.j.bron === 'database' && r.j.producten.length === 0, 'webshop toont niets wat niet besteld kan worden');
 r = await call(bestel, { method: 'POST', body: { klant, regels: [{ id: 'golf', formaat: '50x70', aantal: 1 }], akkoord: true, t: 5000 } });

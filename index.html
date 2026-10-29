@@ -140,6 +140,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 .carrousel .dia img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .carrousel .dia.poster{background:var(--papier)}
 .carrousel .dia.foto{background:var(--papier)}
+.carrousel .dia.foto small{color:#000;text-shadow:none;background:rgba(251,250,247,.82);padding:4px 7px;opacity:1}
 .carrousel .dia.poster img{inset:0;margin:auto;width:auto;height:84%;max-width:84%;object-fit:contain;box-shadow:0 18px 40px rgba(0,0,0,.2)}
 .carrousel .dia.poster small{color:#000;text-shadow:none;opacity:.55}
 /* dia 2 en 3: de poster in een lijst op een witte muur. Breedte volgt uit de hoogte, zodat de poster precies 2:3 blijft. */
@@ -615,7 +616,7 @@ function openModal(s){
   let formaat=((fmts.find(f=>f.standaard)||fmts[0])||{}).id,papier=(vs.find(v=>v.formaat===formaat)||{}).papier;
   const huidig=()=>vs.find(v=>v.formaat===formaat&&v.papier===papier)||vs.find(v=>v.formaat===formaat);
   const tekenDias=()=>{const v=huidig(),alle=visuals[s.id]||[],vis=alle.filter(x=>(!x.formaat||x.formaat===v?.formaat)&&(!x.papier||x.papier===v?.papier));
-    const dias=vis.length?vis.map((x,k)=>`<div class="dia foto"><img src="${x.url}" alt="${(x.alt||`Poster ${s.naam}, beeld ${k+1}`).replace(/"/g,'&quot;')}"${k?' loading="lazy"':''}></div>`):[`<div class="dia poster"><img src="${beeld(s.id)}" alt="Poster ${s.naam}"><small>poster ${s.naam.toLowerCase()}</small></div>`,
+    const dias=vis.length?vis.map((x,k)=>`<div class="dia foto"><img src="${x.url}" alt="${(x.alt||`Poster ${s.naam}, beeld ${k+1}`).replace(/"/g,'&quot;')}"${k?' loading="lazy"':''}>${x.soort==='mockup'?'<small>sfeerbeeld · lijst niet meegeleverd</small>':''}</div>`):[`<div class="dia poster"><img src="${beeld(s.id)}" alt="Poster ${s.naam}"><small>poster ${s.naam.toLowerCase()}</small></div>`,
     `<div class="dia lijst hout"><div class="lijstje"><img src="${klein(s.id)}" alt="Poster ${s.naam} in een houten lijst"></div><small>voorbeeld in een houten lijst — lijst niet meegeleverd</small></div>`,
     `<div class="dia lijst zwart"><div class="lijstje"><div class="pp"><img src="${klein(s.id)}" alt="Poster ${s.naam} in een zwarte lijst met passe-partout"></div></div><small>voorbeeld in een zwarte lijst — lijst niet meegeleverd</small></div>`];
     baan.innerHTML=dias.join('');vg.forEach((i,k)=>i.style.display=k<Math.min(dias.length,vg.length)?'':'none');aantalDias=Math.min(dias.length,vg.length);dia=0;toonDia();};
@@ -791,6 +792,10 @@ tekenMandje();
     if(d.visuals)visuals=d.visuals;
     if(d.bron==='database'&&Array.isArray(d.producten)&&!d.producten.some(p=>Array.isArray(p.varianten)&&p.varianten.length)){
       binnenkort=true;regels=[];bewaar();document.getElementById('productdata')?.remove();
+      if(Array.isArray(d.binnenkort))posters=d.binnenkort.map(p=>{const oud=vind(p.id);
+        if(p.beeld&&!String(p.beeld).startsWith('/posters/'))eigenBeeld[p.id]={beeld:p.beeld,klein:p.klein||p.beeld};
+        return {id:String(p.id),naam:String(p.titel),sub:String(p.stijl||''),zin:String(p.beschrijving||''),kleur:/^#[0-9a-f]{6}$/i.test(p.accentkleur)?p.accentkleur:'#1F4E79',actief:true,punten:oud?.punten||PUNTEN};});
+      plaatsHotspots(document.body.dataset.periode||'ochtend');
       tekenShop();if(overGetekend)tekenOverBlok();tekenMandje();if(huidigePoster)openModal(huidigePoster);return;}
     if(d.bron!=='database'||!Array.isArray(d.producten)||!d.producten.length||!Array.isArray(d.formaten)||!d.formaten.length)return;
     // Alleen wat echt besteld kan worden: producten met bestelbare varianten.

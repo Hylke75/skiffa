@@ -55,6 +55,10 @@ async function openbaar() {
     formaten: Object.entries(FORMATEN).map(([id, f]) => ({ id, label: f.label, mm: f.mm })),
     papiersoorten: Object.entries(PAPIER).filter(([id]) => papieren.has(id)).map(([id, p]) => ({ id, naam: p.naam, uitleg: p.uitleg, gsm: p.gsm })),
     standaard_papier: STANDAARD_PAPIER, visuals: vis,
+    // Actief in de database maar nog niet bestelbaar (bv. drukbestand of Prodigi nog niet klaar): de winkel toont ze als "binnenkort".
+    binnenkort: catalogusBron() === 'database' ? Object.values(PRODUCTEN).filter((p) => p.status === 'actief' && !POSTERS[p.id]).map((p) => ({
+      id: p.id, titel: p.titel, stijl: p.stijl || '', beschrijving: p.beschrijving || '', accentkleur: p.accentkleur || '#1F4E79', ...beeldVan(p.id),
+    })) : [],
   };
 }
 

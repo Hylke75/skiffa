@@ -78,6 +78,9 @@ function importeer({ p }) {
 }
 function opslag(u, o) {
   const p = decodeURIComponent(u.pathname.replace('/storage/v1/', '')), body = o.body && typeof o.body === 'string' && o.body.startsWith('{') ? JSON.parse(o.body) : null;
+  // Zoals Supabase Storage: content-type JSON met een lege body = 400.
+  const ct = Object.entries(o.headers || {}).find(([k]) => k.toLowerCase() === 'content-type')?.[1] || '';
+  if (o.method !== 'PUT' && /json/.test(ct) && (o.body == null || o.body === '')) return { __status: 400, statusCode: '400', error: 'FST_ERR_CTP_EMPTY_JSON_BODY' };
   let m = p.match(/^object\/upload\/sign\/([^/]+)\/(.+)$/);
   if (m && o.method === 'PUT') { const data = o.body == null ? Buffer.alloc(0) : Buffer.isBuffer(o.body) ? o.body : typeof o.body === 'string' ? Buffer.from(o.body) : Buffer.from(o.body); S[m[1]][m[2]] = { size: Number(o.headers?.['content-length'] || data.length || 1), type: o.headers?.['content-type'] || '', data }; return { Key: m[2] }; }
   const ma = p.match(/^object\/authenticated\/([^/]+)\/(.+)$/);
