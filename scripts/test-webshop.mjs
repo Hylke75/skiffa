@@ -3,34 +3,7 @@
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 const R=fileURLToPath(new URL('../api/', import.meta.url));
-// ---- nep-Supabase (PostgREST-subset) ----
-const T={bestellingen:[],bestelregels:[],bestelling_log:[],factuurteller:{}};
-let seq=1;
-function filt(rows,params){
-  for(const [k,v] of params){
-    if(['select','order','limit'].includes(k))continue;
-    if(k==='or'){const conds=v.slice(1,-1).split(',').map(c=>{const [f,op,...r]=c.split('.');return [f,op,decodeURIComponent(r.join('.'))]});
-      rows=rows.filter(x=>conds.some(([f,op,val])=>op==='ilike'&&String(x[f]??'').toLowerCase().includes(val.replace(/\*/g,'').toLowerCase())));continue;}
-    const [op,...r]=v.split('.');const val=decodeURIComponent(r.join('.'));
-    rows=rows.filter(x=>op==='eq'?String(x[k])===val:op==='in'?val.slice(1,-1).split(',').includes(x[k]):op==='not'&&val==='is.null'?x[k]!=null:op==='gte'?String(x[k])>=val:op==='lte'?String(x[k])<=val:true);
-  }
-  const o=params.get('order');if(o){const [f,d]=o.split('.');rows=[...rows].sort((a,b)=>(a[f]>b[f]?1:-1)*(d==='desc'?-1:1));}
-  if(params.get('limit'))rows=rows.slice(0,+params.get('limit'));
-  if((params.get('select')||'').includes('bestelregels(*)'))rows=rows.map(x=>({...x,bestelregels:T.bestelregels.filter(r=>r.bestelling_id===x.id)}));
-  return rows;
-}
-function supa(url,o){
-  const u=new URL(url);const pad=u.pathname.replace('/rest/v1/','');const body=o.body?JSON.parse(o.body):undefined;
-  if(pad==='rpc/skiffa_markeer_betaald'){const b=T.bestellingen.find(x=>x.id===body.p_id);if(!b)return {ok:false,reden:'onbekend'};
-    if(!['open','mislukt'].includes(b.status))return {ok:true,nieuw:false,status:b.status};
-    if(!b.factuurnummer){T.factuurteller[2026]=(T.factuurteller[2026]||0)+1;b.factuurnummer='2026-'+String(T.factuurteller[2026]).padStart(4,'0');b.factuurdatum='2026-10-29';}
-    Object.assign(b,{status:'betaald',betaald_op:b.betaald_op||new Date().toISOString(),mollie_methode:body.p_methode||b.mollie_methode});
-    T.bestelling_log.push({bestelling_id:b.id,soort:'betaald',tekst:'betaald',door:body.p_door,op:new Date().toISOString()});return {ok:true,nieuw:true,status:'betaald'};}
-  const tab=pad;const rows=T[tab];
-  if(o.method==='POST'){const arr=(Array.isArray(body)?body:[body]).map(x=>tab==='bestellingen'?{id:crypto.randomUUID(),token:crypto.randomBytes(18).toString('hex'),status:'open',terugbetaald:0,btw_tarief:21,notitie:'',factuurnummer:null,mollie_id:null,betaald_op:null,track_trace:null,aangemaakt_op:new Date(Date.now()+seq++).toISOString(),...x}:{id:seq++,op:new Date().toISOString(),...x});rows.push(...arr);return arr;}
-  if(o.method==='PATCH'){const hit=filt(rows,u.searchParams);hit.forEach(x=>Object.assign(x,body));return hit;}
-  return filt(rows,u.searchParams);
-}
+import { T, supabase as supa } from './_testmock.mjs';
 // ---- nep-Mollie / Resend ----
 const M={};const mails=[];const mcalls=[];
 function mollieApi(url,o){const u=new URL(url);const p=u.pathname.replace('/v2/','');const body=o.body?JSON.parse(o.body):null;mcalls.push(o.method+' '+p);

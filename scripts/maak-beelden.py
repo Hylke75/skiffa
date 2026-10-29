@@ -5,7 +5,8 @@ Gebruik:  python3 scripts/maak-beelden.py <bronbestand> <poster-id>
 
 Schrijft:
   posters/<id>.webp         de poster (productbeeld, max 1333 x 2000)
-  posters/<id>-klein.webp   600 x 900, voor overzicht, mandje en de muur-/lijst-dia's
+  posters/<id>.jpg          dezelfde poster als JPEG (Etsy en Amazon accepteren geen WebP)
+  posters/<id>-klein.webp   600 x 900, voor overzicht, mandje en de lijst-dia's
 Vereist Pillow (pip install pillow).
 """
 import sys
@@ -21,8 +22,9 @@ root = Path(__file__).resolve().parent.parent
 im = Image.open(bron).convert('RGB')
 im.thumbnail((1333, 2000), Image.LANCZOS)
 im.save(root / 'posters' / f'{pid}.webp', 'WEBP', quality=88, method=6)
+im.save(root / 'posters' / f'{pid}.jpg', 'JPEG', quality=88, optimize=True, progressive=True)  # voor Etsy/Amazon
 im.resize((600, 900), Image.LANCZOS).save(root / 'posters' / f'{pid}-klein.webp', 'WEBP', quality=72, method=6)
 
 print(f'klaar: posters/{pid}.webp en posters/{pid}-klein.webp')
 print(f"zet in index.html bij '{pid}': actief:true")
-print(f"en voeg '{pid}' toe aan POSTERS in api/_catalogus.js")
+print(f"en voeg '{pid}' toe aan POSTERS in api/_catalogus.js; draai daarna node scripts/maak-posterteksten.mjs")

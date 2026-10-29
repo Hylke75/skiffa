@@ -33,7 +33,7 @@ async function mailEnLog(id, soort, fn) {
 const dag = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
 
 async function overzicht() {
-  const rijen = await db('bestellingen?select=status,totaal,terugbetaald,betaald_op,aangemaakt_op&order=aangemaakt_op.desc&limit=5000');
+  const rijen = await db('bestellingen?select=status,totaal,terugbetaald,betaald_op,aangemaakt_op,kanaal&order=aangemaakt_op.desc&limit=5000');
   const nu = new Date();
   const maandStart = new Date(nu.getFullYear(), nu.getMonth(), 1).getTime();
   const jaarStart = new Date(nu.getFullYear(), 0, 1).getTime();
@@ -46,18 +46,21 @@ async function overzicht() {
     omzetMaand: Math.round(omzet(maandStart) * 100) / 100,
     omzetJaar: Math.round(omzet(jaarStart) * 100) / 100,
     aantalBetaald: rijen.filter((r) => r.betaald_op).length,
+    omzetPerKanaal: Object.fromEntries(['webshop', 'bol', 'etsy', 'amazon'].map((k) => [k, Math.round(rijen.filter((r) => r.kanaal === k && r.betaald_op && new Date(r.betaald_op).getTime() >= jaarStart).reduce((t, r) => t + Number(r.totaal) - Number(r.terugbetaald), 0) * 100) / 100])),
   };
 }
 
 async function lijst(req) {
   const status = param(req, 'status');
   const q = param(req, 'q').trim().slice(0, 60).replace(/[,()*%]/g, ' ');
-  let pad = 'bestellingen?select=id,nummer,status,naam,email,plaats,land,totaal,factuurnummer,aangemaakt_op,betaald_op,track_trace,betaalwijze&order=aangemaakt_op.desc&limit=300';
+  let pad = 'bestellingen?select=id,nummer,status,naam,email,plaats,land,totaal,factuurnummer,aangemaakt_op,betaald_op,track_trace,betaalwijze,kanaal,extern_id&order=aangemaakt_op.desc&limit=300';
+  const kanaal = param(req, 'kanaal');
+  if (['webshop', 'bol', 'etsy', 'amazon'].includes(kanaal)) pad += `&kanaal=eq.${kanaal}`;
   if (STATUSSEN.includes(status)) pad += `&status=eq.${status}`;
   else if (status === 'actie') pad += '&status=in.(betaald,in_productie)';
   if (q) {
     const v = encodeURIComponent(`*${q}*`);
-    pad += `&or=(nummer.ilike.${v},naam.ilike.${v},email.ilike.${v},factuurnummer.ilike.${v},plaats.ilike.${v})`;
+    pad += `&or=(nummer.ilike.${v},naam.ilike.${v},email.ilike.${v},factuurnummer.ilike.${v},plaats.ilike.${v},extern_id.ilike.${v})`;
   }
   return db(pad);
 }
@@ -81,9 +84,9 @@ async function exporteer(req) {
   if (van) pad += `&factuurdatum=gte.${van}`;
   if (tot) pad += `&factuurdatum=lte.${tot}`;
   const rijen = await db(pad);
-  const kop = ['factuurnummer', 'factuurdatum', 'bestelnummer', 'status', 'klant', 'e-mail', 'land', 'posters', 'omzet excl btw', 'btw 21%', 'totaal incl btw', 'waarvan verzending', 'teruggestort', 'betaalwijze', 'betaald op'];
+  const kop = ['factuurnummer', 'factuurdatum', 'bestelnummer', 'kanaal', 'extern ordernummer', 'status', 'klant', 'e-mail', 'land', 'posters', 'omzet excl btw', 'btw 21%', 'totaal incl btw', 'waarvan verzending', 'teruggestort', 'betaalwijze', 'betaald op'];
   const regels = rijen.map((r) => [
-    r.factuurnummer, r.factuurdatum, r.nummer, r.status, r.naam, r.email, r.land,
+    r.factuurnummer, r.factuurdatum, r.nummer, r.kanaal, r.extern_id || '', r.status, r.naam, r.email, r.land,
     (r.bestelregels || []).map((x) => `${x.aantal}x ${x.poster_naam} ${x.formaat}`).join(' | '),
     bedrag(Number(r.totaal) - btwDeel(Number(r.totaal))), bedrag(btwDeel(Number(r.totaal))), bedrag(r.totaal),
     bedrag(r.verzending), bedrag(r.terugbetaald), r.mollie_methode || r.betaalwijze, r.betaald_op ? r.betaald_op.slice(0, 10) : '',
@@ -100,10 +103,18 @@ async function zetStatus(id, body) {
   if (nieuw === 'verzonden') {
     velden.track_trace = String(body.track_trace || '').trim().slice(0, 300) || null;
     velden.verzonden_op = new Date().toISOString();
+    if (['postnl', 'dhl', 'dpd', 'ups', 'gls', 'bpost'].includes(body.vervoerder)) velden.vervoerder = body.vervoerder;
+    if (r.kanaal !== 'webshop' && !velden.track_trace) return { fout: `${r.kanaal} eist een track-and-trace-code.` };
   }
+  if (nieuw === 'geannuleerd' && r.kanaal !== 'webshop') return { fout: `Annuleer een ${r.kanaal}-order bij ${r.kanaal} zelf; de volgende synchronisatie neemt dat over.` };
   const bijgewerkt = await werkBij(id, velden);
   await log(id, 'status', `${r.status} → ${nieuw}${velden.track_trace ? ` (${velden.track_trace})` : ''}`, 'admin');
   let gemaild = false;
+  // Kanaalorders: het kanaal mailt de koper zelf; de track-and-trace gaat bij de volgende sync mee.
+  if (r.kanaal !== 'webshop') {
+    if (nieuw === 'verzonden') await log(id, 'kanaal', `track-and-trace gaat bij de volgende synchronisatie naar ${r.kanaal}`, 'admin');
+    return { ok: true, gemaild: false, kanaal: r.kanaal };
+  }
   if (body.mail !== false) {
     const o = vanRij({ ...r, ...bijgewerkt, bestelregels: r.bestelregels });
     if (nieuw === 'verzonden') gemaild = await mailEnLog(id, 'verzonden', () => mails.verzonden(o));
@@ -116,6 +127,7 @@ async function terugbetalen(id, body) {
   const r = await haalBestelling('id', id);
   if (!r) return { fout: 'Bestelling niet gevonden.' };
   if (!r.betaald_op) return { fout: 'Deze bestelling is nog niet betaald.' };
+  if (r.kanaal !== 'webshop') return { fout: `Betaal een ${r.kanaal}-order terug via ${r.kanaal} zelf (het geld ging via ${r.kanaal}).` };
   const ruimte = Math.round((Number(r.totaal) - Number(r.terugbetaald)) * 100) / 100;
   const b = body.bedrag === undefined || body.bedrag === '' ? ruimte : Math.round(Number(String(body.bedrag).replace(',', '.')) * 100) / 100;
   if (!(b > 0) || b > ruimte + 0.001) return { fout: `Bedrag moet tussen € 0,01 en ${euro(ruimte)} liggen.` };
@@ -202,7 +214,7 @@ export default async function handler(req, res) {
       } else if (actie === 'mail') {
         const r = await haalBestelling('id', id);
         const o = r && vanRij(r);
-        const fn = { bevestiging: () => mails.bevestiging(o), verzonden: () => mails.verzonden(o) }[body.soort];
+        const fn = o && r.kanaal === 'webshop' ? { bevestiging: () => mails.bevestiging(o), verzonden: () => mails.verzonden(o) }[body.soort] : null;
         uit = !o || !fn ? { fout: 'Onbekende mail.' } : (await mailEnLog(id, `${body.soort} (opnieuw)`, fn)) ? { ok: true } : { fout: 'Mail niet verstuurd (Resend niet ingesteld of fout, zie logboek).' };
       } else return fout(res, 400, 'Onbekende actie.');
       return uit.fout ? fout(res, 400, uit.fout) : res.status(200).json(uit);

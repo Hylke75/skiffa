@@ -1,0 +1,21 @@
+# Synchroniseert de verkoopkanalen (bol.com, Etsy, Amazon) elke 15 minuten via /api/kanalen?actie=cron.
+# Nodig: repository-secret CRON_SECRET (dezelfde waarde als in Vercel) en variable SITE_URL
+# (Settings → Secrets and variables → Actions). Zonder secret slaat de job zichzelf over.
+name: kanalen-sync
+on:
+  schedule:
+    - cron: '7,22,37,52 * * * *'
+  workflow_dispatch:
+permissions: {}
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Synchroniseer kanalen
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SITE_URL: ${{ vars.SITE_URL || 'https://skiffa.store' }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then echo "CRON_SECRET ontbreekt: overgeslagen"; exit 0; fi
+          curl -fsS --max-time 90 -X POST -H "Authorization: Bearer $CRON_SECRET" "$SITE_URL/api/kanalen?actie=cron"

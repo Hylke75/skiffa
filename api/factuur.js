@@ -5,6 +5,7 @@ import { isAdmin } from './_auth.js';
 import { esc, euro, LANDEN } from './_bestelling.js';
 import { bedrijf, btwDeel } from './_bedrijf.js';
 import { vanRij } from './_mails.js';
+import { maakPdf } from './_pdf.js';
 
 const param = (req, k) => String(req.query?.[k] ?? new URL(req.url || '/', 'http://x').searchParams.get(k) ?? '');
 const datum = (d) => new Date(d).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Amsterdam' });
@@ -52,16 +53,53 @@ Op deze bestelling zijn onze <a href="${b.site}/voorwaarden.html">algemene voorw
 </div></body></html>`;
 }
 
+// Dezelfde factuur als PDF (o.a. voor bol.com, dat facturen als PDF opvraagt).
+export function factuurPdf(r) {
+  const o = vanRij(r), b = bedrijf();
+  const d = datum(r.factuurdatum || r.betaald_op || r.aangemaakt_op);
+  const R = [], L = [];
+  const t = (x, y, tekst, extra = {}) => R.push({ x, y, tekst: String(tekst ?? ''), ...extra });
+  t(50, 70, 'SKIFFA', { grootte: 20, vet: true });
+  [b.naam, b.adres, b.email, `KvK ${b.kvk} · btw ${b.btw}`, `IBAN ${b.iban}`].forEach((x, i) => t(50, 92 + i * 12, x, { grootte: 8 }));
+  t(545, 70, 'FACTUUR', { grootte: 13, vet: true, rechts: true });
+  t(545, 92, `nummer ${r.factuurnummer}`, { rechts: true, grootte: 9 });
+  t(545, 104, `datum ${d}`, { rechts: true, grootte: 9 });
+  t(545, 116, `bestelling ${r.nummer}${r.extern_id ? ` (${r.kanaal} ${r.extern_id})` : ''}`, { rechts: true, grootte: 9 });
+  t(50, 180, 'factuur aan', { grootte: 8 });
+  [r.naam, r.straat, `${r.postcode} ${r.plaats}`, LANDEN[r.land] || r.land, r.email].filter(Boolean).forEach((x, i) => t(50, 194 + i * 13, x));
+  let y = 290;
+  t(50, y, 'OMSCHRIJVING', { grootte: 8, vet: true }); t(380, y, 'AANTAL', { grootte: 8, vet: true, rechts: true });
+  t(460, y, 'PRIJS', { grootte: 8, vet: true, rechts: true }); t(545, y, 'BEDRAG', { grootte: 8, vet: true, rechts: true });
+  L.push({ x1: 50, y1: y + 6, x2: 545, y2: y + 6 });
+  const rijen = o.regels.map((x) => [`Poster ${x.naam}, ${x.formaatLabel}`, x.aantal, x.prijs]);
+  if (o.verzending) rijen.push(['Verzending in koker', 1, o.verzending]);
+  for (const [oms, n, p] of rijen) { y += 20; t(50, y, oms); t(380, y, n, { rechts: true }); t(460, y, euro(p), { rechts: true }); t(545, y, euro(p * n), { rechts: true }); }
+  y += 34; const btw = btwDeel(o.totaal, Number(r.btw_tarief || 21));
+  t(400, y, 'totaal excl. btw'); t(545, y, euro(o.totaal - btw), { rechts: true });
+  t(400, y + 15, `btw ${Number(r.btw_tarief || 21)}%`); t(545, y + 15, euro(btw), { rechts: true });
+  L.push({ x1: 400, y1: y + 22, x2: 545, y2: y + 22 });
+  t(400, y + 36, 'totaal incl. btw', { vet: true }); t(545, y + 36, euro(o.totaal), { vet: true, rechts: true });
+  t(50, y + 80, r.betaald_op ? `Voldaan op ${datum(r.betaald_op)}${r.mollie_methode ? ` via ${r.mollie_methode}` : ''}.` : `Graag binnen 14 dagen overmaken op ${b.iban} o.v.v. ${r.nummer}.`, { grootte: 8 });
+  t(50, y + 92, `Algemene voorwaarden: ${b.site}/voorwaarden.html · 14 dagen bedenktijd na ontvangst.`, { grootte: 8 });
+  return maakPdf({ regels: R, lijnen: L });
+}
+
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'private, no-store');
   res.setHeader('X-Robots-Tag', 'noindex');
   if (!dbAan()) { res.status(404).send('Niet gevonden'); return; }
   const nr = param(req, 'nr'), t = param(req, 't');
-  if (!/^SK-[A-Z0-9]{4,20}$/.test(nr)) { res.status(404).send('Niet gevonden'); return; }
+  if (!/^(SK|BOL|ETS|AMA)-[A-Z0-9]{4,20}$/.test(nr)) { res.status(404).send('Niet gevonden'); return; }
   try {
     const r = await haalBestelling('nummer', nr);
     const mag = r && (isAdmin(req) || (/^[a-f0-9]{36}$/.test(t) && r.token === t));
     if (!mag || !r.factuurnummer) { res.status(404).send('Niet gevonden'); return; }
+    if (param(req, 'pdf') === '1') {
+      res.setHeader('content-type', 'application/pdf');
+      res.setHeader('content-disposition', `inline; filename="factuur-${r.factuurnummer}.pdf"`);
+      res.status(200).send(factuurPdf(r));
+      return;
+    }
     res.setHeader('content-type', 'text/html; charset=utf-8');
     res.status(200).send(factuurHtml(r));
   } catch {

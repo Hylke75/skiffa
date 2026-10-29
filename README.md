@@ -57,7 +57,42 @@ supabase db push            # past supabase/migrations/20261029000000_webshop.sq
 Zet daarna in Vercel: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_WACHTWOORD`, `MOLLIE_API_KEY`,
 `RESEND_API_KEY`, `RESEND_FROM` (op een in Resend geverifieerd domein), `BESTEL_EMAIL`, `SITE_URL`, `BEDRIJF_*`.
 
-**Testen**: `npm test` (catalogus + de hele bestelstroom met nagebootste Supabase, Mollie en Resend).
+**Testen**: `npm test` (catalogus, de hele bestelstroom en de drie kanalen, met nagebootste Supabase, Mollie, Resend, bol, Etsy en Amazon).
+
+## Verkoopkanalen: bol.com, Etsy en Amazon
+
+Opgezet naar het voorbeeld van Luna Azul (`Hylke75/dreamer-collectives`, `supabase/functions/{bol,etsy,amazon}-sync`),
+vertaald naar posters op bestelling (geen fysieke voorraad: we tonen een vaste voorraad per listing).
+
+| | bol.com | Etsy | Amazon |
+|---|---|---|---|
+| API | Retailer API v10/v11 (client credentials) | Open API v3 (OAuth 2.0 + PKCE) | Selling Partner API (LWA-refresh-token) |
+| Aanbod | per poster × formaat, op **EAN** | per poster één listing, formaten als variatie | per poster × formaat, op **EAN** (aanbod op bestaande ASIN of volledige listing) |
+| Orders | open FBR-orders → administratie | betaalde receipts → administratie | FBM-orders (Orders API 2026-01-01) → administratie |
+| Verzending | track-and-trace + vervoerder → bol | track-and-trace → Etsy (mailt koper) | confirmShipment → Amazon |
+| Extra | annuleringsverzoeken accepteren, factuurverzoeken beantwoorden met PDF | annuleringen/terugbetalingen overnemen | proefmodus = `VALIDATION_PREVIEW` |
+
+- **Code**: `api/kanalen.js` (beheer + synchronisatie, één route) en `api/_kanalen/{bol,etsy,amazon,gemeen,opslag}.js`.
+  Database: `supabase/migrations/20261029010000_kanalen.sql` (`kanaal_listings`, `kanaal_instellingen`,
+  `poster_ean`, `kanaal_sync_log`, `etsy_koppeling`, functie `skiffa_importeer_kanaalorder`).
+- **Orders van kanalen** komen in dezelfde administratie: nummer `BOL-…`/`ETS-…`/`AMA-…`, direct betaald,
+  zelfde doorlopende factuurnummers, filter per kanaal, omzet per kanaal en in de CSV-export. De koper krijgt géén
+  mails van ons (dat doet het kanaal); jij krijgt een melding. Verzenden in `/admin` met vervoerder en
+  track-and-trace; de volgende synchronisatie geeft die door. Terugbetalen en annuleren gaan via het kanaal zelf.
+- **Prijzen**: winkelprijs + instelbare opslag (commissie), afgerond op x,95 (15% → € 33,95 / € 51,95 / € 79,95).
+- **Veilig starten**: elk kanaal staat uit en in proefmodus. In proefmodus wordt er niets naar het kanaal
+  geschreven (wel opgehaald); je ziet in Beheer → Kanalen wat er verstuurd zou worden.
+- **Automatisch**: `.github/workflows/kanalen-sync.yml` roept elke 15 minuten `/api/kanalen?actie=cron` aan
+  (zet `CRON_SECRET` in Vercel én als GitHub-secret). Handmatig: "nu synchroniseren" in Beheer → Kanalen.
+- **Beelden**: Etsy en Amazon accepteren geen WebP; `posters/<id>.jpg` wordt meegeleverd (`maak-beelden.py`).
+
+**Wat je per kanaal nodig hebt**
+1. **bol.com**: verkopersaccount, API-sleutels, en per poster × formaat een **EAN** (GS1 Nederland). Vul de EAN's in
+   onder Beheer → Kanalen → assortiment (de controle op het GS1-controlecijfer zit erin).
+2. **Etsy**: een Etsy-winkel en een app op etsy.com/developers (callback `https://skiffa.store/etsy/terug`). Klik
+   "koppel Etsy", dan "profielen ophalen" en vul verzendprofiel, verwerkingsprofiel en categorie (taxonomy-id) in.
+3. **Amazon**: Pro-verkopersaccount, een SP-API-app met refresh token en dezelfde EAN's (of een GTIN-vrijstelling
+   voor merk Skiffa). Producttype standaard `POSTER`; Amazon meldt ontbrekende verplichte velden bij de listing.
 
 ## Hoe het in elkaar zit
 
