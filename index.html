@@ -50,6 +50,10 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 .periode{position:absolute;inset:0;opacity:0;transition:opacity 1.8s ease,filter 1.2s ease}
 .periode.actief{opacity:1}
 .periode img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scale(1.04);animation:adem 24s ease-in-out infinite alternate}
+/* Staande sfeerbeelden: op brede schermen volledig (contain) met een vage kopie als vulling, op staande schermen vullend. */
+.periode img.vulling{filter:blur(28px) saturate(.9) brightness(.9);transform:scale(1.2);animation:none}
+@media (min-aspect-ratio:4/5){.periode img.hoofd{object-fit:contain}}
+@media (max-aspect-ratio:4/5){.periode img.vulling{display:none}}
 @keyframes adem{from{transform:scale(1.04) translate(0,0)}to{transform:scale(1.09) translate(-1%,-.6%)}}
 .periode::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.35) 0%,rgba(0,0,0,0) 30%,rgba(0,0,0,0) 70%,rgba(0,0,0,.45) 100%)}
 .korrel{position:absolute;inset:0;pointer-events:none;opacity:.09;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E")}
@@ -146,6 +150,22 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 .carrousel .dia.foto small{color:#000;text-shadow:none;background:rgba(251,250,247,.82);padding:4px 7px;opacity:1}
 .carrousel .dia.poster img{inset:0;margin:auto;width:auto;height:84%;max-width:84%;object-fit:contain;box-shadow:0 18px 40px rgba(0,0,0,.2)}
 .carrousel .dia.poster small{color:#000;text-shadow:none;opacity:.55}
+
+/* Vergroting */
+.carrousel .vergroot{position:absolute;right:14px;bottom:14px;z-index:2;font:inherit;font-size:8px;letter-spacing:.2em;text-transform:uppercase;background:rgba(251,250,247,.86);color:#000;padding:6px 9px;border-radius:2px;cursor:zoom-in}
+.carrousel .dia.foto,.carrousel .dia.poster{cursor:zoom-in}
+#lightbox{position:fixed;inset:0;z-index:60;background:#0b0b0b;display:grid;grid-template-columns:56px 1fr 56px;align-items:center;opacity:0;pointer-events:none;transition:opacity .3s}
+#lightbox.open{opacity:1;pointer-events:auto}
+#lightbox .lbvak{grid-column:2;grid-row:1;height:100vh;height:100dvh;overflow:hidden;display:grid;place-items:center;cursor:zoom-in;touch-action:pan-x pan-y pinch-zoom}
+#lightbox .lbvak img{max-width:100%;max-height:92vh;max-height:92dvh;object-fit:contain;user-select:none;-webkit-user-drag:none}
+#lightbox .lbvak.zoom{overflow:auto;display:block;cursor:zoom-out}
+#lightbox .lbvak.zoom img{max-width:none;max-height:none;height:auto}
+#lightbox .sluit{position:absolute;top:16px;right:18px;z-index:2;width:34px;height:34px;border-radius:50%;background:#fff;color:#000;font-size:20px;display:grid;place-items:center}
+#lightbox .lbpijl.links{grid-column:1;grid-row:1}#lightbox .lbpijl.rechts{grid-column:3;grid-row:1}
+#lightbox .lbpijl{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;font-size:16px;justify-self:center;z-index:2}
+#lightbox .lbpijl[hidden]{visibility:hidden}
+#lightbox .lbhint{position:absolute;left:0;right:0;bottom:14px;text-align:center;color:#fff;opacity:.6;font-size:8px;letter-spacing:.2em;text-transform:uppercase;pointer-events:none}
+@media (max-width:700px){#lightbox{grid-template-columns:0 1fr 0}#lightbox .lbpijl{position:absolute;bottom:40px}#lightbox .lbpijl.links{left:18px}#lightbox .lbpijl.rechts{right:18px}}
 /* dia 2 en 3: de poster in een lijst op een witte muur. Breedte volgt uit de hoogte, zodat de poster precies 2:3 blijft. */
 .carrousel .dia.lijst{background:#fff;container-type:size}
 .carrousel .dia.lijst small{color:#000;text-shadow:none;opacity:.55}
@@ -275,7 +295,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
   #header .c2{display:none}
   #header .c3{flex-wrap:wrap;max-width:250px;row-gap:8px}
   #header .c3 .knop.ico{display:none}
-  .hotspot .naam{opacity:1}
+  .hotspot .naam{opacity:1;left:auto;right:0;transform:none}
   #footer{height:auto}
   .tijd{position:static;transform:none;justify-content:center;margin-bottom:8px}
   .nu{display:none}
@@ -300,9 +320,9 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 
 <!-- Scène: drie uitsneden uit de posters, gekozen op de tijd in Scheveningen -->
 <div id="scene">
-  <div class="periode" data-p="ochtend"><img data-src="/sfeer/surfcultuur-scene.webp" alt="Surfers bij een oude BMW op het strand, de pier in de verte (uit de poster Surfcultuur)" data-w="1277" data-h="820"></div>
-  <div class="periode" data-p="middag"><img data-src="/sfeer/windsurf-scene.webp" alt="Windsurfers en publiek bij de vuurtoren van Scheveningen (uit de poster Windsurf)" data-w="1333" data-h="920"></div>
-  <div class="periode" data-p="avond"><img data-src="/sfeer/golf-scene.webp" alt="Surfer loopt bij zonsondergang de zee uit, met een grote golf (uit de poster Golf)" data-w="1333" data-h="1040"></div>
+  <div class="periode" data-p="ochtend"><img class="vulling" data-src="/sfeer/mockup-ochtend.webp" alt="" aria-hidden="true"><img class="hoofd" data-src="/sfeer/mockup-ochtend.webp" alt="De poster SKIFFA Windsurf Scheveningen boven een lichte bank in de woonkamer" data-w="1122" data-h="1402"></div>
+  <div class="periode" data-p="middag"><img class="vulling" data-src="/sfeer/mockup-middag.webp" alt="" aria-hidden="true"><img class="hoofd" data-src="/sfeer/mockup-middag.webp" alt="De poster SKIFFA Windsurf Scheveningen aan de muur naast een leren fauteuil" data-w="1122" data-h="1402"></div>
+  <div class="periode" data-p="avond"><img class="vulling" data-src="/sfeer/mockup-avond.webp" alt="" aria-hidden="true"><img class="hoofd" data-src="/sfeer/mockup-avond.webp" alt="De poster SKIFFA Windsurf Scheveningen op een houten dressoir naast een platenspeler" data-w="1122" data-h="1402"></div>
   <div class="korrel"></div>
 </div>
 <div class="credit" id="credit"></div>
@@ -333,11 +353,20 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
   </div>
 </div>
 
+<!-- Vergroting: beeld schermvullend, tik of klik om in te zoomen -->
+<div id="lightbox" role="dialog" aria-modal="true" aria-label="Vergroting" aria-hidden="true" inert>
+  <button class="sluit" id="lbSluit" aria-label="Sluiten">×</button>
+  <button class="lbpijl links" data-lb="-1" aria-label="Vorige afbeelding">←</button>
+  <div class="lbvak" id="lbVak"><img id="lbImg" alt=""></div>
+  <button class="lbpijl rechts" data-lb="1" aria-label="Volgende afbeelding">→</button>
+  <p class="lbhint" id="lbHint">tik op het beeld om in te zoomen</p>
+</div>
+
 <!-- Product-modal -->
 <div id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitel" aria-hidden="true" inert>
   <div class="kader">
     <button class="sluit" id="modalSluit" aria-label="Sluiten">+</button>
-    <div class="carrousel"><div class="voortgang"><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="baan" id="baan"></div></div>
+    <div class="carrousel"><div class="voortgang"><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="baan" id="baan"></div><button class="vergroot" id="vergroot" aria-label="Beeld vergroten">⤢ vergroot</button></div>
     <div class="modaltekst" id="modaltekst"></div>
   </div>
   <button class="pijl vorige" id="vorigePoster" aria-label="Vorige poster">←</button>
@@ -498,13 +527,14 @@ const WINKEL_MAIL='hallo@skiffa.nl';
 
 /* Hotspots: verankerd aan een plek in de uitsnede (fractie van beeldbreedte/-hoogte, zoals maikasui doet met videoX/videoY) */
 const ankers={
-  ochtend:[{poster:'surfcultuur',x:.19,y:.40}],
-  middag:[{poster:'windsurf',x:.80,y:.58}],
-  avond:[{poster:'golf',x:.65,y:.47}]
+  ochtend:[{poster:'skiffa-windsurf-scheveningen',x:.72,y:.30}],
+  middag:[{poster:'skiffa-windsurf-scheveningen',x:.85,y:.32}],
+  avond:[{poster:'skiffa-windsurf-scheveningen',x:.77,y:.40}]
 };
-const credits={ochtend:'uit de poster: surfcultuur',middag:'uit de poster: windsurf',avond:'uit de poster: golf'};
+const credits={ochtend:'sfeerbeeld: skiffa windsurf scheveningen',middag:'sfeerbeeld: skiffa windsurf scheveningen',avond:'sfeerbeeld: skiffa windsurf scheveningen'};
 const hs=document.getElementById('hotspots');
-function beeldRect(p){const img=document.querySelector(`.periode[data-p="${p}"] img`);const W=innerWidth,H=innerHeight,iw=+img.dataset.w,ih=+img.dataset.h;const s=Math.max(W/iw,H/ih)*1.04;const w=iw*s,h=ih*s;return{x:(W-w)/2,y:(H-h)/2,w,h};}
+function beeldRect(p){const img=document.querySelector(`.periode[data-p="${p}"] img.hoofd`)||document.querySelector(`.periode[data-p="${p}"] img`);const W=innerWidth,H=innerHeight,iw=+img.dataset.w,ih=+img.dataset.h;
+  const contain=getComputedStyle(img).objectFit==='contain';const s=(contain?Math.min(W/iw,H/ih):Math.max(W/iw,H/ih))*1.04;const w=iw*s,h=ih*s;return{x:(W-w)/2,y:(H-h)/2,w,h};}
 function plaatsHotspots(p){
   hs.innerHTML='';const r=beeldRect(p);
   (ankers[p]||[]).forEach((a,i)=>{const s=vind(a.poster);if(!s||s.actief===false)return;
@@ -525,7 +555,7 @@ if(!rm){gsap.from('#header > *',{y:-14,opacity:0,duration:.8,stagger:.08,delay:2
 const scene=document.getElementById('scene'),periodes=[...document.querySelectorAll('.periode')];
 let zon={op:6.5,onder:20.5};/* uren, fallback; wordt overschreven door Open-Meteo */
 function periodeVan(uur,min){const t=uur+(min||0)/60;return t>=zon.op&&t<12?'ochtend':t>=12&&t<zon.onder?'middag':'avond';}
-function zetPeriode(p){if(document.body.dataset.periode===p)return;periodes.forEach(el=>{const aan=el.dataset.p===p;el.classList.toggle('actief',aan);const im=el.querySelector('img');if(aan&&!im.src)im.src=im.dataset.src;});document.body.dataset.periode=p;plaatsHotspots(p);}
+function zetPeriode(p){if(document.body.dataset.periode===p)return;periodes.forEach(el=>{const aan=el.dataset.p===p;el.classList.toggle('actief',aan);el.querySelectorAll('img').forEach(im=>{if(aan&&!im.src)im.src=im.dataset.src;});});document.body.dataset.periode=p;plaatsHotspots(p);}
 function nuScheveningen(){const d=new Date(new Date().toLocaleString('en-US',{timeZone:'Europe/Amsterdam'}));return d;}
 const klok=document.getElementById('klok');klok.innerHTML=[0,1,':',2,3].map(k=>k===':'?'<span style="width:.6em;text-align:center">:</span>':`<span class="cijfer" data-i="${k}"><span class="huidig">0</span><span class="volgend">0</span></span>`).join('');
 const cijfers=[...klok.querySelectorAll('.cijfer')];const huidig=[0,0,0,0];
@@ -622,6 +652,7 @@ function openModal(s){
     const dias=vis.length?vis.map((x,k)=>`<div class="dia foto"><img class="vulling" src="${x.klein||x.url}" alt="" aria-hidden="true"${k?' loading="lazy"':''}><img src="${x.url}" alt="${(x.alt||`Poster ${s.naam}, beeld ${k+1}`).replace(/"/g,'&quot;')}"${k?' loading="lazy"':''}>${x.soort==='mockup'?'<small>sfeerbeeld · lijst niet meegeleverd</small>':''}</div>`):[`<div class="dia poster"><img src="${beeld(s.id)}" alt="Poster ${s.naam}"><small>poster ${s.naam.toLowerCase()}</small></div>`,
     `<div class="dia lijst hout"><div class="lijstje"><img src="${klein(s.id)}" alt="Poster ${s.naam} in een houten lijst"></div><small>voorbeeld in een houten lijst — lijst niet meegeleverd</small></div>`,
     `<div class="dia lijst zwart"><div class="lijstje"><div class="pp"><img src="${klein(s.id)}" alt="Poster ${s.naam} in een zwarte lijst met passe-partout"></div></div><small>voorbeeld in een zwarte lijst — lijst niet meegeleverd</small></div>`];
+    lbBeelden=vis.length?vis.map(x=>({url:x.url,alt:x.alt||`Poster ${s.naam}`})):[{url:beeld(s.id),alt:`Poster ${s.naam}`}];
     baan.innerHTML=dias.join('');vg.forEach((i,k)=>i.style.display=k<Math.min(dias.length,vg.length)?'':'none');aantalDias=Math.min(dias.length,vg.length);dia=0;toonDia();};
   const papieren=()=>papiersoorten.filter(p=>vs.some(v=>v.formaat===formaat&&v.papier===p.id));
   mt.innerHTML=`<nav class="posternav" aria-label="Andere posters"><button data-blader="-1">← vorige</button><span>${nr} / ${lijst.length} · <button class="alle">alle posters</button></span><button data-blader="1">volgende →</button></nav>
@@ -660,10 +691,30 @@ function openModal(s){
   history.replaceState(null,'','#'+s.id);
 }
 function toonDia(){baan.style.transform=`translateX(${-dia*100}%)`;vg.forEach((i,k)=>{i.className=k<dia?'klaar':k===dia?'bezig':'';});clearTimeout(diaTimer);diaTimer=setTimeout(()=>{dia=(dia+1)%aantalDias;toonDia();},3200);}
-function sluitModal(){if(!modal.classList.contains('open'))return;huidigePoster=null;zetOpen(modal,false);scene.classList.remove('grijs');clearTimeout(diaTimer);if(location.hash)history.replaceState(null,'',location.pathname+location.search);}
+function sluitModal(){if(!modal.classList.contains('open'))return;sluitLightbox();huidigePoster=null;zetOpen(modal,false);scene.classList.remove('grijs');clearTimeout(diaTimer);if(location.hash)history.replaceState(null,'',location.pathname+location.search);}
 document.getElementById('modalSluit').addEventListener('click',sluitModal);
 modal.addEventListener('click',e=>{if(e.target===modal)sluitModal();});
-document.querySelector('.carrousel').addEventListener('click',e=>{if(e.target.closest('.voortgang'))return;dia=(dia+1)%aantalDias;toonDia();});
+document.querySelector('.carrousel').addEventListener('click',e=>{if(e.target.closest('.voortgang'))return;
+  if(e.target.closest('.vergroot,.dia.foto,.dia.poster')){openLightbox(lbBeelden.length===aantalDias||lbBeelden.length>1?dia:0);return;}
+  dia=(dia+1)%aantalDias;toonDia();});
+/* Vergroting: alle beelden van deze poster schermvullend; tik/klik zoomt in op die plek (ware grootte), nog eens = uit. */
+let lbBeelden=[],lbI=0;
+const lb=document.getElementById('lightbox'),lbVak=document.getElementById('lbVak'),lbImg=document.getElementById('lbImg');
+function toonLb(){const b=lbBeelden[lbI];if(!b)return;lbVak.classList.remove('zoom');lbImg.style.width='';lbImg.src=b.url;lbImg.alt=b.alt;
+  lb.querySelectorAll('.lbpijl').forEach(x=>x.hidden=lbBeelden.length<2);}
+function openLightbox(i){if(!lbBeelden.length)return;lbI=Math.max(0,Math.min(i,lbBeelden.length-1));clearTimeout(diaTimer);toonLb();
+  lb.classList.add('open');lb.setAttribute('aria-hidden','false');lb.inert=false;document.getElementById('lbSluit').focus();}
+function sluitLightbox(){if(!lb.classList.contains('open'))return false;lb.classList.remove('open');lb.setAttribute('aria-hidden','true');lb.inert=true;
+  document.getElementById('vergroot')?.focus();if(modal.classList.contains('open'))toonDia();return true;}
+lb.querySelectorAll('[data-lb]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();lbI=(lbI+ +b.dataset.lb+lbBeelden.length)%lbBeelden.length;toonLb();}));
+document.getElementById('lbSluit').addEventListener('click',sluitLightbox);
+lb.addEventListener('click',e=>{if(e.target===lb)sluitLightbox();});
+lbVak.addEventListener('click',e=>{
+  if(e.target!==lbImg){if(!lbVak.classList.contains('zoom'))sluitLightbox();return;}
+  if(lbVak.classList.contains('zoom')){lbVak.classList.remove('zoom');lbImg.style.width='';return;}
+  const r=lbImg.getBoundingClientRect(),fx=(e.clientX-r.left)/r.width,fy=(e.clientY-r.top)/r.height;
+  lbImg.style.width=Math.max(r.width,Math.min(lbImg.naturalWidth||r.width*3,r.width*3))+'px';lbVak.classList.add('zoom');
+  requestAnimationFrame(()=>{lbVak.scrollLeft=fx*lbImg.offsetWidth-lbVak.clientWidth/2;lbVak.scrollTop=fy*lbImg.offsetHeight-lbVak.clientHeight/2;});});
 
 const shopLijst=document.getElementById('shopLijst');
 function tekenShop(){shopLijst.innerHTML=zichtbaar().map(s=>`<button class="knop vol" data-id="${s.id}"><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${s.kleur};margin-right:8px;border:1px solid rgba(0,0,0,.15)"></i>${s.naam.toLowerCase()} — ${binnenkort?'binnenkort':`vanaf ${euro(vanafVan(s.id))}`}</button>`).join('');}
@@ -702,7 +753,8 @@ cf.addEventListener('submit',async e=>{
   location.href=`mailto:${WINKEL_MAIL}?subject=${encodeURIComponent('Vraag via skiffa.nl: '+d.waarover)}&body=${encodeURIComponent(tekst)}`;
   cf.classList.add('klaar');cf.querySelector('.dank').textContent=`Je mailprogramma opent met je bericht erin. Verstuur die mail naar ${WINKEL_MAIL}, dan reageren we binnen één werkdag.`;
 });
-addEventListener('keydown',e=>{if(e.key==='Escape'){sluitModal();sluitOver();sluitContact();sluitMandje();}
+addEventListener('keydown',e=>{if(lb.classList.contains('open')){if(e.key==='Escape')sluitLightbox();else if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();lbI=(lbI+(e.key==='ArrowLeft'?-1:1)+lbBeelden.length)%lbBeelden.length;toonLb();}return;}
+  if(e.key==='Escape'){sluitModal();sluitOver();sluitContact();sluitMandje();}
   if(modal.classList.contains('open')&&(e.key==='ArrowLeft'||e.key==='ArrowRight')&&!e.target.closest('input,textarea,select')){e.preventDefault();bladerPoster(e.key==='ArrowLeft'?-1:1);}});
 document.getElementById('vorigePoster').addEventListener('click',()=>bladerPoster(-1));
 document.getElementById('volgendePoster').addEventListener('click',()=>bladerPoster(1));
