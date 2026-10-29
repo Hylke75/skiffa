@@ -5,12 +5,13 @@ import { POSTERS, ALLE_POSTERS, FORMATEN, ALLE_FORMATEN, VARIANTEN, STANDAARD_PA
 import { TEKSTEN as POSTERTEKSTEN } from '../_catalogus.js';
 import { bedrijf } from '../_bedrijf.js';
 
-export const KANALEN = ['bol', 'etsy', 'amazon'];
+export const KANALEN = ['bol', 'etsy', 'amazon', 'tiktok'];
 
 // Veilige standaardinstellingen: alles staat uit en in proefmodus tot je het zelf aanzet.
 export const STANDAARD = {
   bol: { aan: false, proef: true, opslag_pct: 15, voorraad: 20, levertijd_min: 3, levertijd_max: 5, vervoerder: 'TNT' },
   etsy: { aan: false, proef: true, auto_publiceren: false, opslag_pct: 15, voorraad: 20, verzendprofiel_id: null, verwerkingsprofiel_id: null, retourbeleid_id: null, taxonomy_id: null, laatste_ordersync: null },
+  tiktok: { aan: false, proef: true, voorraad: 20, categorie_id: '', magazijn_id: '', gewicht_kg: 0.6, lengte_cm: 80, breedte_cm: 10, hoogte_cm: 10, laatste_ordersync: null },
   amazon: { aan: false, proef: true, opslag_pct: 15, voorraad: 20, verwerkingsdagen: 3, marketplace_id: 'A1805IZSGTT6HS', producttype: 'POSTER', merk: 'Skiffa', laatste_ordersync: null },
 };
 

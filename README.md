@@ -222,6 +222,51 @@ Eén product, één keer ingevoerd; per kanaal vink je aan of het daar verschijn
   verschijnt pas als er een code is, per zending. Schadefoto's stuurt de klant (nog) per mail; jij voegt ze toe.
   Tabellen: `serviceverzoeken`, `actie_afgehandeld` (`supabase/migrations/20261029060000_service.sql`).
 
+## Social via Buffer (Beheer → social)
+
+- **Accounts** koppel je in Buffer zelf; "accounts ophalen" haalt ze op (met status: actief, ontkoppeld, vergrendeld,
+  gepauzeerd). Per account kies je of SKIFFA erop mag plannen. Geen inbox en geen statistieken.
+- **Contentstudio**: één bericht met een basistekst (`{link}` = campagnelink naar het product met UTM-codes),
+  media (openbaar en blijvend; Buffer haalt ze pas bij plaatsing op) en per account een eigen variant: tekst,
+  soort (post/reel/story), tijdstip in Europe/Amsterdam en publicatiewijze. "Voorbeeld" toont per account de
+  definitieve tekst, de lengte tegen de limiet en wat er ontbreekt, zonder iets te versturen.
+- **Automatisch of afronden op telefoon**: automatisch = Buffer plaatst zelf. Telefoon = Buffer stuurt een
+  herinnering; die staat als "herinnering" en wordt **nooit** als geplaatst getoond, tot Buffer meldt dat je het
+  als gepubliceerd hebt gemarkeerd of jij hier op "ik heb het geplaatst" klikt.
+- **Hoogstens één keer**: elk account krijgt een taak met een unieke sleutel (`publishing_jobs`), geclaimd door één
+  verwerker. Bij een onduidelijk antwoord (time-out, serverfout) zoekt SKIFFA eerst in Buffer of het bericht er al
+  staat en neemt het dan over; alleen als het er niet is, wordt het één keer opnieuw verstuurd.
+- **Maak socialmediabericht**: knop bij elk product (Beheer → producten) maakt een concept met tekst, beelden en de
+  actieve accounts.
+- **Aan/uit**: social staat los aan/uit en heeft een eigen proefmodus. De cron (elke 15 minuten) verwerkt taken en
+  haalt statussen op; mislukte berichten, herinneringen en ontkoppelde accounts staan op de actielijst.
+
+## Meta-productfeed (Facebook / Instagram)
+
+- Feed-URL: `https://skiffa.store/api/catalogus?actie=feed&kanaal=meta`: RSS-XML met `g:`-velden volgens de
+  Meta-specificatie (gecontroleerd oktober 2026). Eén item per bestelbare variant: id = SKU, item_group_id per
+  poster, size = formaat, material = papier, prijs als `49.95 EUR`, brand SKIFFA, hoofdbeeld als jpg/png.
+- In Commerce Manager: Catalogus → Gegevensbronnen → Gegevensfeed → gepland (bv. dagelijks) met deze URL.
+- Beheer → koppelingen toont per variant wat ontbreekt (onvolledige items gaan niet in de feed), laat je varianten
+  uitsluiten, controleert of de feed bereikbaar is en waarschuwt als Meta de feed nooit of meer dan 48 uur geleden
+  ophaalde. Goedkeuring per item (goedgekeurd/afgekeurd met reden) alleen met `META_TOKEN` + `META_CATALOG_ID`.
+- Meta biedt geen afrekenen op Facebook/Instagram meer: kopers rekenen af op skiffa.store.
+
+## TikTok Shop
+
+- Vraagt een TikTok Shop-verkopersaccount (Nederland sinds juni 2026) en een eigen app in TikTok Partner Center
+  (`TIKTOK_APP_KEY`, `TIKTOK_APP_SECRET`, `TIKTOK_SERVICE_ID`, callback `https://skiffa.store/tiktok/terug`).
+  Daarna "koppel TikTok Shop" onder Koppelingen.
+- **Orders**: alleen orders met status AWAITING_SHIPMENT (betaald en buiten de annuleringstermijn) worden
+  geïmporteerd, idempotent, met een vaste kopie van de variant; daarna gaan ze de normale productieroute in.
+- **Annuleringen**: een verzoek van de koper komt als serviceverzoek op de actielijst (jij beslist; goedkeuren of
+  weigeren gaat met een idempotency-sleutel). Afgeronde annuleringen worden overgenomen.
+- **Tracking**: per pakket, met eigen vervoerder uit de TikTok-lijst voor die order; staat je vervoerder er niet
+  in, dan meldt SKIFFA dat in plaats van te gokken.
+- **Producten**: SKIFFA maakt per poster een **concept** (beelden, varianten, EUR-prijzen, magazijn). Afronden en
+  indienen doe je in Seller Center; daarna volgt SKIFFA de beoordeling (afgekeurd = melding met reden).
+- Niets hiervan is getest tegen de echte TikTok-API; begin met de proefmodus.
+
 ## Hoe het in elkaar zit
 
 - **`index.html`** — het volledige ontwerp (HTML + CSS + JS, GSAP via CDN). Alle content

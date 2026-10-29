@@ -14,6 +14,7 @@
 //   POST formaat {…} · papier {…}    aanmaken of bijwerken
 //   POST uitzondering {sku, reden} · uitzondering-intrekken {sku}      afgekeurd drukbestand toch toestaan
 //   POST beeld-upload {id, bytes} · beeld-bevestig {id, pad, pad_klein}  hoofdbeeld van een product
+import * as feeds from './_feeds.js';
 import { dbAan, db } from './_db.js';
 import { isAdmin } from './_auth.js';
 import { laadCatalogus, catalogusBron, ontbreektVoor, POSTERS, ALLE_FORMATEN, FORMATEN, PAPIER, VARIANTEN, TEKSTEN, BEELDEN, VASTE_BEELDEN, PRODUCTEN, STANDAARD_PAPIER } from './_catalogus.js';
@@ -269,6 +270,15 @@ export default async function handler(req, res) {
     if (!actie && req.method === 'GET') {
       res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=600');
       return res.status(200).json(await openbaar());
+    }
+    // Openbare productfeed voor Meta Commerce Manager (alleen openbare productgegevens).
+    if (actie === 'feed' && req.method === 'GET') {
+      if (param(req, 'kanaal') !== 'meta') return fout(res, 404, 'Onbekende feed.');
+      const f = await feeds.metaFeed();
+      if (dbAan()) await feeds.registreerOphalen(req.headers?.['user-agent'], f.aantal);
+      res.setHeader('Cache-Control', 'no-store');
+      res.setHeader('content-type', 'application/xml; charset=utf-8');
+      return res.status(200).send(f.xml);
     }
     res.setHeader('Cache-Control', 'no-store');
     if (!isAdmin(req)) return fout(res, 401, 'Niet ingelogd.');

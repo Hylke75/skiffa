@@ -54,7 +54,7 @@ await cat.laadCatalogus({ vers: true });
 let r = await K('publicatie');
 let g = r.j.producten.find((p) => p.id === 'golf');
 ok(r.j.ok && g.kanalen.webshop.status === 'actief' && g.kanalen.webshop.extern_url === 'https://skiffa.store/#golf' && g.kanalen.etsy.status === 'niet_gepubliceerd' && r.j.producten.find((p) => p.id === 'zon').kanalen.webshop.status === 'onvolledig', 'overzicht: golf actief in de webshop, nog niet op Etsy; zon onvolledig (met reden)');
-ok(/geen bestelbare variant/.test(r.j.producten.find((p) => p.id === 'zon').kanalen.webshop.melding) && r.j.kanalen.ebay.soort === 'niet-beschikbaar' && r.j.kanalen.tiktok.soort === 'niet-beschikbaar', 'eerlijk: ontbrekende koppelingen (eBay, TikTok Shop) staan als niet beschikbaar');
+ok(/geen bestelbare variant/.test(r.j.producten.find((p) => p.id === 'zon').kanalen.webshop.melding) && r.j.kanalen.ebay.soort === 'niet-beschikbaar' && r.j.kanalen.tiktok.soort === 'elders', 'eerlijk: eBay als niet beschikbaar, TikTok Shop via Koppelingen');
 
 // ---- aanvinken: eerst onvolledig, dan met sjabloon gereed ----
 r = await K('publicatie-zet', { product_id: 'golf', kanaal: 'etsy', publiceren: true });

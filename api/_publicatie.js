@@ -22,7 +22,8 @@ export const KANAAL_INFO = {
   bol: { naam: 'bol.com', soort: 'per-variant', uitleg: 'Per variant met EAN; beheer onder Koppelingen.' },
   amazon: { naam: 'Amazon', soort: 'per-variant', uitleg: 'Per variant met EAN; beheer onder Koppelingen.' },
   ebay: { naam: 'eBay', soort: 'niet-beschikbaar', uitleg: 'Nog geen koppeling: er wordt niets naar eBay gestuurd.' },
-  tiktok: { naam: 'TikTok Shop', soort: 'niet-beschikbaar', uitleg: 'Nog geen koppeling: vraagt toegang tot de TikTok Shop Partner-API.' },
+  tiktok: { naam: 'TikTok Shop', soort: 'elders', uitleg: 'Concept per poster en orders via Koppelingen → TikTok Shop (vraagt een eigen app in TikTok Partner Center).' },
+  meta: { naam: 'Facebook / Instagram', soort: 'elders', uitleg: 'Productfeed voor Meta Commerce Manager; beheer onder Koppelingen.' },
 };
 export const PUBLICEERBAAR = ['webshop', 'etsy'];
 export const STATUSSEN = ['niet_gepubliceerd', 'onvolledig', 'gereed', 'verwerken', 'actief', 'fout'];

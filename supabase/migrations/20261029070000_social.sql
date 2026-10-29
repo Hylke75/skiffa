@@ -139,6 +139,23 @@ returns setof public.publishing_jobs language sql security definer set search_pa
 $$;
 revoke all on function public.skiffa_claim_job(bigint) from public, anon, authenticated;
 
+-- TikTok Shop-koppeling (OAuth). Tokens alleen server-side; de koppelpoging gebruikt etsy_oauth_states (code_verifier = 'tiktok').
+create table if not exists public.tiktok_koppeling (
+  id                  int primary key check (id = 1),
+  shop_id             text,
+  shop_naam           text,
+  shop_cipher         text,
+  regio               text,
+  verkoper            text,
+  access_token        text not null,
+  refresh_token       text not null,
+  access_verloopt_op  timestamptz not null,
+  refresh_verloopt_op timestamptz,
+  gekoppeld_op        timestamptz not null default now(),
+  bijgewerkt_op       timestamptz not null default now()
+);
+alter table public.tiktok_koppeling enable row level security;
+
 alter table public.kanaal_instellingen drop constraint if exists kanaal_instellingen_kanaal_check;
 alter table public.kanaal_instellingen add constraint kanaal_instellingen_kanaal_check
   check (kanaal in ('bol','etsy','amazon','prodigi','tiktok','meta','buffer'));

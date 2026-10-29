@@ -6,7 +6,7 @@ const Verkoop = (() => {
   let data = null, open_ = null, zoek = '', filter = '', sjOpen = null;
   const KOLOMMEN = ['webshop', 'etsy'];
   const ST = { niet_gepubliceerd: 'Niet gepubliceerd', onvolledig: 'Onvolledig', gereed: 'Gereed', verwerken: 'Wordt verwerkt', actief: 'Actief', fout: 'Fout' };
-  const BESCHIKBAAR = { eigen: '<span class="ok">altijd beschikbaar</span>', koppeling: '', 'per-variant': 'per variant via Koppelingen', 'niet-beschikbaar': '<span class="nok">geen koppeling</span>' };
+  const BESCHIKBAAR = { eigen: '<span class="ok">altijd beschikbaar</span>', koppeling: '', 'per-variant': 'per variant via Koppelingen', 'niet-beschikbaar': '<span class="nok">geen koppeling</span>', elders: 'via Koppelingen' };
   const REGEL = { basis: 'zelfde als basisprijs', vast: 'basisprijs + vast bedrag', procent: 'basisprijs + percentage', handmatig: 'handmatig per variant' };
 
   async function vraag(actie, body) {
