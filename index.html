@@ -790,7 +790,7 @@ openUitHash();
    met dezelfde gegevens). Zonder database blijft alles zoals hierboven in de code. */
 (async()=>{
   try{
-    const r=await fetch('/api/catalogus');if(!r.ok)return;
+    const r=await fetch('/api/catalogus',{cache:'no-cache'});if(!r.ok)return;
     const d=await r.json();if(!d||!d.ok)return;
     if(d.visuals)visuals=d.visuals;
     if(d.bron==='database'&&Array.isArray(d.producten)&&!d.producten.some(p=>Array.isArray(p.varianten)&&p.varianten.length)){

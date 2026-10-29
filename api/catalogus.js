@@ -273,7 +273,8 @@ async function handler(req, res) {
   body = body && typeof body === 'object' ? body : {};
   try {
     if (!actie && req.method === 'GET') {
-      res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=600');
+      // Kort cachen: wijzigingen in beheer (beelden, teksten, prijzen) moeten binnen een halve minuut in de winkel staan.
+      res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=15, stale-while-revalidate=30');
       return res.status(200).json(await openbaar());
     }
     // Openbare productfeed voor Meta Commerce Manager (alleen openbare productgegevens).
