@@ -137,7 +137,15 @@ returns setof public.publishing_jobs language sql security definer set search_pa
           or (status = 'bezig' and geclaimd_op < now() - interval '10 minutes'))
   returning *;
 $$;
-revoke all on function public.skiffa_claim_job(bigint) from public, anon, authenticated;
+revoke all on function public.skiffa_claim_job(bigint) from public;
+do $$ begin
+  if exists (select 1 from pg_roles where rolname = 'anon') then
+    revoke all on function public.skiffa_claim_job(bigint) from anon, authenticated;
+  end if;
+  if exists (select 1 from pg_roles where rolname = 'service_role') then
+    grant execute on function public.skiffa_claim_job(bigint) to service_role;
+  end if;
+end $$;
 
 -- TikTok Shop-koppeling (OAuth). Tokens alleen server-side; de koppelpoging gebruikt etsy_oauth_states (code_verifier = 'tiktok').
 create table if not exists public.tiktok_koppeling (
