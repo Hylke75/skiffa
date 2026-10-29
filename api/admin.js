@@ -22,7 +22,7 @@ import { metDrukbestanden } from './_media.js';
 import { fulfilmentVan, fulfilmentsVan, annuleer as prodigiAnnuleer } from './_prodigi.js';
 import { registreer, zendingenVan } from './_zendingen.js';
 
-const STATUSSEN = ['open', 'betaald', 'in_productie', 'verzonden', 'geleverd', 'geannuleerd', 'mislukt', 'terugbetaald'];
+const STATUSSEN = ['open', 'betaald', 'in_productie', 'deels_verzonden', 'verzonden', 'geleverd', 'geannuleerd', 'mislukt', 'terugbetaald'];
 const param = (req, k) => String(req.query?.[k] ?? new URL(req.url || '/', 'http://x').searchParams.get(k) ?? '');
 const isUuid = (s) => /^[0-9a-f-]{36}$/.test(String(s));
 const fout = (res, code, melding) => res.status(code).json({ ok: false, melding });
@@ -46,7 +46,7 @@ async function overzicht() {
   const perStatus = Object.fromEntries(STATUSSEN.map((s) => [s, rijen.filter((r) => r.status === s).length]));
   return {
     perStatus,
-    teVerzenden: perStatus.betaald + perStatus.in_productie,
+    teVerzenden: perStatus.betaald + perStatus.in_productie + perStatus.deels_verzonden,
     omzetMaand: Math.round(omzet(maandStart) * 100) / 100,
     omzetJaar: Math.round(omzet(jaarStart) * 100) / 100,
     aantalBetaald: rijen.filter((r) => r.betaald_op).length,
@@ -61,7 +61,7 @@ async function lijst(req) {
   const kanaal = param(req, 'kanaal');
   if (['webshop', 'bol', 'etsy', 'amazon'].includes(kanaal)) pad += `&kanaal=eq.${kanaal}`;
   if (STATUSSEN.includes(status)) pad += `&status=eq.${status}`;
-  else if (status === 'actie') pad += '&status=in.(betaald,in_productie)';
+  else if (status === 'actie') pad += '&status=in.(betaald,in_productie,deels_verzonden)';
   if (q) {
     const v = encodeURIComponent(`*${q}*`);
     pad += `&or=(nummer.ilike.${v},naam.ilike.${v},email.ilike.${v},factuurnummer.ilike.${v},plaats.ilike.${v},extern_id.ilike.${v})`;

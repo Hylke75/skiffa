@@ -35,7 +35,7 @@ tbody tr{cursor:pointer}
 tbody tr:hover{background:var(--zee)}
 .r{text-align:right}
 .st{display:inline-block;padding:1px 8px;border-radius:999px;font-size:10px;letter-spacing:.08em;border:1px solid currentColor;white-space:nowrap}
-.st.open{color:#8a6d00}.st.betaald,.st.in_productie{color:#1d4ed8}.st.verzonden,.st.geleverd{color:var(--groen)}
+.st.open{color:#8a6d00}.st.betaald,.st.in_productie,.st.deels_verzonden{color:#1d4ed8}.st.verzonden,.st.geleverd{color:var(--groen)}
 .st.geannuleerd,.st.mislukt{color:#777}.st.terugbetaald{color:var(--rood)}
 .leeg{padding:30px;text-align:center;opacity:.6;background:#fff;border:1px solid var(--lijn);border-radius:12px}
 #paneel{position:fixed;inset:0;background:rgba(0,0,0,.3);display:none;z-index:10}
@@ -58,7 +58,7 @@ tbody tr:hover{background:var(--zee)}
 #login input{width:100%;margin:6px 0 12px}
 .waarschuw{background:#fff7e0;border:1px solid #e5c76b;border-radius:10px;padding:10px 14px;margin-bottom:16px}
 .verberg{display:none!important}
-.nav{display:flex;gap:6px}
+.nav{display:flex;gap:6px;flex-wrap:wrap}
 .nav button[aria-current=true]{background:#111;color:#fff}
 .kb{display:inline-block;font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:0 6px;border-radius:4px;background:var(--zee);margin-left:6px}
 .kb.bol{background:#e6efff}.kb.etsy{background:#ffe9dc}.kb.amazon{background:#fff3cc}
@@ -118,6 +118,12 @@ table.kaal{border:0}table.kaal td,table.kaal th{padding:6px 8px}table.kaal input
 .uits i{position:absolute;outline:1.5px dashed #fff}.uits.papier{background:#fff;outline:1px solid #ccc}
 .genereer{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:8px}.genereer label{display:flex;align-items:center;gap:6px;margin:3px 0}
 .merkrij{display:grid;grid-template-columns:170px 1fr 80px;gap:6px 10px;align-items:center;margin:3px 0}
+.pchip{display:inline-block;font-size:10px;padding:2px 8px;border-radius:99px;background:var(--zee);white-space:nowrap}
+.pchip.actief{background:#d9efe0;color:var(--groen)}.pchip.fout{background:#fbe1e1;color:var(--rood)}.pchip.onvolledig{background:#fff2c9;color:#7a5c00}.pchip.gereed{background:#e3e9ff;color:#2a3f8f}.pchip.verwerken{background:#eee;color:#555}
+.drie{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.drie div{background:var(--papier);border:1px solid var(--lijn);border-radius:10px;padding:8px 10px;display:grid;gap:2px}.drie b{font-size:12px;font-weight:500}
+.splits{display:flex;flex-wrap:wrap;gap:4px 12px;width:100%;margin-top:4px}.splits label{display:flex;gap:4px;align-items:center}.acties .splits input{flex:none;min-width:0;width:auto}
+@media (max-width:520px){.drie{grid-template-columns:1fr}}
+.pcel{display:flex;align-items:center;gap:8px}.ptabel tr.open{background:var(--zee)}.ptabel tr.pdetail td{padding:0 8px 12px}
 @media (max-width:900px){.pgrid{grid-template-columns:1fr}.vgrid{grid-template-columns:1fr}}
 @media (max-width:760px){.drukrij{grid-template-columns:80px 1fr}.drukrij .acties{grid-column:1/-1}.vb{display:none}main{padding:14px}.log div{grid-template-columns:1fr}}
 </style>
@@ -134,7 +140,7 @@ table.kaal{border:0}table.kaal td,table.kaal th{padding:6px 8px}table.kaal input
 <div id="app" class="verberg">
   <header>
     <b>SKIFFA</b>
-    <div class="nav"><button data-view="bestellingen" aria-current="true">bestellingen</button><button data-view="kanalen">kanalen</button><button data-view="producten">producten</button></div>
+    <div class="nav"><button data-view="bestellingen" aria-current="true">bestellingen</button><button data-view="producten">producten</button><button data-view="verkoop">verkoopkanalen</button><button data-view="kanalen">koppelingen</button></div>
     <span style="flex:1"></span>
     <a href="/" target="_blank" rel="noopener">winkel ↗</a>
     <button id="uitloggen">uitloggen</button>
@@ -153,6 +159,7 @@ table.kaal{border:0}table.kaal td,table.kaal th{padding:6px 8px}table.kaal input
       </div>
     </section>
     <section id="viewProducten" class="verberg"><div id="producten"></div></section>
+    <section id="viewVerkoop" class="verberg"><div id="verkoop"></div></section>
     <section id="viewBestellingen">
     <div class="kaarten" id="kaarten"></div>
     <div class="balk" id="filters">
@@ -182,7 +189,7 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const euro=v=>'€ '+Number(v||0).toFixed(2).replace('.',',');
 const datum=d=>d?new Date(d).toLocaleString('nl-NL',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Amsterdam'}):'';
-const LABEL={open:'open',betaald:'betaald',in_productie:'in productie',verzonden:'verzonden',geleverd:'geleverd',geannuleerd:'geannuleerd',mislukt:'mislukt',terugbetaald:'terugbetaald'};
+const LABEL={open:'open',betaald:'betaald',in_productie:'in productie',deels_verzonden:'deels verzonden',verzonden:'verzonden',geleverd:'geleverd',geannuleerd:'geannuleerd',mislukt:'mislukt',terugbetaald:'terugbetaald'};
 const st=s=>`<span class="st ${esc(s)}">${esc(LABEL[s]||s)}</span>`;
 let filter='actie',zoekTimer=null,huidig=null;
 
@@ -252,8 +259,11 @@ function prodigiBlok(b){
     <div class="acties" style="margin-top:8px">
       ${['fout','geblokkeerd','wacht','opnieuw'].includes(f.status)?`<button data-p="opnieuw">${f.status==='wacht'?'nu versturen':'opnieuw proberen'}</button>`:''}
       ${!['geannuleerd','verzonden'].includes(f.status)?`<button data-p="annuleer">${f.extern_id?'annuleer bij Prodigi':'niet naar Prodigi'}</button>`:''}
+      ${['geblokkeerd','fout'].includes(f.status)&&!f.extern_id?'<button data-p="vrijgeven">toch vrijgeven (met reden)</button>':''}
       ${f.omgeving==='sandbox'&&f.extern_id?'<button data-p="reset-sandbox">proeforder loskoppelen (daarna live)</button>':''}
-    </div></div>`;
+      ${b.betaald_op&&['verstuurd','in_productie','verzonden'].includes(f.status)?'<button data-p="herdruk">herdruk (schade/fout)</button>':''}
+    </div>
+    ${(b.fulfilments||[]).filter(x=>x.herdruk_nr).map(x=>`<p class="mini" style="margin-top:6px">herdruk ${x.herdruk_nr}: ${esc(FSTATUS[x.status]||x.status)}${x.extern_id?` · order <code>${esc(x.extern_id)}</code>`:''}${x.laatste_fout?` · <span class="nok">${esc(x.laatste_fout)}</span>`:''}</p>`).join('')}</div>`;
 }
 async function papi(actie,body){
   const r=await fetch('/api/prodigi?actie='+actie,{method:body?'POST':'GET',headers:body?{'content-type':'application/json'}:{},body:body?JSON.stringify(body):undefined});
@@ -261,24 +271,47 @@ async function papi(actie,body){
   if(r.status===401){toonLogin();throw new Error('uit');}
   if(!j.ok)throw new Error(j.melding||j.info||'Mislukt');return j;
 }
+// Betaling, productie en verzending los van elkaar: een terugbetaling betekent niet dat de productie stopt.
+function drieStatussen(b){
+  const bet=b.status==='terugbetaald'||(Number(b.terugbetaald)>=Number(b.totaal)&&b.betaald_op)?['nok','terugbetaald']:Number(b.terugbetaald)>0?['nok',`deels terugbetaald (${euro(b.terugbetaald)})`]:b.betaald_op?['ok','betaald']:b.status==='mislukt'?['nok','mislukt']:['','nog niet betaald'];
+  const fs=(b.fulfilments||[]).filter(f=>f.status!=='geannuleerd'),f=fs[fs.length-1];
+  const prod=f?[['fout','geblokkeerd','onzeker'].includes(f.status)?'nok':['verzonden','verstuurd','in_productie'].includes(f.status)?'ok':'',`Prodigi: ${FSTATUS[f.status]||f.status}${f.herdruk_nr?` (herdruk ${f.herdruk_nr})`:''}`]
+    :(b.fulfilments||[]).length?['','Prodigi: geannuleerd']:b.status==='in_productie'||['deels_verzonden','verzonden','geleverd'].includes(b.status)?['ok','eigen productie']:['','nog niet in productie'];
+  const zs=b.zendingen||[];
+  const verz=b.status==='geleverd'?['ok','geleverd']:b.status==='verzonden'?['ok',`verzonden${zs.length>1?` in ${zs.length} zendingen`:''}`]:b.status==='deels_verzonden'?['',`deels verzonden (${zs.length})`]:['','nog niet verzonden'];
+  return `<div class="drie">${[['betaling',bet],['productie',prod],['verzending',verz]].map(([n,[k,t]])=>`<div><span class="mini">${n}</span><b class="${k}">${esc(t)}</b></div>`).join('')}</div>`;
+}
+// Regels die al in een zending zitten (een zending zonder regels = alles).
+function verzondenRegels(b){const zs=b.zendingen||[];if(zs.some(z=>!Array.isArray(z.regels)||!z.regels.length))return new Set((b.bestelregels||[]).map(r=>String(r.id)));return new Set(zs.flatMap(z=>z.regels.map(String)));}
+function zendingenBlok(b){
+  const zs=b.zendingen||[];if(!zs.length)return '';
+  const naam=id=>{const r=(b.bestelregels||[]).find(x=>String(x.id)===String(id));return r?`${r.aantal}× ${r.poster_naam} ${r.formaat_label||''}`:`regel ${id}`;};
+  return `<div class="blok"><h3>zendingen</h3><table>${zs.map(z=>`<tr><td>${datum(z.verzonden_op)} · ${esc(z.vervoerder||'vervoerder onbekend')} · ${esc(z.bron)}
+    <div class="mini">${z.tracking_url?`<a href="${esc(z.tracking_url)}" target="_blank" rel="noopener">${esc(z.tracking_code||'volg zending')} ↗</a>`:z.tracking_code?esc(z.tracking_code):'nog geen track-and-trace'}
+    · ${Array.isArray(z.regels)&&z.regels.length?z.regels.map(naam).map(esc).join(', '):'hele bestelling'}</div>
+    <div class="mini">${b.kanaal==='webshop'?(z.klant_gemaild_op?`klant gemaild ${datum(z.klant_gemaild_op)}`:'klant (nog) niet gemaild'):(z.kanaal_gemeld_op?`doorgegeven aan ${esc(b.kanaal)} ${datum(z.kanaal_gemeld_op)}`:z.kanaal_fout?`<span class="nok">doorgeven aan ${esc(b.kanaal)} mislukt (${z.kanaal_pogingen}×): ${esc(z.kanaal_fout)}</span>`:`wordt bij de volgende sync doorgegeven aan ${esc(b.kanaal)}`)}</div></td></tr>`).join('')}</table></div>`;
+}
 function tekenPaneel(b){
   const druk=r=>r.druk?`<a href="${esc(r.druk.link)}" target="_blank" rel="noopener" class="${r.druk.status==='afgekeurd'?'nok':'ok'}">drukbestand v${esc(r.druk.versie)} ↓${r.druk.status==='afgekeurd'?' (afgekeurd)':''}</a>`:`<span class="nok">drukbestand ontbreekt</span> · <a href="#product/${esc(r.poster_id)}" data-naarproduct="${esc(r.poster_id)}">naar product</a>`;
   const regels=(b.bestelregels||[]).map(r=>`<tr><td>${r.aantal}× ${esc(r.poster_naam)} <span style="opacity:.6">${esc(r.formaat_label)}${r.papier_label?` · ${esc(r.papier_label)}`:''}</span><div class="mini">${r.variant_sku?`${esc(r.variant_sku)} · `:''}${druk(r)}</div></td><td class="r">${euro(r.prijs*r.aantal)}</td></tr>`).join('');
   const kan=s=>({
     betaald:['open','mislukt'].includes(b.status),
     productie:b.status==='betaald',
-    verzenden:['betaald','in_productie'].includes(b.status),
+    verzenden:['betaald','in_productie','deels_verzonden'].includes(b.status),
     geleverd:b.status==='verzonden',
     annuleren:['open','mislukt','betaald','in_productie'].includes(b.status),
+    herdruk:!!b.betaald_op&&['in_productie','deels_verzonden','verzonden','geleverd','terugbetaald'].includes(b.status),
     terug:b.kanaal==='webshop'&&!!b.betaald_op&&Number(b.terugbetaald)<Number(b.totaal),
   })[s];
   $('#vak').innerHTML=`
   <div style="display:flex;justify-content:space-between;align-items:center"><h2>${esc(b.nummer)} ${st(b.status)}</h2><button data-a="sluit">sluiten</button></div>
   ${b.kanaal!=='webshop'?`<p style="margin-top:6px"><span class="kb ${esc(b.kanaal)}">${esc(b.kanaal)}</span> ordernummer ${esc(b.extern_id)}${b.extern_verzonden_op?` · track-and-trace doorgegeven ${datum(b.extern_verzonden_op)}`:b.track_trace?' · track-and-trace wordt bij de volgende sync doorgegeven':''}${b.extern_meta?.verzend_fout?` · <span class="nok">fout: ${esc(b.extern_meta.verzend_fout)}</span>`:''}</p>`:''}
+  ${drieStatussen(b)}
   <p style="opacity:.6;margin-top:4px">besteld ${datum(b.aangemaakt_op)}${b.betaald_op?` · betaald ${datum(b.betaald_op)}${b.mollie_methode?' via '+esc(b.mollie_methode):''}`:''}</p>
 
   <div class="blok"><h3>acties</h3><div class="acties">
-    ${kan('verzenden')?`<select id="vervoerder">${['postnl','dhl','dpd','ups','gls','bpost'].map(v=>`<option ${v===(b.vervoerder||'postnl')?'selected':''}>${v}</option>`).join('')}</select><input id="tt" placeholder="track-and-trace (code${b.kanaal==='webshop'?' of link':''})" value="${esc(b.track_trace||'')}"><button class="vol" data-a="verzonden">markeer verzonden${b.kanaal==='webshop'?' + mail':` + door naar ${esc(b.kanaal)}`}</button>`:''}
+    ${kan('verzenden')?`<select id="vervoerder">${['postnl','dhl','dpd','ups','gls','bpost'].map(v=>`<option ${v===(b.vervoerder||'postnl')?'selected':''}>${v}</option>`).join('')}</select><input id="tt" placeholder="track-and-trace (code${b.kanaal==='webshop'?' of link':''})" value="${esc(b.track_trace||'')}"><button class="vol" data-a="verzonden">${b.status==='deels_verzonden'?'nog een zending':'markeer verzonden'}${b.kanaal==='webshop'?' + mail':` + door naar ${esc(b.kanaal)}`}</button>
+      ${(b.bestelregels||[]).length>1?`<div class="splits mini">in dit pakket: ${(b.bestelregels||[]).map(r=>`<label><input type="checkbox" data-regel="${esc(r.id)}" ${verzondenRegels(b).has(String(r.id))?'':'checked'}> ${r.aantal}× ${esc(r.poster_naam)} ${esc(r.formaat_label||'')}</label>`).join('')}</div>`:''}`:''}
     ${kan('productie')?`<button data-a="in_productie">in productie</button>`:''}
     ${b.betaald_op&&b.drukker&&!b.fulfilment&&!['verzonden','geleverd','geannuleerd','terugbetaald'].includes(b.status)?`<button data-a="drukker">drukopdracht ${(b.log||[]).some(l=>l.soort==='drukker')?'opnieuw ':''}naar drukker</button>`:''}
     ${kan('geleverd')?`<button data-a="geleverd">geleverd</button>`:''}
@@ -294,6 +327,7 @@ function tekenPaneel(b){
   </div>
 
   ${prodigiBlok(b)}
+  ${zendingenBlok(b)}
   <div class="blok"><h3>bestelling</h3><table>${regels}
     <tr><td>verzending</td><td class="r">${Number(b.verzending)?euro(b.verzending):'gratis'}</td></tr>
     <tr><td><b>totaal</b> (waarvan btw ${euro(b.totaal-b.totaal/1.21)})</td><td class="r"><b>${euro(b.totaal)}</b></td></tr>
@@ -313,8 +347,13 @@ $('#vak').addEventListener('click',async e=>{
   const pk=e.target.closest('button[data-p]');
   if(pk&&huidig){const a=pk.dataset.p,id=huidig.id;
     const vraag={annuleer:'Niet (meer) laten drukken door Prodigi?','reset-sandbox':'Proeforder loskoppelen? De bestelling gaat daarna live naar Prodigi.',aanmelden:'Deze bestelling naar Prodigi sturen?'}[a];
-    if(vraag&&!confirm(vraag))return;pk.disabled=true;
-    try{const r=await papi(a,{id});meld(r.melding||(r.resultaat?`Prodigi: verstuurd ${r.resultaat.verstuurd}, geblokkeerd ${r.resultaat.geblokkeerd}, fout ${r.resultaat.fout}`:'Opgeslagen'));await open(id);laadLijst();}
+    if(vraag&&!confirm(vraag))return;
+    const extra={};
+    if(a==='vrijgeven'){extra.reden=prompt('Waarom mag deze opdracht toch naar Prodigi? (komt in het logboek)');if(!extra.reden)return;}
+    if(a==='herdruk'){extra.reden=prompt('Reden van de herdruk (bv. beschadigd aangekomen, foto ontvangen):');if(!extra.reden)return;
+      if(!confirm('Er wordt een NIEUWE, betaalde productieopdracht bij Prodigi geplaatst. Doorgaan?'))return;extra.bevestigd=true;}
+    pk.disabled=true;
+    try{const r=await papi(a,{id,...extra});meld(r.melding||(r.resultaat?`Prodigi: verstuurd ${r.resultaat.verstuurd}, geblokkeerd ${r.resultaat.geblokkeerd}, fout ${r.resultaat.fout}`:'Opgeslagen'));await open(id);laadLijst();}
     catch(x){if(x.message!=='uit')meld(x.message,true);pk.disabled=false;}
     return;}
   const k=e.target.closest('button[data-a]');if(!k||!huidig)return;const a=k.dataset.a,id=huidig.id;
@@ -324,14 +363,16 @@ $('#vak').addEventListener('click',async e=>{
   k.disabled=true;
   try{
     let res;
-    if(['verzonden','in_productie','geleverd','geannuleerd'].includes(a))res=await api('status',{method:'POST',body:{id,status:a,track_trace:$('#tt')?.value,vervoerder:$('#vervoerder')?.value}});
+    if(['verzonden','in_productie','geleverd','geannuleerd'].includes(a)){const alle=[...document.querySelectorAll('#vak [data-regel]')],gekozen=alle.filter(i=>i.checked).map(i=>i.dataset.regel);
+      if(a==='verzonden'&&alle.length&&!gekozen.length){meld('Kies minstens één regel voor dit pakket',true);k.disabled=false;return;}
+      res=await api('status',{method:'POST',body:{id,status:a,track_trace:$('#tt')?.value,vervoerder:$('#vervoerder')?.value,regels:a==='verzonden'&&gekozen.length<alle.length?gekozen:undefined}});}
     else if(a==='betaald')res=await api('betaald',{method:'POST',body:{id}});
     else if(a==='terugbetalen')res=await api('terugbetalen',{method:'POST',body:{id,bedrag:$('#terugBedrag').value}});
     else if(a==='ververs')res=await api('ververs',{method:'POST',body:{id}});
     else if(a==='notitie')res=await api('notitie',{method:'POST',body:{id,tekst:$('#notitie').value}});
     else if(a.startsWith('mail-'))res=await api('mail',{method:'POST',body:{id,soort:a.slice(5)}});
     else if(a==='drukker'){res=await mapi('drukker',{id});meld(res.melding);await open(id);return;}
-    meld(res.gemaild?'Opgeslagen, klant gemaild':res.mollie?`Mollie: ${res.mollie}`:res.kanaal?`Opgeslagen; gaat bij de volgende sync naar ${res.kanaal}`:'Opgeslagen');
+    meld(res.deels?'Zending vastgelegd (deels verzonden)'+(res.gemaild?', klant gemaild':''):res.gemaild?'Opgeslagen, klant gemaild':res.mollie?`Mollie: ${res.mollie}`:res.kanaal?`Opgeslagen; gaat bij de volgende sync naar ${res.kanaal}`:'Opgeslagen');
     await open(id);laadOverzicht();laadLijst();
   }catch(err){if(err.message!=='uit')meld(err.message,true);k.disabled=false;}
 });
@@ -343,7 +384,7 @@ const VELDEN={
   amazon:[['opslag_pct','opslag t.o.v. webshop (%)'],['voorraad','voorraad tonen (stuks)'],['verwerkingsdagen','verwerkingstijd (dagen)'],['producttype','producttype'],['merk','merk'],['marketplace_id','marketplace-id']],
 };
 function toonView(v){document.querySelectorAll('.nav button').forEach(b=>b.setAttribute('aria-current',String(b.dataset.view===v)));
-  $('#viewBestellingen').classList.toggle('verberg',v!=='bestellingen');$('#viewKanalen').classList.toggle('verberg',v!=='kanalen');$('#viewProducten').classList.toggle('verberg',v!=='producten');
+  $('#viewBestellingen').classList.toggle('verberg',v!=='bestellingen');$('#viewKanalen').classList.toggle('verberg',v!=='kanalen');$('#viewProducten').classList.toggle('verberg',v!=='producten');$('#viewVerkoop').classList.toggle('verberg',v!=='verkoop');if(v==='verkoop')Verkoop.open();
   if(v==='kanalen'){laadKanalen();laadAssort();}if(v==='producten')Producten.open();if(v!=='producten')history.replaceState(null,'',v==='bestellingen'?location.pathname:'#'+v);}
 document.querySelector('.nav').addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(b)toonView(b.dataset.view);});
 async function kapi(actie,{method='GET',body,params}={}){
@@ -413,6 +454,7 @@ async function laadKanalen(){
       <p class="mini" style="margin-bottom:8px">listings: ${l.aan} aangeboden · ${l.actief} actief · ${l.wacht} in behandeling · ${l.fout} met fout</p>
       <div class="rij"><label>kanaal aan</label><input type="checkbox" class="schakel" data-v="aan" ${s.aan?'checked':''}></div>
       <div class="rij"><label>proefmodus (niets naar ${KNAAM[k]} sturen)</label><input type="checkbox" class="schakel" data-v="proef" ${s.proef?'checked':''}></div>
+      ${k==='etsy'?`<div class="rij"><label>automatisch publiceren (anders alleen via "publiceer" op Verkoopkanalen)</label><input type="checkbox" class="schakel" data-v="auto_publiceren" ${s.auto_publiceren?'checked':''}></div>`:''}
       ${VELDEN[k].map(([v,lab])=>`<div class="rij"><label>${lab}</label><input data-v="${v}" value="${esc(s[v]??'')}"></div>`).join('')}
       <div class="acties" style="margin-top:10px">
         <button class="vol" data-ka="opslaan">opslaan</button><button data-ka="ping">test verbinding</button><button data-ka="sync">nu synchroniseren</button>
@@ -460,8 +502,9 @@ for(const [id,aan] of [['#allesAan',true],['#allesUit',false]])$(id).addEventLis
   if(!confirm(aan?`Alle posters op ${KNAAM[k]} aanbieden?`:`Alle posters op ${KNAAM[k]} pauzeren?`))return;
   try{await kapi('alles',{method:'POST',body:{kanaal:k,aan}});laadAssort();}catch(e){if(e.message!=='uit')meld(e.message,true);}});
 {const m=new URLSearchParams(location.search).get('melding');if(m){setTimeout(()=>meld(m,/mislukt/.test(m)),600);history.replaceState(null,'',location.pathname+location.hash);}}
-start().then(()=>{const h=location.hash.slice(1);if(h==='kanalen'||h==='producten'||h.startsWith('product/'))toonView(h.startsWith('product/')?'producten':h);});
+start().then(()=>{const h=location.hash.slice(1);if(h==='kanalen'||h==='producten'||h==='verkoop'||h.startsWith('product/'))toonView(h.startsWith('product/')?'producten':h);});
 </script>
 <script src="/beheer/producten.js"></script>
+<script src="/beheer/verkoopkanalen.js"></script>
 </body>
 </html>

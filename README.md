@@ -155,18 +155,51 @@ vertaald naar posters op bestelling (geen fysieke voorraad: we tonen een vaste v
   track-and-trace; de volgende synchronisatie geeft die door. Terugbetalen en annuleren gaan via het kanaal zelf.
 - **Prijzen**: winkelprijs + instelbare opslag (commissie), afgerond op x,95 (15% → € 33,95 / € 51,95 / € 79,95).
 - **Veilig starten**: elk kanaal staat uit en in proefmodus. In proefmodus wordt er niets naar het kanaal
-  geschreven (wel opgehaald); je ziet in Beheer → Kanalen wat er verstuurd zou worden.
+  geschreven (wel opgehaald); je ziet in Beheer → Koppelingen wat er verstuurd zou worden.
 - **Automatisch**: `.github/workflows/kanalen-sync.yml` roept elke 15 minuten `/api/kanalen?actie=cron` aan
-  (zet `CRON_SECRET` in Vercel én als GitHub-secret). Handmatig: "nu synchroniseren" in Beheer → Kanalen.
+  (zet `CRON_SECRET` in Vercel én als GitHub-secret). Handmatig: "nu synchroniseren" in Beheer → Koppelingen.
 - **Beelden**: Etsy en Amazon accepteren geen WebP; `posters/<id>.jpg` wordt meegeleverd (`maak-beelden.py`).
 
 **Wat je per kanaal nodig hebt**
 1. **bol.com**: verkopersaccount, API-sleutels, en per poster × formaat een **EAN** (GS1 Nederland). Vul de EAN's in
-   onder Beheer → Kanalen → assortiment (de controle op het GS1-controlecijfer zit erin).
+   onder Beheer → Koppelingen → assortiment (de controle op het GS1-controlecijfer zit erin).
 2. **Etsy**: een Etsy-winkel en een app op etsy.com/developers (callback `https://skiffa.store/etsy/terug`). Klik
    "koppel Etsy", dan "profielen ophalen" en vul verzendprofiel, verwerkingsprofiel en categorie (taxonomy-id) in.
 3. **Amazon**: Pro-verkopersaccount, een SP-API-app met refresh token en dezelfde EAN's (of een GTIN-vrijstelling
    voor merk Skiffa). Producttype standaard `POSTER`; Amazon meldt ontbrekende verplichte velden bij de listing.
+
+## Publiceren per kanaal (Beheer → Verkoopkanalen)
+
+Eén product, één keer ingevoerd; per kanaal vink je aan of het daar verschijnt.
+
+- **Kanalen**: SKIFFA-webshop en Etsy zijn per product te publiceren. bol.com en Amazon werken per variant met EAN
+  (Beheer → Koppelingen → assortiment). eBay en TikTok Shop staan er eerlijk bij als "geen koppeling": er wordt
+  niets naartoe gestuurd.
+- **Statussen**: Niet gepubliceerd · Onvolledig (melding zegt wat ontbreekt) · Gereed · Wordt verwerkt · Actief
+  (met link en tijdstip van de laatste synchronisatie) · Fout (met uitleg).
+- **Sjablonen en afwijkingen**: kanaalinstellingen < sjabloon < afwijkingen per product (titel, beschrijving, taal,
+  categorie, tags, foto's, prijsregel). Leeg = de centrale gegevens gelden.
+- **Prijsregels**: zelfde als basisprijs, + vast bedrag, + percentage (optioneel afgerond op ,95) of handmatig per
+  variant. De prijs per variant staat bij de afwijkingen.
+- **Geen dubbele advertenties**: "aanmaken" maakt een nieuwe Etsy-advertentie, "bijwerken" past de bestaande aan.
+  De verwerking wordt geclaimd (één tegelijk); na een onderbreking wordt een al aangemaakte advertentie
+  teruggevonden via de tag `skf-<code>` en overgenomen in plaats van opnieuw aangemaakt. Uitvinken haalt de
+  advertentie offline (inactief), verwijdert niets.
+- **Automatisch publiceren** staat standaard uit (Koppelingen → Etsy). Uit = alleen via de knop.
+  Tabellen: `product_kanalen`, `kanaal_sjablonen` (`supabase/migrations/20261029050000_publicatie_zendingen.sql`).
+
+## Zendingen en tracking
+
+- Een bestelling kan in **meerdere zendingen** gaan (tabel `zendingen`, één rij per pakket, met regels, vervoerder
+  en track-and-trace). Status `deels_verzonden` tot alle regels onderweg zijn.
+- Prodigi-zendingen komen binnen via de callback; handmatig: in het bestelpaneel vervoerder + code invullen en
+  aanvinken welke regels in het pakket zitten.
+- **Webshop**: per zending precies één mail in SKIFFA-stijl (geclaimd vóór verzending, dus ook bij dubbele
+  callbacks niet twee keer); zonder code staat er geen tracking in de mail.
+- **Kanalen**: elke zending wordt apart aan het oorspronkelijke kanaal gemeld (Etsy, bol, Amazon), met
+  herhaalpogingen en de foutmelding in het bestelpaneel.
+- Het bestelpaneel toont **betaling, productie en verzending los van elkaar**: een terugbetaling stopt de productie
+  niet automatisch (annuleer die apart). Herdruk = een nieuwe, expliciet bevestigde productieopdracht met reden.
 
 ## Hoe het in elkaar zit
 
