@@ -17,8 +17,8 @@ een scène die met de tijd in Scheveningen meebeweegt (uitsneden uit de posters)
 - **Catalogus**: `posters` en `formaten` in `index.html` (teksten, beelden), en `api/_catalogus.js`
   (ids en prijzen; de server rekent altijd zelf). Check: `node scripts/check-catalogus.mjs`.
 - **Papier**: alle prints op **Hahnemühle German Etching** (310 g/m², fluweelachtige structuur). Geen lijsten, geen hangers.
-- **Formaten** (standaard lijstmaten): **50 × 70 cm** (€ 59, hoofdproduct en standaard geselecteerd), 30 × 40 cm
-  (€ 39, instap/cadeau), 70 × 100 cm (€ 99, grote uitvoering). Klaargezet voor Noord-Amerika, nog niet te koop:
+- **Formaten** (standaard lijstmaten): **50 × 70 cm** (€ 69, hoofdproduct en standaard geselecteerd), 30 × 40 cm
+  (€ 49, instap/cadeau), 70 × 100 cm (€ 119, grote uitvoering). Klaargezet voor Noord-Amerika, nog niet te koop:
   18 × 24 inch en 24 × 36 inch (`actief: false` in `api/_catalogus.js`; prijzen voorlopig). Verzending € 6,95
   (BE € 9,95), gratis vanaf € 75.
 - **Nieuwe poster toevoegen**: met database in /admin → producten (zie hieronder). Zonder database:
@@ -72,9 +72,9 @@ Een poster voer je één keer in bij **/admin → producten**; webshop, kanalen 
 
 | formaat | Prodigi-artikel | echte maat (pdf-paginagrootte) | drukbestand | kostprijs NL (excl. btw, incl. verzending) | prijs incl. btw | marge excl. btw |
 |---|---|---|---|---|---|---|
-| 30 × 40 cm | `GLOBAL-HGE-12X16` | 304,8 × 406,4 mm (12 × 16 inch) | 3600 × 4800 px | € 20,05 | € 39 | € 12,18 |
-| 50 × 70 cm | `GLOBAL-HGE-20X28` | 508 × 711,2 mm (20 × 28 inch) | 6000 × 8400 px | € 31,05 | € 59 | € 17,71 |
-| 70 × 100 cm | `GLOBAL-HGE-28X40` | 711,2 × 1016 mm (28 × 40 inch) | 8400 × 12000 px | € 59,30 | € 99 | € 22,52 |
+| 30 × 40 cm | `GLOBAL-HGE-12X16` | 304,8 × 406,4 mm (12 × 16 inch) | 3600 × 4800 px | € 20,05 | € 49 | € 20,45 |
+| 50 × 70 cm | `GLOBAL-HGE-20X28` | 508 × 711,2 mm (20 × 28 inch) | 6000 × 8400 px | € 31,05 | € 69 | € 25,97 |
+| 70 × 100 cm | `GLOBAL-HGE-28X40` | 711,2 × 1016 mm (28 × 40 inch) | 8400 × 12000 px | € 59,30 | € 119 | € 39,05 |
 
 Opties bij Prodigi: `paperType` HGE, `substrateWeight` 310gsm. Prodigi levert opgerold of plat ("ready to frame"),
 gedrukt in Nederland. German Etching bestaat in 86 formaten (o.a. A5–A0, 30 × 45, 50 × 75, 70 × 105 cm en de

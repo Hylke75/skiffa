@@ -29,9 +29,9 @@ export const POSTERS = {
 // uploaden, maar het formaat is nog nergens te koop. Aanzetten: actief op true en het formaat ook
 // toevoegen aan `formaten` in index.html.
 export const ALLE_FORMATEN = {
-  '30x40': { label: '30 × 40 cm', prijs: 39, mm: [304.8, 406.4], actief: true },     // instap, cadeau
-  '50x70': { label: '50 × 70 cm', prijs: 59, mm: [508, 711.2], actief: true },     // hoofdproduct
-  '70x100': { label: '70 × 100 cm', prijs: 99, mm: [711.2, 1016], actief: true },  // grote uitvoering
+  '30x40': { label: '30 × 40 cm', prijs: 49, mm: [304.8, 406.4], actief: true },     // instap, cadeau
+  '50x70': { label: '50 × 70 cm', prijs: 69, mm: [508, 711.2], actief: true },     // hoofdproduct
+  '70x100': { label: '70 × 100 cm', prijs: 119, mm: [711.2, 1016], actief: true },  // grote uitvoering
   '18x24in': { label: '18 × 24 inch', prijs: 39, mm: [457.2, 609.6], actief: false },
   '24x36in': { label: '24 × 36 inch', prijs: 59, mm: [609.6, 914.4], actief: false },
 };

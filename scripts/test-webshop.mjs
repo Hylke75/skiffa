@@ -28,9 +28,9 @@ let r=await call(bestel,{method:'POST',body:{klant,regels,t:5000}});ok(r.c===400
 // 2. bestellen met Mollie
 r=await call(bestel,{method:'POST',body:{klant,regels,akkoord:true,t:5000}});
 const b=T.bestellingen[0];ok(r.j.ok&&r.j.modus==='mollie'&&r.j.url.startsWith('https://mollie.test/'),'bestelling opgeslagen + Mollie-betaling gestart');
-ok(b.totaal===65.95&&b.subtotaal===59&&b.verzending===6.95,'bedragen door server berekend (59 + 6,95 = 65,95)');
+ok(b.totaal===75.95&&b.subtotaal===69&&b.verzending===6.95,'bedragen door server berekend (69 + 6,95 = 75,95)');
 ok(T.bestelregels.length===1&&b.mollie_id&&M[b.mollie_id].redirectUrl.includes(`bestelling.html?nr=${b.nummer}&t=${b.token}`),'regels + mollie_id + terugkeer naar statuspagina');
-ok(M[b.mollie_id].metadata.order_id===b.id&&M[b.mollie_id].amount.value==='65.95','Mollie-bedrag en metadata kloppen');
+ok(M[b.mollie_id].metadata.order_id===b.id&&M[b.mollie_id].amount.value==='75.95','Mollie-bedrag en metadata kloppen');
 // 3. status voor betaling
 r=await call(bestel,{url:`/api/bestel?nr=${b.nummer}&t=${b.token}`});ok(r.j.ok&&r.j.status==='open'&&!r.j.factuur,'statuspagina: open');
 r=await call(bestel,{url:`/api/bestel?nr=${b.nummer}&t=${'0'.repeat(36)}`});ok(r.c===404,'statuspagina met verkeerd token geweigerd');
@@ -43,13 +43,13 @@ ok(!mails[1].html.includes('<script>')&&mails[1].html.includes('&lt;script&gt;')
 // 5. webhook daarna: geen dubbele mails
 await call(hook,{method:'POST',body:'id='+b.mollie_id});await call(hook,{method:'POST',body:'id='+b.mollie_id});ok(mails.length===2,'webhook twee keer: geen dubbele mails');
 // 6. factuur
-r=await call(factuur,{url:`/api/factuur?nr=${b.nummer}&t=${b.token}`});ok(r.c===200&&r.s.includes('2026-0001')&&r.s.includes('54,50')&&r.s.includes('11,45')&&r.s.includes('65,95'),'factuur: excl. € 54,50 + btw € 11,45 = € 65,95');
+r=await call(factuur,{url:`/api/factuur?nr=${b.nummer}&t=${b.token}`});ok(r.c===200&&r.s.includes('2026-0001')&&r.s.includes('62,77')&&r.s.includes('13,18')&&r.s.includes('75,95'),'factuur: excl. € 62,77 + btw € 13,18 = € 75,95');
 r=await call(factuur,{url:`/api/factuur?nr=${b.nummer}`});ok(r.c===404,'factuur zonder token of inlog geweigerd');
 // 7. admin
 r=await call(admin,{url:'/api/admin?actie=overzicht'});ok(r.c===401,'admin zonder inlog geweigerd');
 r=await call(admin,{method:'POST',url:'/api/admin?actie=login',body:{wachtwoord:'fout'}});ok(r.c===401,'verkeerd wachtwoord geweigerd');
 r=await call(admin,{method:'POST',url:'/api/admin?actie=login',body:{wachtwoord:'zeer-geheim-wachtwoord'}});const cookie=r.h['set-cookie'].split(';')[0];ok(r.j.ok&&/HttpOnly; Secure; SameSite=Strict/.test(r.h['set-cookie']),'inloggen: veilige sessiecookie');
-r=await call(admin,{url:'/api/admin?actie=overzicht',cookie});ok(r.j.teVerzenden===1&&r.j.omzetMaand===65.95,'overzicht: 1 te verzenden, omzet € 65,95');
+r=await call(admin,{url:'/api/admin?actie=overzicht',cookie});ok(r.j.teVerzenden===1&&r.j.omzetMaand===75.95,'overzicht: 1 te verzenden, omzet € 75,95');
 r=await call(admin,{url:'/api/admin?actie=bestellingen&status=actie',cookie});ok(r.j.bestellingen.length===1,'lijst "te verzenden"');
 r=await call(admin,{url:'/api/admin?actie=bestellingen&q=vries',cookie});ok(r.j.bestellingen.length===1,'zoeken op naam');
 r=await call(admin,{url:'/api/admin?actie=bestelling&id='+b.nummer,cookie});ok(r.j.bestelling.bestelregels.length===1&&r.j.bestelling.log.length>=3,'detail met regels en logboek');
@@ -58,15 +58,15 @@ r=await call(admin,{method:'POST',url:'/api/admin?actie=status',cookie,body:{id:
 r=await call(admin,{method:'POST',url:'/api/admin?actie=terugbetalen',cookie,body:{id:b.id,bedrag:'100'}});ok(r.c===400,'terugbetalen meer dan betaald geweigerd');
 r=await call(admin,{method:'POST',url:'/api/admin?actie=terugbetalen',cookie,body:{id:b.id,bedrag:'29,00'}});ok(r.j.ok&&b.terugbetaald===29&&b.status==='verzonden'&&mcalls.includes(`POST payments/${b.mollie_id}/refunds`)&&/Terugbetaling/.test(mails.at(-1).onderwerp),'gedeeltelijke terugbetaling via Mollie + mail');
 const nm=mails.length;await call(hook,{method:'POST',body:'id='+b.mollie_id});ok(mails.length===nm&&b.terugbetaald===29,'webhook na terugbetaling: niet dubbel geboekt');
-r=await call(admin,{url:'/api/admin?actie=export&van=2026-10-01&tot=2026-10-31',cookie});const csv=r.s.split('\r\n');ok(r.h['content-type'].includes('csv')&&csv.length===2&&csv[1].startsWith('2026-0001;2026-10-29;'+b.nummer)&&csv[1].includes('54,50;11,45;65,95;6,95;29,00'),'CSV-export voor de boekhouding');
+r=await call(admin,{url:'/api/admin?actie=export&van=2026-10-01&tot=2026-10-31',cookie});const csv=r.s.split('\r\n');ok(r.h['content-type'].includes('csv')&&csv.length===2&&csv[1].startsWith('2026-0001;2026-10-29;'+b.nummer)&&csv[1].includes('62,77;13,18;75,95;6,95;29,00'),'CSV-export voor de boekhouding');
 // 8. zonder Mollie: betaalverzoek
 delete process.env.MOLLIE_API_KEY;
 r=await call(bestel,{method:'POST',body:{klant:{...klant,email:'bob@voorbeeld.be',land:'BE'},regels:[{id:'regatta',formaat:'70x100',aantal:1},{id:'zon',formaat:'30x40',aantal:1}],akkoord:true,t:5000}});
-const b2=T.bestellingen[1];ok(r.j.ok&&r.j.modus==='mail'&&b2.betaalwijze==='betaalverzoek'&&b2.totaal===138&&b2.verzending===0,'zonder Mollie: betaalverzoek, gratis verzending boven € 75');
+const b2=T.bestellingen[1];ok(r.j.ok&&r.j.modus==='mail'&&b2.betaalwijze==='betaalverzoek'&&b2.totaal===168&&b2.verzending===0,'zonder Mollie: betaalverzoek, gratis verzending boven € 75');
 ok(/ontvangen/.test(mails.at(-2).onderwerp)&&mails.at(-2).aan==='bob@voorbeeld.be','klant krijgt "ontvangen"-mail');
 r=await call(admin,{method:'POST',url:'/api/admin?actie=betaald',cookie,body:{id:b2.id}});ok(r.j.ok&&b2.factuurnummer==='2026-0002'&&/Bedankt/.test(mails.at(-2).onderwerp),'handmatig betaald: factuur 2026-0002 + bevestiging');
 r=await call(admin,{method:'POST',url:'/api/admin?actie=betaald',cookie,body:{id:b2.id}});ok(r.c===400,'twee keer betaald zetten geweigerd');
-r=await call(admin,{method:'POST',url:'/api/admin?actie=terugbetalen',cookie,body:{id:b2.id}});ok(r.j.ok&&b2.status==='terugbetaald'&&b2.terugbetaald===138,'volledige handmatige terugbetaling');
+r=await call(admin,{method:'POST',url:'/api/admin?actie=terugbetalen',cookie,body:{id:b2.id}});ok(r.j.ok&&b2.status==='terugbetaald'&&b2.terugbetaald===168,'volledige handmatige terugbetaling');
 // 9. bot
 const n=T.bestellingen.length;r=await call(bestel,{method:'POST',body:{klant,regels,akkoord:true,t:200}});ok(T.bestellingen.length===n,'bot (te snel) wordt niet opgeslagen');
 if(process.env.VERBOSE)console.log('\nmails:',mails.map(m=>m.aan+' · '+m.onderwerp).join('\n       '));
