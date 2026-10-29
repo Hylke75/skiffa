@@ -142,16 +142,23 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 .carrousel .dia.foto{background:var(--papier)}
 .carrousel .dia.poster img{inset:0;margin:auto;width:auto;height:84%;max-width:84%;object-fit:contain;box-shadow:0 18px 40px rgba(0,0,0,.2)}
 .carrousel .dia.poster small{color:#000;text-shadow:none;opacity:.55}
-/* dia 2 en 3: de poster in een lijst op een witte muur. Breedte volgt uit de hoogte, zodat de poster precies 2:3 blijft. */
-.carrousel .dia.lijst{background:#fff;container-type:size}
-.carrousel .dia.lijst small{color:#000;text-shadow:none;opacity:.55}
-.carrousel .dia.lijst .lijstje{--h:74cqh;--i:calc(var(--rand) + var(--pp,0px));position:absolute;left:50%;top:47%;transform:translate(-50%,-50%);height:var(--h);width:calc((var(--h) - 2 * var(--i)) * 2 / 3 + 2 * var(--i));padding:var(--rand)}
-.carrousel .dia.lijst .lijstje::after{content:"";position:absolute;inset:var(--rand);box-shadow:inset 0 0 0 1px rgba(0,0,0,.22),inset 2px 3px 6px rgba(0,0,0,.22);pointer-events:none}
-.carrousel .dia.lijst .lijstje img{position:static;display:block;width:100%;height:100%;object-fit:cover}
-.carrousel .dia.hout .lijstje{--rand:clamp(12px,3cqh,20px);background:repeating-linear-gradient(92deg,rgba(60,30,10,.07) 0 1px,transparent 1px 4px,rgba(255,240,220,.05) 4px 5px,transparent 5px 9px),linear-gradient(135deg,#C49563 0%,#A87A4C 35%,#BE8F5E 55%,#9A6C41 100%);box-shadow:0 22px 40px rgba(0,0,0,.18),0 4px 10px rgba(0,0,0,.12),inset 0 0 0 1px rgba(70,40,15,.35),inset 1px 1px 0 2px rgba(255,235,205,.18)}
-.carrousel .dia.zwart .lijstje{--rand:clamp(8px,1.8cqh,12px);--pp:6.5cqh;background:#151515;box-shadow:0 22px 40px rgba(0,0,0,.2),0 4px 10px rgba(0,0,0,.14),inset 0 0 0 1px #000,inset 1px 1px 0 2px rgba(255,255,255,.06)}
-.carrousel .dia.zwart .pp{width:100%;height:100%;background:#FBFAF7;padding:var(--pp);box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
-.carrousel .dia.zwart .lijstje::after{inset:calc(var(--rand) + var(--pp));box-shadow:inset 0 0 0 1px rgba(0,0,0,.15),inset 1px 2px 3px rgba(0,0,0,.18)}
+/* dia 2 en 3: de poster aan een posterhanger op een witte muur: houten latten boven en onder, koord naar een spijker.
+   --b is de breedte van de lat ten opzichte van de poster (70 × 100: lat van 86 cm aan een poster van 71 cm). */
+.carrousel .dia.hanger{background:#fff;container-type:size}
+.carrousel .dia.hanger small{color:#000;text-shadow:none;opacity:.55}
+.carrousel .dia.hanger .hang{--h:66cqh;--w:calc(var(--h) * var(--r,.75));--lat:max(7px,1.7cqh);position:absolute;left:50%;top:55%;transform:translate(-50%,-50%);height:var(--h);width:var(--w)}
+.carrousel .dia.hanger .hang img{position:static;display:block;width:100%;height:100%;object-fit:cover;box-shadow:0 18px 34px rgba(0,0,0,.16),0 3px 8px rgba(0,0,0,.1)}
+.carrousel .dia.hanger .lat{position:absolute;left:50%;transform:translateX(-50%);width:calc(var(--w) * var(--b,1.07));height:var(--lat);border-radius:2px;box-shadow:0 3px 6px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.18),inset 0 -1px 0 rgba(0,0,0,.18)}
+.carrousel .dia.hanger .lat.boven{top:calc(var(--lat) * -.45)}.carrousel .dia.hanger .lat.onder{bottom:calc(var(--lat) * -.45)}
+.carrousel .dia.hanger .koord{position:absolute;left:50%;bottom:calc(100% + var(--lat) * .4);width:calc(var(--w) * .42);height:12cqh;transform:translateX(-50%);overflow:visible}
+.carrousel .dia.hanger .koord path{fill:none;stroke-width:1.3}
+.carrousel .dia.hanger .koord circle{fill:#9a9a9a}
+.carrousel .dia.hanger.k-natural .lat{background:repeating-linear-gradient(90deg,rgba(90,55,20,.08) 0 1px,transparent 1px 5px),linear-gradient(180deg,#E2C49A,#C9A574)}
+.carrousel .dia.hanger.k-natural .koord path{stroke:#B89466}
+.carrousel .dia.hanger.k-black .lat{background:linear-gradient(180deg,#2a2a2a,#121212)}
+.carrousel .dia.hanger.k-black .koord path{stroke:#1a1a1a}
+.carrousel .dia.hanger.k-white .lat{background:linear-gradient(180deg,#fdfdfb,#e9e8e3);box-shadow:0 3px 6px rgba(0,0,0,.14),inset 0 0 0 1px rgba(0,0,0,.08)}
+.carrousel .dia.hanger.k-white .koord path{stroke:#d9d7d0}
 .carrousel .dia small{position:absolute;bottom:14px;left:16px;font-size:8px;letter-spacing:.2em;text-transform:uppercase;opacity:.8;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.5)}
 .modaltekst{padding:56px 40px 32px;display:flex;flex-direction:column;gap:18px;font-size:11px;line-height:1.8;overflow:auto}
 .modaltekst h3{font-family:var(--mono);font-weight:500;font-size:13px;letter-spacing:.14em}
@@ -164,6 +171,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 .modaltekst .varinfo{font-size:10px;line-height:1.7;opacity:.8;margin-top:-6px}
 .modaltekst .varinfo b{font-weight:500}
 .modaltekst .label{font-size:8px;letter-spacing:.24em;opacity:.55;margin-bottom:-10px}
+.papierkeuze,.ophangkeuze{display:flex;flex-direction:column;gap:18px}.papierkeuze:empty,.ophangkeuze:empty{display:none}
 .modaltekst .naarmandje{font-size:9px;letter-spacing:.14em;border-bottom:1px solid currentColor;align-self:flex-start;opacity:0;pointer-events:none;transition:opacity .3s}
 .modaltekst .naarmandje.aan{opacity:1;pointer-events:auto}
 .bestel{flex-shrink:0;margin-top:auto;align-self:flex-start;background:#000;color:#fff;border-radius:999px;height:30px;padding:0 20px;display:inline-flex;align-items:center;gap:14px;font-size:10px;letter-spacing:.12em;transition:background .3s}
@@ -359,7 +367,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
       <p>Elke poster is een hoofdstuk: <b>Surfcultuur</b>, de eerste surfers bij de pier in de jaren zeventig. <b>Windsurf</b>, de zeilen bij de vuurtoren in de jaren tachtig. <b>Golf</b>, de zee zoals je hem 's avonds onthoudt. En de pier door de jaren heen: <b>Pier en Strand</b>, <b>Boulevard</b>, <b>De Pier</b>, <b>Surf</b>, <b>Havenpier</b>, <b>Skiffa</b>, <b>Skyview</b>, <b>Havenhoofden</b>, <b>Noordzee Surf</b>, <b>Regatta</b>, <b>Zon</b>, <b>Vuurtoren</b> en <b>Reuzenrad</b>. Drie formaten, kleine oplages.</p>
     </div>
     <div class="kol">
-      <p>Elke poster wordt <b>op bestelling gedrukt</b> op fine-art papier; bij elke poster zie je welk papier je kunt kiezen. Alle formaten zijn standaard lijstmaten (30 × 40, 50 × 70 en 70 × 100 cm), dus een lijst vind je overal. Ze gaan opgerold de deur uit, in een stevige koker en zonder lijst: hoe hij aan de muur komt, kies je zelf.</p>
+      <p>Elke poster wordt <b>op bestelling gedrukt</b> op fine-art papier; bij elke poster zie je welk papier je kunt kiezen. Er zijn drie formaten: 30 × 40, 50 × 70 en 70 × 100 cm. Je kiest de poster los, of met een <b>posterhanger</b> in zwart, naturel of wit: een houten lat boven en onder, met magneten en een ophangkoord in dezelfde kleur. Lijsten verkopen we niet.</p>
       <p>De scène op deze site volgt de tijd in Scheveningen. 's Ochtends, 's middags en 's avonds zie je een uitsnede uit een van de posters; die wisselt bij zonsopkomst, om twaalf uur en bij zonsondergang. De balk onderaan is het getij van vandaag, met hoog- en laagwater. Daarboven staat het strandbericht: wind, temperatuur, zeewater en of het een grijze dag is. Beweeg over de balk om zelf door de dag te gaan.</p>
     </div>
   </div>
@@ -399,8 +407,9 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
     </div>
     <div class="kol">
       <div class="label">veelgestelde vragen</div>
-      <div class="vraag"><b>Welk formaat moet ik nemen?</b><p>30 × 40 cm voor boven je bureau, als cadeau of om er een paar te combineren. 50 × 70 cm voor een gewone wand. 70 × 100 cm als hij de kamer mag dragen. Alle drie zijn standaard lijstmaten; de poster wordt geleverd zonder lijst.</p></div>
-      <div class="vraag"><b>Zit er een lijst bij?</b><p>Nee. De poster komt opgerold in een koker. Leg hem een nacht plat onder een paar boeken, dan ligt hij weer recht.</p></div>
+      <div class="vraag"><b>Welk formaat moet ik nemen?</b><p>30 × 40 cm voor boven je bureau, als cadeau of om er een paar te combineren. 50 × 70 cm voor een gewone wand. 70 × 100 cm als hij de kamer mag dragen. Wil je hem meteen ophangen, kies dan een posterhanger.</p></div>
+      <div class="vraag"><b>Zit er een lijst bij?</b><p>Nee, lijsten verkopen we niet. Je kunt wel een posterhanger kiezen: twee latten van massief hout (zwart, naturel of wit) die met magneten boven en onder om de poster klemmen, met een koord om hem aan een spijker te hangen. De latten bedekken boven en onder tot 1,5 cm van de poster. Zonder hanger komt de poster opgerold in een koker; leg hem een nacht plat onder een paar boeken, dan ligt hij weer recht.</p></div>
+      <div class="vraag"><b>Hoe breed is de posterhanger?</b><p>Bij 30 × 40 cm is de lat 32 cm, bij 50 × 70 cm 52 cm. Bij 70 × 100 cm is de lat 86 cm, de poster zelf 71 cm: de latten steken aan beide kanten zo'n 7,5 cm uit.</p></div>
       <div class="vraag"><b>Hoe snel wordt er verzonden?</b><p>Elke poster wordt op bestelling gedrukt; bij de poster zie je de verwachte levertijd. Verzenden kost € 6,95 (België € 9,95) en is gratis vanaf € 75.</p></div>
       <div class="vraag"><b>Kan ik retourneren?</b><p>Ja, je hebt 14 dagen bedenktijd na ontvangst. Meld het via dit formulier en stuur de poster onbeschadigd in de koker terug; het terugsturen is voor eigen rekening. Zie de <a href="/voorwaarden.html" style="border-bottom:1px solid currentColor">voorwaarden</a>.</p></div>
       <div class="vraag"><b>Komen er meer posters?</b><p>Ja, maar alleen als er een verhaal bij hoort. Volg Instagram voor de volgende.</p></div>
@@ -449,7 +458,7 @@ const formaten=[
   {id:'50x70',label:'50 × 70 cm',prijs:45,mm:[508,711.2],standaard:true},
   {id:'70x100',label:'70 × 100 cm',prijs:69,mm:[711.2,1016]},
 ];
-const PUNTEN=['op bestelling gedrukt op fine-art papier','standaard lijstmaten','opgerold verstuurd in een koker, zonder lijst'];
+const PUNTEN=['op bestelling gedrukt op mat art-papier van 200 g/m²','los of met een posterhanger van massief hout','zonder hanger opgerold verstuurd in een koker'];
 /* actief:false = klaargezet, nog niet zichtbaar (beeld volgt). Zet op true zodra /posters/<id>.webp er staat
    en voeg hem ook toe aan api/_catalogus.js. */
 let posters=[
@@ -471,15 +480,18 @@ let posters=[
   {id:'zon',naam:'Zon',kleur:'#E8571E',actief:true,sub:'linodrukstijl · illustratie',zin:'Een oranje zon, een muur van blauw water en de vuurtoren klein in de verte. Een surfer loopt terug naar het strand; de zee mag even rusten.',punten:PUNTEN},
 ];
 /* Zes visuals per poster (geüpload in /admin → posters). Zolang er geen zijn, toont het productvenster
-   de poster en de twee lijst-dia's. Visuals en de centrale catalogus komen uit /api/catalogus (onderaan). */
+   de poster en twee dia's met een posterhanger. Visuals en de centrale catalogus komen uit /api/catalogus (onderaan). */
 let visuals={};const eigenBeeld={};
 /* Varianten (formaat × papier) per poster. Zonder centrale catalogus: elk formaat op mat papier. */
 let papiersoorten=[{id:'mat',naam:'Mat art-papier',uitleg:'Enhanced Matte Art Paper van 200 g/m²: mat, zonder glans, dus geen spiegeling van lampen of ramen. Kleuren blijven rustig en diep.',gsm:200}];
 let varianten={};
-const variantenVan=id=>varianten[id]||formaten.map(f=>({sku:`SKF-${id}-${f.id}`.toUpperCase(),formaat:f.id,papier:'mat',prijs:f.prijs,levertijd:null}));
-const variantVan=r=>variantenVan(r.id).find(v=>r.sku?v.sku===r.sku:(v.formaat===r.formaat&&v.papier===(r.papier||'mat')));
+const variantenVan=id=>varianten[id]||formaten.map(f=>({sku:`SKF-${id}-${f.id}`.toUpperCase(),formaat:f.id,papier:'mat',lijst:null,lijst_kleur:null,prijs:f.prijs,levertijd:null}));
+const variantVan=r=>variantenVan(r.id).find(v=>r.sku?v.sku===r.sku:(v.formaat===r.formaat&&v.papier===(r.papier||'mat')&&!v.lijst));
+/* Posterhangers (Prodigi): kleur per variant; zonder hanger = lijst null. */
+const HANGERKLEUR={black:'zwart',natural:'naturel',white:'wit'};
+const ophangVan=v=>v?.lijst==='hanger'?`posterhanger ${HANGERKLEUR[v.lijst_kleur]||v.lijst_kleur}`:'';
 const papierVan=id=>papiersoorten.find(p=>p.id===id);
-const vanafVan=id=>Math.min(...variantenVan(id).map(v=>v.prijs));
+const vanafVan=id=>Math.min(...variantenVan(id).filter(v=>!v.lijst).map(v=>v.prijs));
 const beeld=id=>eigenBeeld[id]?.beeld||`/posters/${id}.webp`,klein=id=>eigenBeeld[id]?.klein||`/posters/${id}-klein.webp`;
 const zichtbaar=()=>posters.filter(p=>p.actief!==false);
 const vind=id=>posters.find(p=>p.id===id);
@@ -608,33 +620,44 @@ function bladerPoster(stap){const lijst=zichtbaar();if(!huidigePoster||!lijst.le
 function openModal(s){
   huidigePoster=s;const lijst=zichtbaar(),nr=lijst.findIndex(p=>p.id===s.id)+1;
   const vs=variantenVan(s.id),fmts=formaten.filter(f=>vs.some(v=>v.formaat===f.id));
-  let formaat=((fmts.find(f=>f.standaard)||fmts[0])||{}).id,papier=(vs.find(v=>v.formaat===formaat)||{}).papier;
-  const huidig=()=>vs.find(v=>v.formaat===formaat&&v.papier===papier)||vs.find(v=>v.formaat===formaat);
+  let formaat=((fmts.find(f=>f.standaard)||fmts[0])||{}).id,papier=(vs.find(v=>v.formaat===formaat&&!v.lijst)||{}).papier,ophang=null;
+  const pastOphang=v=>ophang?v.lijst==='hanger'&&v.lijst_kleur===ophang:!v.lijst;
+  const huidig=()=>vs.find(v=>v.formaat===formaat&&v.papier===papier&&pastOphang(v))||vs.find(v=>v.formaat===formaat&&pastOphang(v));
+  const kaal=()=>vs.find(v=>v.formaat===formaat&&v.papier===papier&&!v.lijst)||vs.find(v=>v.formaat===formaat&&!v.lijst);
+  const hangDia=(k,v,tekst)=>{const f=formaatVan(formaat),r=f?.mm?f.mm[0]/f.mm[1]:.75,b=v?.hanger_cm&&f?.mm?Math.max(1.02,v.hanger_cm*10/f.mm[0]):1.07;
+    return `<div class="dia hanger k-${k}"><div class="hang" style="--r:${r};--b:${b}"><svg class="koord" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><path d="M2 40 L50 3 L98 40"/><circle cx="50" cy="3" r="1.6"/></svg><div class="lat boven"></div><img src="${klein(s.id)}" alt="Poster ${s.naam} aan een posterhanger in ${HANGERKLEUR[k]}"><div class="lat onder"></div></div><small>${tekst}</small></div>`;};
   const tekenDias=()=>{const v=huidig(),alle=visuals[s.id]||[],vis=alle.filter(x=>(!x.formaat||x.formaat===v?.formaat)&&(!x.papier||x.papier===v?.papier));
     const dias=vis.length?vis.map((x,k)=>`<div class="dia foto"><img src="${x.url}" alt="${(x.alt||`Poster ${s.naam}, beeld ${k+1}`).replace(/"/g,'&quot;')}"${k?' loading="lazy"':''}></div>`):[`<div class="dia poster"><img src="${beeld(s.id)}" alt="Poster ${s.naam}"><small>poster ${s.naam.toLowerCase()}</small></div>`,
-    `<div class="dia lijst hout"><div class="lijstje"><img src="${klein(s.id)}" alt="Poster ${s.naam} in een houten lijst"></div><small>voorbeeld in een houten lijst — lijst niet meegeleverd</small></div>`,
-    `<div class="dia lijst zwart"><div class="lijstje"><div class="pp"><img src="${klein(s.id)}" alt="Poster ${s.naam} in een zwarte lijst met passe-partout"></div></div><small>voorbeeld in een zwarte lijst — lijst niet meegeleverd</small></div>`];
+    ...(v?.lijst?[hangDia(v.lijst_kleur,v,`met posterhanger ${HANGERKLEUR[v.lijst_kleur]}`)]:hangers().slice(0,2).map(h=>hangDia(h.lijst_kleur,h,`met posterhanger ${HANGERKLEUR[h.lijst_kleur]} — los te kiezen`)))];
     baan.innerHTML=dias.join('');vg.forEach((i,k)=>i.style.display=k<Math.min(dias.length,vg.length)?'':'none');aantalDias=Math.min(dias.length,vg.length);dia=0;toonDia();};
-  const papieren=()=>papiersoorten.filter(p=>vs.some(v=>v.formaat===formaat&&v.papier===p.id));
+  const papieren=()=>papiersoorten.filter(p=>vs.some(v=>v.formaat===formaat&&v.papier===p.id&&pastOphang(v)));
+  /* Hangerkleuren in dit formaat (naturel eerst), één variant per kleur. */
+  const hangers=()=>['natural','black','white'].map(k=>vs.find(v=>v.formaat===formaat&&v.lijst==='hanger'&&v.lijst_kleur===k)).filter(Boolean);
   mt.innerHTML=`<nav class="posternav" aria-label="Andere posters"><button data-blader="-1">← vorige</button><span>${nr} / ${lijst.length} · <button class="alle">alle posters</button></span><button data-blader="1">volgende →</button></nav>
     <h3 id="modalTitel">${s.naam.toLowerCase()} — poster</h3><p class="sub">${s.sub}</p><p>${s.zin}</p><ul>${s.punten.map(p=>`<li>${p}</li>`).join('')}</ul>
     <div class="label">formaat</div>
     <div class="formaten" role="group" aria-label="Formaat" data-keuze="formaat">${fmts.map(f=>`<button data-f="${f.id}" aria-pressed="${f.id===formaat}">${f.label}</button>`).join('')}</div>
     <div class="papierkeuze"></div>
+    <div class="ophangkeuze"></div>
     <p class="varinfo" aria-live="polite"></p>
     <button class="bestel">in het mandje <span></span></button>
     <small style="font-size:9px;opacity:.55;margin-top:-10px">incl. btw · verzending € 6,95 (België € 9,95), gratis vanaf € 75 · 14 dagen bedenktijd, zie <a href="/voorwaarden.html" style="color:inherit">voorwaarden</a></small>
     <button class="naarmandje">bekijk je mandje →</button>`;
   const be=mt.querySelector('.bestel'),prijs=be.querySelector('span');
-  const zetVariant=()=>{const ps=papieren();if(!ps.some(p=>p.id===papier))papier=(ps[0]||{}).id;
+  const zetVariant=()=>{const hs=hangers();if(ophang&&!hs.some(h=>h.lijst_kleur===ophang))ophang=null;
+    const ps=papieren();if(!ps.some(p=>p.id===papier))papier=(ps[0]||{}).id;
+    const basis=kaal();
+    mt.querySelector('.ophangkeuze').innerHTML=hs.length?`<div class="label">ophangen</div><div class="formaten" role="group" aria-label="Ophangen" data-keuze="ophang"><button data-o="" aria-pressed="${!ophang}">los</button>${hs.map(h=>`<button data-o="${h.lijst_kleur}" aria-pressed="${h.lijst_kleur===ophang}">hanger ${HANGERKLEUR[h.lijst_kleur]}${basis?` +${euro(h.prijs-basis.prijs)}`:''}</button>`).join('')}</div>`:'';
+    mt.querySelector('[data-keuze="ophang"]')?.addEventListener('click',kies);
     mt.querySelector('.papierkeuze').innerHTML=ps.length>1?`<div class="label">papier</div><div class="formaten" role="group" aria-label="Papier" data-keuze="papier">${ps.map(p=>`<button data-p="${p.id}" aria-pressed="${p.id===papier}">${p.naam.toLowerCase()}</button>`).join('')}</div>`:'';
     mt.querySelector('[data-keuze="papier"]')?.addEventListener('click',kies);
     const v=huidig(),f=formaatVan(formaat),pa=papierVan(v?.papier);prijs.textContent=v?euro(v.prijs):'';
     const lt=v?.levertijd?`Gemaakt op bestelling: verwacht ${v.levertijd.productie+v.levertijd.verzending}–${v.levertijd.productie+v.levertijd.verzending+2} werkdagen tot bezorging.`:'Gemaakt op bestelling.';
-    mt.querySelector('.varinfo').innerHTML=`${f?.mm?`Exact ${cm(f.mm[0])} × ${cm(f.mm[1])} cm, zonder lijst.`:''} ${pa?`<b>${pa.naam}</b>${pa.gsm?` (${pa.gsm} g/m²)`:''}: ${pa.uitleg}`:''}<br>${lt}`;
+    const hang=v?.lijst==='hanger'?`<b>Posterhanger ${HANGERKLEUR[v.lijst_kleur]}</b>: latten van massief hout boven en onder${v.hanger_cm?` (${v.hanger_cm} cm breed${f?.mm&&v.hanger_cm*10-f.mm[0]>50?`, de poster is ${cm(f.mm[0])} cm: de latten steken aan beide kanten zo'n ${cm((v.hanger_cm*10-f.mm[0])/2)} cm uit`:''})`:''}, met magneetsluiting en een ophangkoord in dezelfde kleur. De latten bedekken boven en onder tot 1,5 cm van de poster.<br>`:'';
+    mt.querySelector('.varinfo').innerHTML=`${f?.mm?`Exact ${cm(f.mm[0])} × ${cm(f.mm[1])} cm${v?.lijst?'.':', zonder ophanging, opgerold in een koker.'}`:''} ${hang}${pa?`<b>${pa.naam}</b>${pa.gsm?` (${pa.gsm} g/m²)`:''}: ${pa.uitleg}`:''}<br>${lt}`;
     tekenDias();};
   function kies(e){const b=e.target.closest('button');if(!b)return;
-    if(b.dataset.f)formaat=b.dataset.f;if(b.dataset.p)papier=b.dataset.p;
+    if(b.dataset.f)formaat=b.dataset.f;if(b.dataset.p)papier=b.dataset.p;if(b.dataset.o!==undefined)ophang=b.dataset.o||null;
     b.parentElement.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));zetVariant();}
   mt.querySelector('[data-keuze="formaat"]').addEventListener('click',kies);
   zetVariant();
@@ -708,7 +731,7 @@ function totaalHtml(land){const b=bedragen(land);const nog=GRATIS_VANAF-b.sub;
 function tekenMandje(){
   const n=regels.reduce((t,r)=>t+r.aantal,0);document.getElementById('mandjeTel').textContent=n;
   ml.innerHTML=regels.length?regels.map((r,i)=>{const p=vind(r.id),v=variantVan(r),f=formaatVan(v.formaat),pa=papiersoorten.length>1?papierVan(v.papier):null;
-    return `<div class="regel"><img src="${klein(p.id)}" alt=""><div><b>${p.naam.toLowerCase()}</b><small>${f.label}${pa?` · ${pa.naam.toLowerCase()}`:''}</small>
+    return `<div class="regel"><img src="${klein(p.id)}" alt=""><div><b>${p.naam.toLowerCase()}</b><small>${f.label}${pa?` · ${pa.naam.toLowerCase()}`:''}${v.lijst?` · ${ophangVan(v)}`:''}</small>
       <div class="aantal"><button data-i="${i}" data-d="-1" aria-label="Eén minder">−</button>${r.aantal}<button data-i="${i}" data-d="1" aria-label="Eén meer">+</button><button class="weg" data-i="${i}" data-weg>verwijder</button></div></div>
       <span>${euro(v.prijs*r.aantal)}</span></div>`;}).join(''):'<p class="leeg">Je mandje is nog leeg. Kies een poster via “shop posters”.</p>';
   mtot.innerHTML=regels.length?totaalHtml('NL'):'';naarAf.disabled=!regels.length;
@@ -730,7 +753,7 @@ bf.land.addEventListener('change',tekenMandje);
 function toonKlaar(t){document.getElementById('klaarTekst').textContent=t;zetStap('klaar');}
 /* Terugval zonder betaal- of mailkoppeling op de server: de bestelling als e-mail klaarzetten. */
 function bestelMail(k){const b=bedragen(k.land);
-  const tekst=['Hallo Skiffa,','','Ik wil graag bestellen:',...regels.map(r=>{const v=variantVan(r);return `- ${r.aantal}× ${vind(r.id).naam}, ${formaatVan(v.formaat).label}, ${papierVan(v.papier)?.naam||v.papier} (${euro(v.prijs*r.aantal)})`;}),
+  const tekst=['Hallo Skiffa,','','Ik wil graag bestellen:',...regels.map(r=>{const v=variantVan(r);return `- ${r.aantal}× ${vind(r.id).naam}, ${formaatVan(v.formaat).label}, ${papierVan(v.papier)?.naam||v.papier}${v.lijst?`, ${ophangVan(v)}`:''} (${euro(v.prijs*r.aantal)})`;}),
     `Verzending: ${b.verz?euro(b.verz):'gratis'}`,`Totaal: ${euro(b.tot)}`,'',k.naam,k.straat,`${k.postcode} ${k.plaats}`,k.land==='BE'?'België':'Nederland',k.email].concat(k.opmerking?['','Opmerking: '+k.opmerking]:[]).join('\n');
   return `mailto:${WINKEL_MAIL}?subject=${encodeURIComponent('Bestelling posters')}&body=${encodeURIComponent(tekst)}`;}
 bf.addEventListener('submit',async e=>{
@@ -784,7 +807,7 @@ tekenMandje();
     const met=d.producten.filter(p=>Array.isArray(p.varianten)&&p.varianten.length);if(!met.length)return;
     formaten.splice(0,formaten.length,...d.formaten.map(f=>({id:String(f.id),label:String(f.label),mm:f.mm,prijs:Math.min(...met.flatMap(p=>p.varianten).filter(v=>v.formaat===f.id).map(v=>Number(v.prijs)))})).filter(f=>isFinite(f.prijs)));
     if(Array.isArray(d.papiersoorten)&&d.papiersoorten.length)papiersoorten=d.papiersoorten;
-    varianten=Object.fromEntries(met.map(p=>[String(p.id),p.varianten.map(v=>({sku:String(v.sku),formaat:String(v.formaat),papier:String(v.papier),prijs:Number(v.prijs),levertijd:v.levertijd||null}))]));
+    varianten=Object.fromEntries(met.map(p=>[String(p.id),p.varianten.map(v=>({sku:String(v.sku),formaat:String(v.formaat),papier:String(v.papier),lijst:v.lijst==='hanger'?'hanger':null,lijst_kleur:HANGERKLEUR[v.lijst_kleur]?v.lijst_kleur:null,hanger_cm:Number(v.hanger_cm)||null,prijs:Number(v.prijs),levertijd:v.levertijd||null}))]));
     vanaf=Math.min(...formaten.map(f=>f.prijs));
     posters=met.map(p=>{const oud=vind(p.id);
       if(p.beeld&&!String(p.beeld).startsWith('/posters/'))eigenBeeld[p.id]={beeld:p.beeld,klein:p.klein||p.beeld};

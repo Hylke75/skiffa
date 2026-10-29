@@ -75,6 +75,23 @@ export const BEELDEN = {};
 /** Producten waarvan het beeld als bestand in /posters/ staat (meegeleverd met de site). */
 export const VASTE_BEELDEN = new Set(Object.keys(POSTERS));
 export const CODE_FORMATEN = JSON.parse(JSON.stringify(ALLE_FORMATEN));
+// Ophangen: SKIFFA verkoopt geen lijsten, wel posterhangers van Prodigi: latten van massief hout boven en onder,
+// met magneetsluiting en een ophangkoord in dezelfde kleur. Een variant met `lijst = 'hanger'` en `lijst_kleur`
+// (Prodigi-kleur) is de poster mét hanger; hij gebruikt hetzelfde drukbestand als de poster zonder hanger.
+export const OPHANGING = {
+  hanger: {
+    naam: 'posterhanger',
+    kleuren: { black: 'zwart', natural: 'naturel', white: 'wit' },
+    prodigi: { '30x40': 'POSTER-HANGER-30-12X16-PORT', '50x70': 'POSTER-HANGER-50-20X28-PORT', '70x100': 'POSTER-HANGER-80-28X40-PORT' },
+    breedte_cm: { '30x40': 32, '50x70': 52, '70x100': 86 },
+    afdekking_mm: 15,   // de latten bedekken boven en onder tot 1,5 cm van de poster
+    papier: 'mat',      // Prodigi drukt de poster bij een hanger op Enhanced Matte Art (EMA, 200 g/m²)
+    attributen: { paperType: 'EMA', substrateWeight: '200gsm' },
+  },
+};
+export const ophangLabel = (lijst, kleur) => (lijst === 'hanger' ? `posterhanger ${OPHANGING.hanger.kleuren[kleur] || kleur || ''}`.trim() : null);
+export const hangerSku = (basisSku, kleur) => `${basisSku}-HANGER-${(OPHANGING.hanger.kleuren[kleur] || kleur).toUpperCase()}`;
+
 /** Alle varianten, op SKU. */
 export const VARIANTEN = {};
 
@@ -143,11 +160,17 @@ export async function laadCatalogus({ vers = false } = {}) {
     const productieRoute = ins?.[0]?.waarden?.aan ? 'prodigi' : 'eigen';
     const fOp = Object.fromEntries(f.map((x) => [x.id, x])), paOp = Object.fromEntries(pa.map((x) => [x.id, x])), pOp = Object.fromEntries(p.map((x) => [x.id, x]));
 
+    // Drukbestand: een variant met ophanging gebruikt het bestand (en een eventuele uitzondering) van dezelfde
+    // poster zonder ophanging, in hetzelfde formaat en op hetzelfde papier.
+    const basisVan = (x) => (x.lijst ? v.find((y) => !y.lijst && y.product_id === x.product_id && y.formaat_id === x.formaat_id && y.papier_id === x.papier_id) || null : null);
     const varianten = {};
-    for (const x of v) {
+    for (const rij of v) {
+      const b = basisVan(rij);
+      const x = b ? { ...rij, drukbestand_id: b.drukbestand_id, qc_uitzondering: b.qc_uitzondering } : rij;
       const ontbreekt = ontbreektVoor(x, { product: pOp[x.product_id], formaat: fOp[x.formaat_id], papier: paOp[x.papier_id], druk: drukOp.get(x.drukbestand_id), productieRoute });
+      if (rij.lijst && !b) ontbreekt.push('geen poster zonder ophanging in dit formaat en papier (daar hoort het drukbestand bij)');
       varianten[x.sku] = {
-        sku: x.sku, product_id: x.product_id, formaat: x.formaat_id, papier: x.papier_id, lijst: x.lijst, lijst_kleur: x.lijst_kleur,
+        sku: x.sku, product_id: x.product_id, formaat: x.formaat_id, papier: x.papier_id, lijst: x.lijst, lijst_kleur: x.lijst_kleur, basis_sku: b?.sku || null,
         prijs: Number(x.prijs), kostprijs: x.kostprijs == null ? null : Number(x.kostprijs), bestelbaar: !ontbreekt.length, ontbreekt,
         prodigi_sku: x.prodigi_sku, prodigi_attributen: x.prodigi_attributen || {}, sizing: x.sizing, prodigi_status: x.prodigi_status,
         drukbestand_id: x.drukbestand_id, drukbestand_status: drukOp.get(x.drukbestand_id)?.status || null, qc_uitzondering: x.qc_uitzondering || null, ean: x.ean,

@@ -33,6 +33,7 @@ const variantRij = async (sku) => (await db(`varianten?sku=eq.${encodeURICompone
 async function drukUpload(b) {
   const v = await variantRij(b.sku);
   if (!v) return { fout: 'Variant niet gevonden.' };
+  if (v.lijst) return { fout: 'Een variant met posterhanger gebruikt het drukbestand van de poster zonder ophanging: upload het daar.' };
   const ext = String(b.bestandsnaam || '').toLowerCase().match(/\.(pdf|png|jpe?g)$/)?.[1];
   if (!ext) return { fout: 'Drukbestand moet jpg, png of pdf zijn.' };
   const bytes = Number(b.bytes);

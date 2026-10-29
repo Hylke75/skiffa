@@ -144,6 +144,23 @@ ok(r.ok && T.poster_visuals[0].soort === 'mockup' && T.poster_visuals[0].formaat
 r = await call(catalogus, { url: '/api/catalogus' }); ok(r.j.visuals.golf[0].soort === 'mockup' && r.j.visuals.golf[0].formaat === '50x70', 'webshop krijgt het beeld met formaat (wisselt mee bij de keuze)');
 r = (await M('beeld-upload', { poster_id: 'golf', positie: 31, bytes: 5 })).j; ok(!r.ok, 'maximaal 30 beelden');
 
+// ---- posterhangers (Prodigi): zelfde drukbestand als de poster zonder ophanging ----
+r = (await C('varianten-genereren', { product_id: 'golf', alleen_hangers: true, hangers: { kleuren: ['black'], prijzen: {} } })).j; ok(!r.ok, 'posterhangers: zonder prijs niets aangemaakt');
+r = (await C('varianten-genereren', { product_id: 'golf', alleen_hangers: true, hangers: { kleuren: ['black', 'natural'], prijzen: { '50x70': '65' } } })).j;
+ok(r.ok && T.varianten.filter((v) => v.product_id === 'golf' && v.lijst === 'hanger').length === 2, 'posterhangers: alleen formaten met prijs, één per gekozen kleur');
+const hz = T.varianten.find((v) => v.sku === 'SKF-GOLF-50X70-HANGER-ZWART');
+ok(hz && hz.prodigi_sku === 'POSTER-HANGER-50-20X28-PORT' && hz.prodigi_attributen.color === 'black' && hz.prodigi_attributen.paperType === 'EMA' && !hz.drukbestand_id, 'hanger: Prodigi-product en kleur ingevuld, geen eigen drukbestand');
+r = (await M('druk-upload', { sku: hz.sku, bytes: 1000, bestandsnaam: 'x.png' })).j; ok(!r.ok && /zonder ophanging/.test(r.melding), 'drukbestand uploaden bij een hanger geweigerd (hoort bij de poster zonder ophanging)');
+await C('variant', { sku: hz.sku, handmatig_leverbaar: true, handmatig_reden: 'proef met hanger goedgekeurd' }); await cat.laadCatalogus({ vers: true });
+const vh = cat.VARIANTEN[hz.sku];
+ok(vh.bestelbaar && vh.drukbestand_id && vh.drukbestand_id === cat.VARIANTEN['SKF-GOLF-50X70'].drukbestand_id && vh.basis_sku === 'SKF-GOLF-50X70', 'hanger erft het drukbestand van de poster zonder ophanging en is bestelbaar');
+r = await call(catalogus, { url: '/api/catalogus' }); const pv = r.j.producten.find((p) => p.id === 'golf').varianten.find((v) => v.sku === hz.sku);
+ok(pv && pv.ophanging === 'posterhanger zwart' && pv.lijst_kleur === 'black' && pv.hanger_cm === 52, 'webshop: ophanging, kleur en hangerbreedte');
+r = await call(bestel, { method: 'POST', body: { klant, regels: [{ id: 'golf', sku: hz.sku, aantal: 1 }], akkoord: true, t: 5000 } });
+const rh = T.bestelregels.at(-1);
+ok(r.j.ok && rh.variant_sku === hz.sku && rh.lijst_kleur === 'black' && /posterhanger zwart/.test(rh.formaat_label) && Number(rh.prijs) === 65 && rh.drukbestand_versie_id === vh.drukbestand_id, 'bestelling met posterhanger: label, kleur, prijs en drukbestand vastgelegd');
+r = (await C('uitzondering', { sku: hz.sku, reden: 'lange genoeg reden hier' })).j; ok(!r.ok && /zonder ophanging/.test(r.melding), 'uitzondering hoort bij de poster zonder ophanging');
+
 // ---- archiveren ----
 await C('product', { id: 'golf', titel: 'Golf', status: 'gearchiveerd' }); await cat.laadCatalogus({ vers: true });
 ok(!cat.POSTERS.golf && cat.ALLE_POSTERS.golf, 'gearchiveerd: niet meer te koop, wel bekend voor oude bestellingen');

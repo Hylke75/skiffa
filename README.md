@@ -13,10 +13,11 @@ een scène die met de tijd in Scheveningen meebeweegt (uitsneden uit de posters)
 
 - **Beelden**: `posters/<id>.webp` (productbeeld, 1333 × 2000) en `posters/<id>-klein.webp` (600 × 900).
   `sfeer/` bevat uitsneden uit de posters: de drie scènes (ochtend/middag/avond) en het beeld bij contact.
-  Het productvenster toont de poster, de poster in een houten lijst en in een zwarte lijst met passe-partout.
+  Het productvenster toont de poster en de poster aan een posterhanger (de gekozen kleur, of naturel en zwart als voorbeeld).
+  SKIFFA verkoopt geen lijsten.
 - **Catalogus**: `posters` en `formaten` in `index.html` (teksten, beelden), en `api/_catalogus.js`
   (ids en prijzen; de server rekent altijd zelf). Check: `node scripts/check-catalogus.mjs`.
-- **Formaten** (standaard lijstmaten): **50 × 70 cm** (€ 45, hoofdproduct en standaard geselecteerd), 30 × 40 cm
+- **Formaten**: **50 × 70 cm** (€ 45, hoofdproduct en standaard geselecteerd), 30 × 40 cm
   (€ 29, instap/cadeau), 70 × 100 cm (€ 69, grote uitvoering). Klaargezet voor Noord-Amerika, nog niet te koop:
   18 × 24 inch en 24 × 36 inch (`actief: false` in `api/_catalogus.js`; prijzen voorlopig). Verzending € 6,95
   (BE € 9,95), gratis vanaf € 75.
@@ -33,7 +34,7 @@ Een poster voer je één keer in bij **/admin → producten**; webshop, kanalen 
 - **Product**: interne naam, productcode (`SKF-001` …), verkooptitel, beschrijving, stijlregel, collectie, onderwerp,
   kleuren, zoekwoorden, SEO-titel en -beschrijving, URL (`/#<id>`, staat vast) en status: concept → gereed voor
   publicatie → actief → gearchiveerd. Gereed/actief kan pas als minstens één variant klaar is voor verkoop.
-- **Varianten**: formaat × papiersoort (later ook lijst). Elke variant heeft een eigen SKU, verkoopprijs, kostprijs,
+- **Varianten**: formaat × papiersoort, los of met posterhanger (zie [Posterhangers](#posterhangers)). Elke variant heeft een eigen SKU, verkoopprijs, kostprijs,
   levertijd, drukbestand en gekoppeld Prodigi-product. Formaten en papiersoorten (met uitleg voor de klant) beheer
   je onder "formaten en papier".
 - **Bestelbaar** is een variant pas als: poster actief, variant/formaat/papier actief, prijs ingevuld, leverbaar
@@ -76,6 +77,29 @@ Een poster voer je één keer in bij **/admin → producten**; webshop, kanalen 
 
 Papier: EMA, Enhanced Matte Art Paper, 200 g/m², gedrukt in Nederland. Hahnemühle Photo Rag (308 g/m²) en
 German Etching (310 g/m²) bestaan in dezelfde maten, maar kosten fors meer (70 × 100 Photo Rag: € 59,30 excl. btw).
+
+### Posterhangers
+
+SKIFFA verkoopt geen lijsten, wel de **posterhanger** van Prodigi: latten van massief hout boven en onder, met
+magneetsluiting en een ophangkoord in dezelfde kleur (zwart, naturel of wit). De latten bedekken boven en onder tot
+1,5 cm van de poster. Opgezocht 29 oktober 2026 in de live-API (migratie `20261029090000_posterhangers.sql`):
+
+| formaat | Prodigi-artikel | breedte hanger | kostprijs NL (excl. btw, incl. verzending) | voorstel verkoopprijs (incl. btw) | marge (excl. btw) |
+|---|---|---|---|---|---|
+| 30 × 40 cm | `POSTER-HANGER-30-12X16-PORT` | 32 cm | € 21,60 | € 45 | € 15,59 |
+| 50 × 70 cm | `POSTER-HANGER-50-20X28-PORT` | 52 cm | € 28,60 | € 65 | € 25,12 |
+| 70 × 100 cm | `POSTER-HANGER-80-28X40-PORT` | 86 cm | € 44,60 | € 99 | € 37,22 |
+
+- Opties bij Prodigi: `color` (black/natural/white), `paperType` EMA, `substrateWeight` 200gsm. De kleur verandert de
+  prijs niet. Er bestaat geen 70 cm-hanger voor 28 × 40 inch: bij 70 × 100 steekt de 86 cm-lat aan beide kanten
+  zo'n 7,5 cm uit; de webshop zegt dat er eerlijk bij.
+- Een hanger is een eigen variant (`lijst = 'hanger'`, `lijst_kleur` = Prodigi-kleur, SKU `<basis>-HANGER-ZWART|NATUREL|WIT`)
+  en gebruikt het **drukbestand (en een eventuele QC-uitzondering) van dezelfde poster zonder ophanging**; uploaden en
+  uitzonderingen gaan daar. Houd boven en onder 1,5 cm vrij van tekst.
+- Beheer → producten → poster → "posterhangers toevoegen": kies kleuren en een prijs per formaat (leeg = dat formaat
+  niet); daarna per variant "controleer bij Prodigi".
+- Webshop: keuze "los / hanger zwart / naturel / wit" met meerprijs; mandje, bestelling, mails en factuur noemen de
+  hanger; de Meta-feed geeft hem als variant met `color`. Bol, Etsy, Amazon en TikTok krijgen (nog) alleen de losse poster.
 
 Eén route naar productie: elke betaalde bestelling (webshop of kanaal) gaat vanuit SKIFFA **hooguit één keer** naar
 Prodigi (`api/_prodigi.js`, `api/prodigi.js`, migratie `20261029040000_prodigi.sql`). Instellingen in **/admin → kanalen →
