@@ -16,6 +16,7 @@ import { valideer, overzichtHtml, mail, mollie, naarMetadata, euro, esc, winkelM
 import { dbAan, db, haalBestelling, log } from './_db.js';
 import { mails, mailAan, vanRij, factuurLink } from './_mails.js';
 import { verwerkMollie } from './_verwerk.js';
+import * as service from './_service.js';
 
 function basisUrl(req) {
   if (process.env.SITE_URL) return process.env.SITE_URL.replace(/\/$/, '');
@@ -46,6 +47,7 @@ async function status(req, res) {
       } catch { /* oudere database */ }
       res.status(200).json({
         zendingen, annulering_aangevraagd: annuleringAangevraagd, annuleren_mogelijk: ['betaald', 'in_productie'].includes(b.status) && !annuleringAangevraagd,
+        melden_mogelijk: ['deels_verzonden', 'verzonden', 'geleverd'].includes(b.status), regel_ids: (b.bestelregels || []).map((x) => x.id),
         ok: true, nummer: o.nummer, status: b.status, betaalwijze: b.betaalwijze, aangemaakt: b.aangemaakt_op,
         regels: o.regels, subtotaal: o.subtotaal, verzending: o.verzending, totaal: o.totaal,
         track_trace: b.track_trace, verzonden_op: b.verzonden_op, factuur: factuurLink(o) || null,
@@ -170,6 +172,41 @@ async function annuleringsverzoek(res, body) {
   return res.status(200).json({ ok: true, melding: 'Je verzoek is ontvangen. We laten je zo snel mogelijk weten of annuleren nog kan; je poster kan al in productie zijn.' });
 }
 
+// De klant meldt schade of een ander probleem na verzending, met foto's (privé opslag, alleen via de
+// beheeromgeving te bekijken). Ook dit is een verzoek: de winkel beslist over herdruk of terugbetaling.
+const MELDING_SOORT = { schade: 'schade', verkeerd: 'klacht', anders: 'klacht' };
+const MAX_MELDINGEN = 3;
+async function klantBestelling(body) {
+  const nr = String(body.nr || ''), t = String(body.t || '');
+  if (!dbAan() || !/^SK-[A-Z0-9]{4,20}$/.test(nr) || !/^[a-f0-9]{36}$/.test(t)) return null;
+  const b = await haalBestelling('nummer', nr);
+  return b && b.token === t ? b : null;
+}
+async function melding(res, body) {
+  const b = await klantBestelling(body);
+  if (!b) return res.status(404).json({ ok: false, melding: 'Onbekende bestelling.' });
+  if (!['deels_verzonden', 'verzonden', 'geleverd'].includes(b.status)) return res.status(400).json({ ok: false, melding: 'Melden kan zodra je bestelling onderweg is. Mail ons gerust.' });
+  const eigen = await db(`serviceverzoeken?bestelling_id=eq.${b.id}&door=eq.klant&soort=neq.annulering&select=id,status`);
+  if (body.actie === 'melding') {
+    if (eigen.length >= MAX_MELDINGEN) return res.status(400).json({ ok: false, melding: 'Je hebt al meerdere meldingen gedaan; we nemen contact met je op. Mail ons gerust als het dringend is.' });
+    const soort = MELDING_SOORT[body.soort];
+    const tekst = String(body.omschrijving || '').replace(/[<>]/g, '').trim().slice(0, 2000);
+    if (!soort) return res.status(400).json({ ok: false, melding: 'Kies wat er aan de hand is.' });
+    if (tekst.length < 5) return res.status(400).json({ ok: false, melding: 'Beschrijf kort wat er aan de hand is.' });
+    const r = await service.nieuwVerzoek({ bestelling_id: b.id, soort, omschrijving: `${body.soort === 'verkeerd' ? 'Verkeerde poster of formaat ontvangen: ' : ''}${tekst}`, regels: body.regels }, 'klant');
+    if (r.fout) return res.status(400).json({ ok: false, melding: r.fout });
+    if (mailAan()) await mail({ to: winkelMail(), subject: `Melding van een klant: ${b.nummer}`, html: `<p>${esc(b.naam)} meldt een probleem met ${esc(b.nummer)} (${esc(soort)}).</p><p>${esc(tekst)}</p><p>Foto's en afhandeling: /admin (actielijst).</p>` }).catch(() => {});
+    return res.status(200).json({ ok: true, id: r.verzoek.id });
+  }
+  // Foto's alleen bij een eigen, open melding van deze bestelling.
+  const id = Number(body.id);
+  if (!eigen.some((x) => x.id === id && ['open', 'in_behandeling'].includes(x.status))) return res.status(404).json({ ok: false, melding: 'Melding niet gevonden.' });
+  const r = body.actie === 'melding-foto'
+    ? await service.fotoUpload({ id, bestandsnaam: body.bestandsnaam, bytes: body.bytes })
+    : await service.fotoBevestig({ id, pad: body.pad });
+  return r.fout ? res.status(400).json({ ok: false, melding: r.fout }) : res.status(200).json(r);
+}
+
 export default async function handler(req, res) {
   await laadCatalogus();
   res.setHeader('Cache-Control', 'no-store');
@@ -188,6 +225,7 @@ export default async function handler(req, res) {
     return;
   }
   if (body.actie === 'annuleringsverzoek') return annuleringsverzoek(res, body);
+  if (['melding', 'melding-foto', 'melding-foto-klaar'].includes(body.actie)) return melding(res, body);
   // Bot: geef een neutraal antwoord en doe niets.
   if (body.website || Number(body.t) < 1500) {
     res.status(200).json({ ok: true, modus: 'mail', nummer: 'SK-0' });

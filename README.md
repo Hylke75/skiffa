@@ -230,7 +230,9 @@ Eén product, één keer ingevoerd; per kanaal vink je aan of het daar verschijn
   (terugbetalen, herdruk, annuleren) is altijd een aparte, bevestigde actie.
 - **Klant**: op de statuspagina kan een webshopklant annulering *aanvragen* zolang de bestelling betaald of in
   productie is. Dat wordt een serviceverzoek en een mail aan de winkel, geen automatische annulering. Tracking
-  verschijnt pas als er een code is, per zending. Schadefoto's stuurt de klant (nog) per mail; jij voegt ze toe.
+  verschijnt pas als er een code is, per zending. Na verzending kan de klant een probleem melden (beschadigd,
+  verkeerde poster, iets anders) met maximaal 5 foto's; dat wordt een serviceverzoek op de actielijst (max. 3 per
+  bestelling), de foto's staan privé en zijn alleen via de beheeromgeving te zien.
   Tabellen: `serviceverzoeken`, `actie_afgehandeld` (`supabase/migrations/20261029060000_service.sql`).
 
 ## Social via Buffer (Beheer → social)
