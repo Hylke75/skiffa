@@ -6,9 +6,9 @@
 //   verzendingen  track-and-trace doorgeven (createReceiptShipment); Etsy mailt de koper zelf
 // Secrets (Vercel): ETSY_KEYSTRING, ETSY_SHARED_SECRET (etsy.com/developers → Your apps).
 import crypto from 'node:crypto';
-import { POSTERS, FORMATEN } from '../_catalogus.js';
+import { POSTERS } from '../_catalogus.js';
 import { db } from '../_db.js';
-import { MAX_SCHRIJFACTIES, MAX_VERZENDPOGINGEN, foutTekst, kanaalPrijs, sku, titelEn, omschrijving, vervoerderCode } from './gemeen.js';
+import { MAX_SCHRIJFACTIES, MAX_VERZENDPOGINGEN, foutTekst, kanaalPrijs, titelEn, omschrijving, vervoerderCode, varianten } from './gemeen.js';
 import { kanaalBeelden } from '../_media.js';
 import { listings, zetListing, bekendeOrders, regel, importeer, teMelden, gemeld, meldenMislukt, annuleerVanKanaal, zetInstellingen } from './opslag.js';
 
@@ -114,10 +114,10 @@ const ok = (s) => s >= 200 && s < 300;
 
 // Voorraad/prijzen voor updateListingInventory: één product per formaat, prijs per formaat.
 export function inventaris(poster_id, s, aan) {
-  const products = Object.entries(FORMATEN).map(([formaat, f]) => ({
-    sku: sku(poster_id, formaat),
-    property_values: [{ property_id: PROPERTY, property_name: 'Size', value_ids: [], values: [f.label.replace(/ /g, '')] }],
-    offerings: [{ price: kanaalPrijs(f.prijs, s.opslag_pct), quantity: aan ? s.voorraad : 0, is_enabled: aan, readiness_state_id: Number(s.verwerkingsprofiel_id) }],
+  const products = varianten().filter((v) => v.poster_id === poster_id).map((v) => ({
+    sku: v.sku,
+    property_values: [{ property_id: PROPERTY, property_name: 'Size', value_ids: [], values: [v.formaat_label.replace(/ /g, '')] }],
+    offerings: [{ price: kanaalPrijs(v.prijs, s.opslag_pct), quantity: aan ? s.voorraad : 0, is_enabled: aan, readiness_state_id: Number(s.verwerkingsprofiel_id) }],
   }));
   return { products, price_on_property: [PROPERTY], quantity_on_property: [PROPERTY], sku_on_property: [PROPERTY], readiness_state_on_property: [] };
 }

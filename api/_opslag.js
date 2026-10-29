@@ -42,4 +42,13 @@ export async function verwijder(bucket, paden) {
   await st(`object/${bucket}`, { method: 'DELETE', body: { prefixes: paden } });
 }
 
+/** De eerste bytes van een (privé) bestand, om het type en de maten zelf te controleren. */
+export async function kop(bucket, pad, bytes = 512 * 1024) {
+  const r = await fetch(`${URL_()}/storage/v1/object/authenticated/${bucket}/${pad}`, {
+    headers: { apikey: KEY(), authorization: `Bearer ${KEY()}`, range: `bytes=0-${bytes - 1}` },
+  });
+  if (!r.ok && r.status !== 206) throw new Error(`opslag-${r.status}`);
+  return Buffer.from(await r.arrayBuffer());
+}
+
 export const publiekeUrl = (bucket, pad) => `${URL_()}/storage/v1/object/public/${bucket}/${pad}`;

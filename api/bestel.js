@@ -12,7 +12,7 @@
 // Spam: honeypot-veld `website` en een minimale invultijd `t` (ms).
 
 import { laadCatalogus } from './_catalogus.js';
-import { valideer, overzichtHtml, mail, mollie, naarMetadata, euro, esc, winkelMail } from './_bestelling.js';
+import { valideer, overzichtHtml, mail, mollie, naarMetadata, euro, esc, winkelMail, regelRij } from './_bestelling.js';
 import { dbAan, db, haalBestelling, log } from './_db.js';
 import { mails, mailAan, vanRij, factuurLink } from './_mails.js';
 import { verwerkMollie } from './_verwerk.js';
@@ -68,7 +68,7 @@ async function metAdministratie(req, res, b) {
   });
   await db('bestelregels', {
     method: 'POST',
-    body: b.regels.map((r) => ({ bestelling_id: rij.id, poster_id: r.id, poster_naam: r.naam, formaat: r.formaat, formaat_label: r.formaatLabel, prijs: r.prijs, aantal: r.aantal })),
+    body: b.regels.map((r) => regelRij(rij.id, r)),   // met vaste kopie van de variant
   });
   await log(rij.id, 'aangemaakt', `${b.regels.reduce((t, r) => t + r.aantal, 0)} poster(s), ${euro(b.totaal)}`, 'klant');
 
@@ -95,7 +95,7 @@ async function metAdministratie(req, res, b) {
   }
 
   // Zonder Mollie: betaalverzoek volgt handmatig (zichtbaar in de administratie).
-  const o = vanRij({ ...rij, bestelregels: b.regels.map((r) => ({ poster_naam: r.naam, formaat_label: r.formaatLabel, prijs: r.prijs, aantal: r.aantal })) });
+  const o = vanRij({ ...rij, bestelregels: b.regels.map((r) => ({ poster_naam: r.naam, formaat_label: r.formaatLabel, papier_label: r.papierLabel, prijs: r.prijs, aantal: r.aantal })) });
   for (const [soort, fn] of [['ontvangen', () => mails.ontvangen(o)], ['winkel', () => mails.winkelNieuw(o, 'Nog niet betaald: stuur een betaalverzoek.')]]) {
     try { if (await fn()) await log(rij.id, 'mail', soort); } catch (e) { await log(rij.id, 'fout', `mail ${soort}: ${e.message}`); }
   }

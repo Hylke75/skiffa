@@ -161,6 +161,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 .formaten{display:flex;gap:6px;flex-wrap:wrap}
 .formaten button{flex-shrink:0;height:26px;padding:0 12px;border:1px solid #000;border-radius:999px;font-size:10px}
 .formaten button[aria-pressed="true"]{background:#000;color:#fff}
+.modaltekst .varinfo{font-size:10px;line-height:1.7;opacity:.8;margin-top:-6px}
+.modaltekst .varinfo b{font-weight:500}
 .modaltekst .label{font-size:8px;letter-spacing:.24em;opacity:.55;margin-bottom:-10px}
 .modaltekst .naarmandje{font-size:9px;letter-spacing:.14em;border-bottom:1px solid currentColor;align-self:flex-start;opacity:0;pointer-events:none;transition:opacity .3s}
 .modaltekst .naarmandje.aan{opacity:1;pointer-events:auto}
@@ -357,7 +359,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
       <p>Elke poster is een hoofdstuk: <b>Surfcultuur</b>, de eerste surfers bij de pier in de jaren zeventig. <b>Windsurf</b>, de zeilen bij de vuurtoren in de jaren tachtig. <b>Golf</b>, de zee zoals je hem 's avonds onthoudt. En de pier door de jaren heen: <b>Pier en Strand</b>, <b>Boulevard</b>, <b>De Pier</b>, <b>Surf</b>, <b>Havenpier</b>, <b>Skiffa</b>, <b>Skyview</b>, <b>Havenhoofden</b>, <b>Noordzee Surf</b>, <b>Regatta</b>, <b>Zon</b>, <b>Vuurtoren</b> en <b>Reuzenrad</b>. Drie formaten, kleine oplages.</p>
     </div>
     <div class="kol">
-      <p>We drukken ze op <b>250 grams mat fine-art papier</b>, in Den Haag. Alle formaten zijn standaard lijstmaten (30 × 40, 50 × 70 en 70 × 100 cm), dus een lijst vind je overal. Ze gaan opgerold de deur uit, in een stevige koker en zonder lijst: hoe hij aan de muur komt, kies je zelf.</p>
+      <p>Elke poster wordt <b>op bestelling gedrukt</b> op fine-art papier; bij elke poster zie je welk papier je kunt kiezen. Alle formaten zijn standaard lijstmaten (30 × 40, 50 × 70 en 70 × 100 cm), dus een lijst vind je overal. Ze gaan opgerold de deur uit, in een stevige koker en zonder lijst: hoe hij aan de muur komt, kies je zelf.</p>
       <p>De scène op deze site volgt de tijd in Scheveningen. 's Ochtends, 's middags en 's avonds zie je een uitsnede uit een van de posters; die wisselt bij zonsopkomst, om twaalf uur en bij zonsondergang. De balk onderaan is het getij van vandaag, met hoog- en laagwater. Daarboven staat het strandbericht: wind, temperatuur, zeewater en of het een grijze dag is. Beweeg over de balk om zelf door de dag te gaan.</p>
     </div>
   </div>
@@ -397,9 +399,9 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
     </div>
     <div class="kol">
       <div class="label">veelgestelde vragen</div>
-      <div class="vraag"><b>Welk formaat moet ik nemen?</b><p>50 × 70 cm is de maat die het meest gekozen wordt: groot genoeg voor een gewone wand. 30 × 40 cm voor boven je bureau, als cadeau of om er een paar te combineren, 70 × 100 cm als hij de kamer mag dragen. Alle drie zijn standaard lijstmaten.</p></div>
+      <div class="vraag"><b>Welk formaat moet ik nemen?</b><p>30 × 40 cm voor boven je bureau, als cadeau of om er een paar te combineren. 50 × 70 cm voor een gewone wand. 70 × 100 cm als hij de kamer mag dragen. Alle drie zijn standaard lijstmaten; de poster wordt geleverd zonder lijst.</p></div>
       <div class="vraag"><b>Zit er een lijst bij?</b><p>Nee. De poster komt opgerold in een koker. Leg hem een nacht plat onder een paar boeken, dan ligt hij weer recht.</p></div>
-      <div class="vraag"><b>Hoe snel wordt er verzonden?</b><p>Voor 15:00 besteld gaat de volgende werkdag op de post. Verzenden kost € 6,95 (België € 9,95) en is gratis vanaf € 75.</p></div>
+      <div class="vraag"><b>Hoe snel wordt er verzonden?</b><p>Elke poster wordt op bestelling gedrukt; bij de poster zie je de verwachte levertijd. Verzenden kost € 6,95 (België € 9,95) en is gratis vanaf € 75.</p></div>
       <div class="vraag"><b>Kan ik retourneren?</b><p>Ja, je hebt 14 dagen bedenktijd na ontvangst. Meld het via dit formulier en stuur de poster onbeschadigd in de koker terug; het terugsturen is voor eigen rekening. Zie de <a href="/voorwaarden.html" style="border-bottom:1px solid currentColor">voorwaarden</a>.</p></div>
       <div class="vraag"><b>Komen er meer posters?</b><p>Ja, maar alleen als er een verhaal bij hoort. Volg Instagram voor de volgende.</p></div>
     </div>
@@ -443,11 +445,11 @@ const rm=matchMedia('(prefers-reduced-motion: reduce)').matches;
 /* Catalogus. De prijzen staan ook in api/_catalogus.js (de server rekent altijd zelf);
    controleer met: node scripts/check-catalogus.mjs */
 const formaten=[
-  {id:'30x40',label:'30 × 40 cm',prijs:29},
-  {id:'50x70',label:'50 × 70 cm',prijs:45,standaard:true},
-  {id:'70x100',label:'70 × 100 cm',prijs:69},
+  {id:'30x40',label:'30 × 40 cm',prijs:29,mm:[300,400]},
+  {id:'50x70',label:'50 × 70 cm',prijs:45,mm:[500,700],standaard:true},
+  {id:'70x100',label:'70 × 100 cm',prijs:69,mm:[700,1000]},
 ];
-const PUNTEN=['giclée op 250 grams mat fine-art papier','gedrukt in Den Haag','standaard lijstmaten: 30 × 40, 50 × 70 en 70 × 100 cm','opgerold verstuurd in een koker, zonder lijst'];
+const PUNTEN=['op bestelling gedrukt op fine-art papier','standaard lijstmaten','opgerold verstuurd in een koker, zonder lijst'];
 /* actief:false = klaargezet, nog niet zichtbaar (beeld volgt). Zet op true zodra /posters/<id>.webp er staat
    en voeg hem ook toe aan api/_catalogus.js. */
 let posters=[
@@ -471,6 +473,13 @@ let posters=[
 /* Zes visuals per poster (geüpload in /admin → posters). Zolang er geen zijn, toont het productvenster
    de poster en de twee lijst-dia's. Visuals en de centrale catalogus komen uit /api/catalogus (onderaan). */
 let visuals={};const eigenBeeld={};
+/* Varianten (formaat × papier) per poster. Zonder centrale catalogus: elk formaat op mat papier. */
+let papiersoorten=[{id:'mat',naam:'Mat fine-art papier',uitleg:'Dik, mat papier zonder glans: kleuren blijven rustig en er is geen spiegeling van lampen of ramen.',gsm:250}];
+let varianten={};
+const variantenVan=id=>varianten[id]||formaten.map(f=>({sku:`SKF-${id}-${f.id}`.toUpperCase(),formaat:f.id,papier:'mat',prijs:f.prijs,levertijd:null}));
+const variantVan=r=>variantenVan(r.id).find(v=>r.sku?v.sku===r.sku:(v.formaat===r.formaat&&v.papier===(r.papier||'mat')));
+const papierVan=id=>papiersoorten.find(p=>p.id===id);
+const vanafVan=id=>Math.min(...variantenVan(id).map(v=>v.prijs));
 const beeld=id=>eigenBeeld[id]?.beeld||`/posters/${id}.webp`,klein=id=>eigenBeeld[id]?.klein||`/posters/${id}-klein.webp`;
 const zichtbaar=()=>posters.filter(p=>p.actief!==false);
 const vind=id=>posters.find(p=>p.id===id);
@@ -597,27 +606,42 @@ function bladerPoster(stap){const lijst=zichtbaar();if(!huidigePoster||!lijst.le
   openModal(lijst[(i+stap+lijst.length)%lijst.length]);if(uitNav)mt.querySelector(`[data-blader="${stap}"]`)?.focus();}
 function openModal(s){
   huidigePoster=s;const lijst=zichtbaar(),nr=lijst.findIndex(p=>p.id===s.id)+1;
-  let formaat=(formaten.find(f=>f.standaard)||formaten[0]).id;
-  const vis=visuals[s.id]||[];
-  const dias=vis.length?vis.map((v,k)=>`<div class="dia foto"><img src="${v.url}" alt="${(v.alt||`Poster ${s.naam}, beeld ${k+1}`).replace(/"/g,'&quot;')}"${k?' loading="lazy"':''}></div>`):[`<div class="dia poster"><img src="${beeld(s.id)}" alt="Poster ${s.naam}"><small>poster ${s.naam.toLowerCase()}</small></div>`,
-    `<div class="dia lijst hout"><div class="lijstje"><img src="${klein(s.id)}" alt="Poster ${s.naam} in een houten lijst"></div><small>in een houten lijst — lijst niet meegeleverd</small></div>`,
-    `<div class="dia lijst zwart"><div class="lijstje"><div class="pp"><img src="${klein(s.id)}" alt="Poster ${s.naam} in een zwarte lijst met passe-partout"></div></div><small>in een zwarte lijst met passe-partout — lijst niet meegeleverd</small></div>`];
-  baan.innerHTML=dias.join('');vg.forEach((i,k)=>i.style.display=k<dias.length?'':'none');aantalDias=dias.length;
+  const vs=variantenVan(s.id),fmts=formaten.filter(f=>vs.some(v=>v.formaat===f.id));
+  let formaat=((fmts.find(f=>f.standaard)||fmts[0])||{}).id,papier=(vs.find(v=>v.formaat===formaat)||{}).papier;
+  const huidig=()=>vs.find(v=>v.formaat===formaat&&v.papier===papier)||vs.find(v=>v.formaat===formaat);
+  const tekenDias=()=>{const v=huidig(),alle=visuals[s.id]||[],vis=alle.filter(x=>(!x.formaat||x.formaat===v?.formaat)&&(!x.papier||x.papier===v?.papier));
+    const dias=vis.length?vis.map((x,k)=>`<div class="dia foto"><img src="${x.url}" alt="${(x.alt||`Poster ${s.naam}, beeld ${k+1}`).replace(/"/g,'&quot;')}"${k?' loading="lazy"':''}></div>`):[`<div class="dia poster"><img src="${beeld(s.id)}" alt="Poster ${s.naam}"><small>poster ${s.naam.toLowerCase()}</small></div>`,
+    `<div class="dia lijst hout"><div class="lijstje"><img src="${klein(s.id)}" alt="Poster ${s.naam} in een houten lijst"></div><small>voorbeeld in een houten lijst — lijst niet meegeleverd</small></div>`,
+    `<div class="dia lijst zwart"><div class="lijstje"><div class="pp"><img src="${klein(s.id)}" alt="Poster ${s.naam} in een zwarte lijst met passe-partout"></div></div><small>voorbeeld in een zwarte lijst — lijst niet meegeleverd</small></div>`];
+    baan.innerHTML=dias.join('');vg.forEach((i,k)=>i.style.display=k<Math.min(dias.length,vg.length)?'':'none');aantalDias=Math.min(dias.length,vg.length);dia=0;toonDia();};
+  const papieren=()=>papiersoorten.filter(p=>vs.some(v=>v.formaat===formaat&&v.papier===p.id));
   mt.innerHTML=`<nav class="posternav" aria-label="Andere posters"><button data-blader="-1">← vorige</button><span>${nr} / ${lijst.length} · <button class="alle">alle posters</button></span><button data-blader="1">volgende →</button></nav>
     <h3 id="modalTitel">${s.naam.toLowerCase()} — poster</h3><p class="sub">${s.sub}</p><p>${s.zin}</p><ul>${s.punten.map(p=>`<li>${p}</li>`).join('')}</ul>
     <div class="label">formaat</div>
-    <div class="formaten" role="group" aria-label="Formaat">${formaten.map(f=>`<button data-f="${f.id}" aria-pressed="${f.id===formaat}">${f.label}</button>`).join('')}</div>
+    <div class="formaten" role="group" aria-label="Formaat" data-keuze="formaat">${fmts.map(f=>`<button data-f="${f.id}" aria-pressed="${f.id===formaat}">${f.label}</button>`).join('')}</div>
+    <div class="papierkeuze"></div>
+    <p class="varinfo" aria-live="polite"></p>
     <button class="bestel">in het mandje <span></span></button>
-    <small style="font-size:9px;opacity:.55;margin-top:-10px">incl. btw · verzending € 6,95, gratis vanaf € 75</small>
+    <small style="font-size:9px;opacity:.55;margin-top:-10px">incl. btw · verzending € 6,95 (België € 9,95), gratis vanaf € 75 · 14 dagen bedenktijd, zie <a href="/voorwaarden.html" style="color:inherit">voorwaarden</a></small>
     <button class="naarmandje">bekijk je mandje →</button>`;
   const be=mt.querySelector('.bestel'),prijs=be.querySelector('span');
-  const zetPrijs=()=>{prijs.textContent=euro(formaten.find(f=>f.id===formaat).prijs);};zetPrijs();
-  mt.querySelector('.formaten').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;formaat=b.dataset.f;mt.querySelectorAll('.formaten button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));zetPrijs();});
-  be.addEventListener('click',()=>{voegToe(s.id,formaat);be.classList.add('klaar');be.firstChild.textContent='toegevoegd ';mt.querySelector('.naarmandje').classList.add('aan');setTimeout(()=>{be.classList.remove('klaar');be.firstChild.textContent='in het mandje ';},1600);});
+  const zetVariant=()=>{const ps=papieren();if(!ps.some(p=>p.id===papier))papier=(ps[0]||{}).id;
+    mt.querySelector('.papierkeuze').innerHTML=ps.length>1?`<div class="label">papier</div><div class="formaten" role="group" aria-label="Papier" data-keuze="papier">${ps.map(p=>`<button data-p="${p.id}" aria-pressed="${p.id===papier}">${p.naam.toLowerCase()}</button>`).join('')}</div>`:'';
+    mt.querySelector('[data-keuze="papier"]')?.addEventListener('click',kies);
+    const v=huidig(),f=formaatVan(formaat),pa=papierVan(v?.papier);prijs.textContent=v?euro(v.prijs):'';
+    const lt=v?.levertijd?`Gemaakt op bestelling: verwacht ${v.levertijd.productie+v.levertijd.verzending}–${v.levertijd.productie+v.levertijd.verzending+2} werkdagen tot bezorging.`:'Gemaakt op bestelling.';
+    mt.querySelector('.varinfo').innerHTML=`${f?.mm?`Exact ${String(f.mm[0]/10).replace('.',',')} × ${String(f.mm[1]/10).replace('.',',')} cm, zonder lijst.`:''} ${pa?`<b>${pa.naam}</b>${pa.gsm?` (${pa.gsm} g/m²)`:''}: ${pa.uitleg}`:''}<br>${lt}`;
+    tekenDias();};
+  function kies(e){const b=e.target.closest('button');if(!b)return;
+    if(b.dataset.f)formaat=b.dataset.f;if(b.dataset.p)papier=b.dataset.p;
+    b.parentElement.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));zetVariant();}
+  mt.querySelector('[data-keuze="formaat"]').addEventListener('click',kies);
+  zetVariant();
+  be.addEventListener('click',()=>{const v=huidig();if(!v)return;voegToe(s.id,v);be.classList.add('klaar');be.firstChild.textContent='toegevoegd ';mt.querySelector('.naarmandje').classList.add('aan');setTimeout(()=>{be.classList.remove('klaar');be.firstChild.textContent='in het mandje ';},1600);});
   mt.querySelector('.naarmandje').addEventListener('click',()=>{sluitModal();openMandje();});
   mt.querySelectorAll('[data-blader]').forEach(b=>b.addEventListener('click',()=>bladerPoster(+b.dataset.blader)));
   mt.querySelector('.alle').addEventListener('click',()=>{sluitModal();openOver();setTimeout(()=>document.getElementById('overBlok').scrollIntoView({behavior:rm?'auto':'smooth'}),rm?0:700);});
-  dia=0;toonDia();zetOpen(modal,true,document.getElementById('modalSluit'));scene.classList.add('grijs');
+  zetOpen(modal,true,document.getElementById('modalSluit'));scene.classList.add('grijs');
   history.replaceState(null,'','#'+s.id);
 }
 function toonDia(){baan.style.transform=`translateX(${-dia*100}%)`;vg.forEach((i,k)=>{i.className=k<dia?'klaar':k===dia?'bezig':'';});clearTimeout(diaTimer);diaTimer=setTimeout(()=>{dia=(dia+1)%aantalDias;toonDia();},3200);}
@@ -627,7 +651,7 @@ modal.addEventListener('click',e=>{if(e.target===modal)sluitModal();});
 document.querySelector('.carrousel').addEventListener('click',e=>{if(e.target.closest('.voortgang'))return;dia=(dia+1)%aantalDias;toonDia();});
 
 const shopLijst=document.getElementById('shopLijst');
-function tekenShop(){shopLijst.innerHTML=zichtbaar().map(s=>`<button class="knop vol" data-id="${s.id}"><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${s.kleur};margin-right:8px;border:1px solid rgba(0,0,0,.15)"></i>${s.naam.toLowerCase()} — vanaf ${euro(vanaf)}</button>`).join('');}
+function tekenShop(){shopLijst.innerHTML=zichtbaar().map(s=>`<button class="knop vol" data-id="${s.id}"><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${s.kleur};margin-right:8px;border:1px solid rgba(0,0,0,.15)"></i>${s.naam.toLowerCase()} — vanaf ${euro(vanafVan(s.id))}</button>`).join('');}
 tekenShop();
 /* Shopmenu: hover/focus op desktop, tikken op touchscreens */
 const shop=document.querySelector('.shop'),shopKnop=document.getElementById('shopKnop');
@@ -638,7 +662,7 @@ shopLijst.addEventListener('click',e=>{const b=e.target.closest('[data-id]');if(
 
 /* Over */
 const over=document.getElementById('over'),ob=document.getElementById('overBlok');
-function tekenOverBlok(){if(!overGetekend)return;ob.style.setProperty('--per',Math.min(8,Math.max(4,Math.ceil(zichtbaar().length/2))));ob.innerHTML=zichtbaar().map(s=>`<button class="poster" data-id="${s.id}"><img src="${klein(s.id)}" alt="Poster ${s.naam}" loading="lazy"><b>${s.naam.toLowerCase()}</b>vanaf ${euro(vanaf)}</button>`).join('');}
+function tekenOverBlok(){if(!overGetekend)return;ob.style.setProperty('--per',Math.min(8,Math.max(4,Math.ceil(zichtbaar().length/2))));ob.innerHTML=zichtbaar().map(s=>`<button class="poster" data-id="${s.id}"><img src="${klein(s.id)}" alt="Poster ${s.naam}" loading="lazy"><b>${s.naam.toLowerCase()}</b>vanaf ${euro(vanafVan(s.id))}</button>`).join('');}
 ob.addEventListener('click',e=>{const b=e.target.closest('[data-id]');if(!b)return;openModal(vind(b.dataset.id));});
 let overGetekend=false;
 function openOver(){if(!overGetekend){overGetekend=true;tekenOverBlok();}zetOpen(over,true);scene.classList.add('grijs');}
@@ -673,23 +697,23 @@ const mandje=document.getElementById('mandje'),ml=document.getElementById('mandj
   bf=document.getElementById('bestelForm'),bfout=document.getElementById('bestelFout'),naarAf=document.getElementById('naarAfrekenen');
 const VERZENDING={NL:6.95,BE:9.95},GRATIS_VANAF=75;
 let regels=[],bestelStart=0;
-try{regels=JSON.parse(localStorage.getItem('skiffa-mandje')||'[]').filter(r=>vind(r.id)&&formaten.some(f=>f.id===r.formaat));}catch(_){regels=[];}
+try{regels=JSON.parse(localStorage.getItem('skiffa-mandje')||'[]').filter(r=>vind(r.id)&&variantVan(r));}catch(_){regels=[];}
 const bewaar=()=>{try{localStorage.setItem('skiffa-mandje',JSON.stringify(regels));}catch(_){}};
 const formaatVan=id=>formaten.find(f=>f.id===id);
-function bedragen(land){const sub=regels.reduce((t,r)=>t+formaatVan(r.formaat).prijs*r.aantal,0);const verz=!sub||sub>=GRATIS_VANAF?0:VERZENDING[land]||VERZENDING.NL;return{sub,verz,tot:sub+verz};}
+function bedragen(land){const sub=regels.reduce((t,r)=>t+(variantVan(r)?.prijs||0)*r.aantal,0);const verz=!sub||sub>=GRATIS_VANAF?0:VERZENDING[land]||VERZENDING.NL;return{sub,verz,tot:sub+verz};}
 function totaalHtml(land){const b=bedragen(land);const nog=GRATIS_VANAF-b.sub;
   return `<span>subtotaal</span><span>${euro(b.sub)}</span><span>verzending${land==='BE'?' (België)':''}</span><span>${b.verz?euro(b.verz):'gratis'}</span><span class="som">totaal</span><span class="som">${euro(b.tot)}</span>`+
     (b.sub&&nog>0?`<small>nog ${euro(nog)} tot gratis verzending</small>`:'')+(b.sub?'<small>alle prijzen inclusief btw</small>':'');}
 function tekenMandje(){
   const n=regels.reduce((t,r)=>t+r.aantal,0);document.getElementById('mandjeTel').textContent=n;
-  ml.innerHTML=regels.length?regels.map((r,i)=>{const p=vind(r.id),f=formaatVan(r.formaat);
-    return `<div class="regel"><img src="${klein(p.id)}" alt=""><div><b>${p.naam.toLowerCase()}</b><small>${f.label}</small>
+  ml.innerHTML=regels.length?regels.map((r,i)=>{const p=vind(r.id),v=variantVan(r),f=formaatVan(v.formaat),pa=papiersoorten.length>1?papierVan(v.papier):null;
+    return `<div class="regel"><img src="${klein(p.id)}" alt=""><div><b>${p.naam.toLowerCase()}</b><small>${f.label}${pa?` · ${pa.naam.toLowerCase()}`:''}</small>
       <div class="aantal"><button data-i="${i}" data-d="-1" aria-label="Eén minder">−</button>${r.aantal}<button data-i="${i}" data-d="1" aria-label="Eén meer">+</button><button class="weg" data-i="${i}" data-weg>verwijder</button></div></div>
-      <span>${euro(f.prijs*r.aantal)}</span></div>`;}).join(''):'<p class="leeg">Je mandje is nog leeg. Kies een poster via “shop posters”.</p>';
+      <span>${euro(v.prijs*r.aantal)}</span></div>`;}).join(''):'<p class="leeg">Je mandje is nog leeg. Kies een poster via “shop posters”.</p>';
   mtot.innerHTML=regels.length?totaalHtml('NL'):'';naarAf.disabled=!regels.length;
   document.getElementById('bestelTotaal').innerHTML=totaalHtml(bf.land.value);
 }
-function voegToe(id,formaat){const r=regels.find(x=>x.id===id&&x.formaat===formaat);if(r)r.aantal=Math.min(10,r.aantal+1);else regels.push({id,formaat,aantal:1});bewaar();tekenMandje();}
+function voegToe(id,v){const r=regels.find(x=>x.id===id&&variantVan(x)?.sku===v.sku);if(r)r.aantal=Math.min(10,r.aantal+1);else regels.push({id,sku:v.sku,formaat:v.formaat,papier:v.papier,aantal:1});bewaar();tekenMandje();}
 ml.addEventListener('click',e=>{const b=e.target.closest('button[data-i]');if(!b)return;const i=+b.dataset.i;
   if(b.hasAttribute('data-weg'))regels.splice(i,1);else{regels[i].aantal=Math.min(10,regels[i].aantal+ +b.dataset.d);if(regels[i].aantal<1)regels.splice(i,1);}
   bewaar();tekenMandje();});
@@ -705,7 +729,7 @@ bf.land.addEventListener('change',tekenMandje);
 function toonKlaar(t){document.getElementById('klaarTekst').textContent=t;zetStap('klaar');}
 /* Terugval zonder betaal- of mailkoppeling op de server: de bestelling als e-mail klaarzetten. */
 function bestelMail(k){const b=bedragen(k.land);
-  const tekst=['Hallo Skiffa,','','Ik wil graag bestellen:',...regels.map(r=>`- ${r.aantal}× ${vind(r.id).naam}, ${formaatVan(r.formaat).label} (${euro(formaatVan(r.formaat).prijs*r.aantal)})`),
+  const tekst=['Hallo Skiffa,','','Ik wil graag bestellen:',...regels.map(r=>{const v=variantVan(r);return `- ${r.aantal}× ${vind(r.id).naam}, ${formaatVan(v.formaat).label}, ${papierVan(v.papier)?.naam||v.papier} (${euro(v.prijs*r.aantal)})`;}),
     `Verzending: ${b.verz?euro(b.verz):'gratis'}`,`Totaal: ${euro(b.tot)}`,'',k.naam,k.straat,`${k.postcode} ${k.plaats}`,k.land==='BE'?'België':'Nederland',k.email].concat(k.opmerking?['','Opmerking: '+k.opmerking]:[]).join('\n');
   return `mailto:${WINKEL_MAIL}?subject=${encodeURIComponent('Bestelling posters')}&body=${encodeURIComponent(tekst)}`;}
 bf.addEventListener('submit',async e=>{
@@ -743,10 +767,10 @@ tekenMandje();
 (()=>{const s=document.createElement('script');s.type='application/ld+json';
   s.textContent=JSON.stringify({'@context':'https://schema.org','@graph':zichtbaar().map(p=>({'@type':'Product',name:`Poster ${p.naam}`,description:p.zin,
     image:location.origin+beeld(p.id),url:location.origin+'/#'+p.id,brand:{'@type':'Brand',name:'Skiffa'},
-    offers:{'@type':'AggregateOffer',priceCurrency:'EUR',lowPrice:vanaf,highPrice:Math.max(...formaten.map(f=>f.prijs)),offerCount:formaten.length,availability:'https://schema.org/InStock'}}))});
+    offers:{'@type':'AggregateOffer',priceCurrency:'EUR',lowPrice:vanafVan(p.id),highPrice:Math.max(...variantenVan(p.id).map(v=>v.prijs)),offerCount:variantenVan(p.id).length,availability:'https://schema.org/InStock'}}))});
   document.head.appendChild(s);})();
 
-/* ---------- Centrale catalogus (/admin → posters) ----------
+/* ---------- Centrale catalogus (/admin → producten) ----------
    Staat de catalogus in de database, dan zijn producten, formaten en prijzen daar leidend (de server rekent
    met dezelfde gegevens). Zonder database blijft alles zoals hierboven in de code. */
 (async()=>{
@@ -755,12 +779,16 @@ tekenMandje();
     const d=await r.json();if(!d||!d.ok)return;
     if(d.visuals)visuals=d.visuals;
     if(d.bron!=='database'||!Array.isArray(d.producten)||!d.producten.length||!Array.isArray(d.formaten)||!d.formaten.length)return;
-    formaten.splice(0,formaten.length,...d.formaten.map(f=>({id:String(f.id),label:String(f.label),prijs:Number(f.prijs),...(f.standaard?{standaard:true}:{})})));
+    // Alleen wat echt besteld kan worden: producten met bestelbare varianten.
+    const met=d.producten.filter(p=>Array.isArray(p.varianten)&&p.varianten.length);if(!met.length)return;
+    formaten.splice(0,formaten.length,...d.formaten.map(f=>({id:String(f.id),label:String(f.label),mm:f.mm,prijs:Math.min(...met.flatMap(p=>p.varianten).filter(v=>v.formaat===f.id).map(v=>Number(v.prijs)))})).filter(f=>isFinite(f.prijs)));
+    if(Array.isArray(d.papiersoorten)&&d.papiersoorten.length)papiersoorten=d.papiersoorten;
+    varianten=Object.fromEntries(met.map(p=>[String(p.id),p.varianten.map(v=>({sku:String(v.sku),formaat:String(v.formaat),papier:String(v.papier),prijs:Number(v.prijs),levertijd:v.levertijd||null}))]));
     vanaf=Math.min(...formaten.map(f=>f.prijs));
-    posters=d.producten.map(p=>{const oud=vind(p.id);
+    posters=met.map(p=>{const oud=vind(p.id);
       if(p.beeld&&!String(p.beeld).startsWith('/posters/'))eigenBeeld[p.id]={beeld:p.beeld,klein:p.klein||p.beeld};
-      return {id:String(p.id),naam:String(p.naam),sub:String(p.sub||''),zin:String(p.zin||''),kleur:/^#[0-9a-f]{6}$/i.test(p.kleur)?p.kleur:'#1F4E79',actief:true,punten:oud?.punten||PUNTEN};});
-    regels=regels.filter(x=>vind(x.id)&&formaatVan(x.formaat));bewaar();
+      return {id:String(p.id),naam:String(p.titel),sub:String(p.stijl||''),zin:String(p.beschrijving||''),kleur:/^#[0-9a-f]{6}$/i.test(p.accentkleur)?p.accentkleur:'#1F4E79',actief:true,punten:oud?.punten||PUNTEN};});
+    regels=regels.filter(x=>vind(x.id)&&variantVan(x));bewaar();
     tekenShop();if(overGetekend)tekenOverBlok();tekenMandje();plaatsHotspots(document.body.dataset.periode||'ochtend');
   }catch(_){/* stil terugvallen op de catalogus in de code */}
 })();

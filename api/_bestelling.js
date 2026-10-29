@@ -1,27 +1,39 @@
 // Gedeelde logica voor bestellen: valideren, prijzen uit de catalogus, mails.
 // (Bestanden met een _ in /api worden door Vercel niet als route gepubliceerd.)
-import { POSTERS, FORMATEN, verzendkosten } from './_catalogus.js';
+import { POSTERS, ALLE_FORMATEN, PAPIER, VARIANTEN, STANDAARD_PAPIER, variantVoor, verzendkosten } from './_catalogus.js';
 
 export const LANDEN = { NL: 'Nederland', BE: 'België' };
 const tekst = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
 export const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export const euro = (v) => '€ ' + v.toFixed(2).replace('.', ',');
 
-// Regels -> bedragen. Prijzen komen altijd uit de catalogus, nooit uit de browser.
+// Regels -> bedragen. Prijzen komen altijd uit de catalogus, nooit uit de browser. Een regel noemt de
+// variant (sku) of poster + formaat (+ papier); alleen bestelbare varianten mogen. Elke regel krijgt een
+// vaste kopie van de variant mee (sku, papier, drukbestandversie, Prodigi-product, kostprijs).
 export function prijs(regelsIn, land) {
   if (!Array.isArray(regelsIn) || !regelsIn.length || regelsIn.length > 20) return null;
   const regels = [];
   for (const r of regelsIn) {
-    const naam = POSTERS[r?.id];
-    const formaat = FORMATEN[r?.formaat];
+    const v = r?.sku ? VARIANTEN[r.sku] : variantVoor(r?.id, r?.formaat, r?.papier || STANDAARD_PAPIER);
     const aantal = Number(r?.aantal);
-    if (!naam || !formaat || !Number.isInteger(aantal) || aantal < 1 || aantal > 10) return null;
-    regels.push({ id: r.id, naam, formaat: r.formaat, formaatLabel: formaat.label, prijs: formaat.prijs, aantal });
+    if (!v || !v.bestelbaar || (r?.id && v.product_id !== r.id) || !POSTERS[v.product_id] || !Number.isInteger(aantal) || aantal < 1 || aantal > 10) return null;
+    regels.push({
+      id: v.product_id, naam: POSTERS[v.product_id], formaat: v.formaat, formaatLabel: ALLE_FORMATEN[v.formaat]?.label || v.formaat,
+      papier: v.papier, papierLabel: PAPIER[v.papier]?.naam || v.papier, sku: v.sku, prijs: v.prijs, aantal,
+      snapshot: { lijst: v.lijst, drukbestand_versie_id: v.drukbestand_id, prodigi_sku: v.prodigi_sku, prodigi_attributen: v.prodigi_attributen, sizing: v.sizing, kostprijs: v.kostprijs },
+    });
   }
   const subtotaal = regels.reduce((t, r) => t + r.prijs * r.aantal, 0);
   const verzending = verzendkosten(subtotaal, land);
   return { regels, subtotaal, verzending, totaal: subtotaal + verzending };
 }
+
+/** Bestelregel voor de database, met de vaste kopie van de variant. */
+export const regelRij = (bestellingId, r) => ({
+  bestelling_id: bestellingId, poster_id: r.id, poster_naam: r.naam, formaat: r.formaat, formaat_label: r.formaatLabel, prijs: r.prijs, aantal: r.aantal,
+  variant_sku: r.sku || null, papier_id: r.papier || null, papier_label: r.papierLabel || null,
+  ...(r.snapshot ? { lijst: r.snapshot.lijst, drukbestand_versie_id: r.snapshot.drukbestand_versie_id, prodigi_sku: r.snapshot.prodigi_sku, prodigi_attributen: r.snapshot.prodigi_attributen, sizing: r.snapshot.sizing, kostprijs: r.snapshot.kostprijs } : {}),
+});
 
 export function valideer(body) {
   const k = body.klant || {};
@@ -83,13 +95,13 @@ export function naarMetadata(b, nummer) {
   return {
     nr: nummer,
     k: [b.klant.naam, b.klant.email, b.klant.straat, b.klant.postcode, b.klant.plaats, b.klant.land, b.klant.opmerking.slice(0, 200)],
-    r: b.regels.map((r) => `${r.id}:${r.formaat}:${r.aantal}`).join(','),
+    r: b.regels.map((r) => `${r.sku || `${r.id}:${r.formaat}`}:${r.aantal}`).join(','),
   };
 }
 export function uitMetadata(m) {
   if (!m || !Array.isArray(m.k) || typeof m.r !== 'string') return null;
   const [naam, email, straat, postcode, plaats, land, opmerking] = m.k;
   const klant = { naam, email, straat, postcode, plaats, land, opmerking: opmerking || '' };
-  const b = prijs(m.r.split(',').map((s) => { const [id, formaat, aantal] = s.split(':'); return { id, formaat, aantal: Number(aantal) }; }), land);
+  const b = prijs(m.r.split(',').map((s) => { const d = s.split(':'); return d.length === 2 ? { sku: d[0], aantal: Number(d[1]) } : { id: d[0], formaat: d[1], aantal: Number(d[2]) }; }), land);
   return b ? { nummer: m.nr, klant, ...b } : null;
 }

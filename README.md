@@ -20,81 +20,79 @@ een scène die met de tijd in Scheveningen meebeweegt (uitsneden uit de posters)
   (€ 29, instap/cadeau), 70 × 100 cm (€ 69, grote uitvoering). Klaargezet voor Noord-Amerika, nog niet te koop:
   18 × 24 inch en 24 × 36 inch (`actief: false` in `api/_catalogus.js`; prijzen voorlopig). Verzending € 6,95
   (BE € 9,95), gratis vanaf € 75.
-- **Nieuwe poster toevoegen**: `python3 scripts/maak-beelden.py <bestand> <id>`, dan in `index.html` bij die
-  poster `actief:true` zetten en de id toevoegen aan `api/_catalogus.js`.
+- **Nieuwe poster toevoegen**: met database in /admin → producten (zie hieronder). Zonder database:
+  `python3 scripts/maak-beelden.py <bestand> <id>`, in `index.html` `actief:true` zetten en de id toevoegen aan `api/_catalogus.js`.
 - **Mandje**: wordt in de browser bewaard (`localStorage`).
 - **Afrekenen**: zie [Webshop en administratie](#webshop-en-administratie).
 
-## Centrale catalogus
+## Centrale catalogus (één keer invoeren)
 
-Producten (posters), formaten en prijzen staan in Supabase (`catalogus_producten`, `catalogus_formaten`,
-migratie `20261029030000_catalogus.sql`, met de huidige catalogus als startvulling) en worden beheerd in
-**/admin → posters**: formaten en prijzen (te koop, standaardformaat, Prodigi-SKU), per poster naam, stijl,
-omschrijving, kleur, volgorde, te koop en een eigen productbeeld. Nieuwe posters maak je daar ook aan.
+Een poster voer je één keer in bij **/admin → producten**; webshop, kanalen en productie lezen dezelfde gegevens
+(migratie `20261029030000_catalogus.sql`, code `api/_catalogus.js`, `api/catalogus.js`, `beheer/producten.js`).
 
-- Webshop: `/api/catalogus` (60 s gecachet) levert producten, formaten, prijzen en visuals; `index.html` neemt die
-  over. Server: `laadCatalogus()` in `api/_catalogus.js` vult dezelfde objecten die de rest van de code al
-  gebruikt (prijsberekening, kanalen, drukbestanden, Prodigi). Zonder database of met lege tabellen geldt de
-  catalogus in de code, dus de site werkt altijd.
-- Een poster kan pas te koop als er een beeld is (eigen productbeeld of `posters/<id>.webp`).
-- Prijzen per formaat gelden voor de webshop; de kanalen rekenen er hun opslag bovenop.
+- **Product**: interne naam, productcode (`SKF-001` …), verkooptitel, beschrijving, stijlregel, collectie, onderwerp,
+  kleuren, zoekwoorden, SEO-titel en -beschrijving, URL (`/#<id>`, staat vast) en status: concept → gereed voor
+  publicatie → actief → gearchiveerd. Gereed/actief kan pas als minstens één variant klaar is voor verkoop.
+- **Varianten**: formaat × papiersoort (later ook lijst). Elke variant heeft een eigen SKU, verkoopprijs, kostprijs,
+  levertijd, drukbestand en gekoppeld Prodigi-product. Formaten en papiersoorten (met uitleg voor de klant) beheer
+  je onder "formaten en papier".
+- **Bestelbaar** is een variant pas als: poster actief, variant/formaat/papier actief, prijs ingevuld, leverbaar
+  bevestigd (Prodigi-product gecontroleerd; zonder Prodigi alleen "handmatig leverbaar" met reden) en een
+  drukbestand dat de verplichte controles doorstond, of een gemotiveerde uitzondering. Wat ontbreekt staat per variant
+  in gewone taal. De webshop toont alleen bestelbare varianten.
+- **Beelden**: productfoto's, interieur-mock-ups, detail- en papierbeelden (max. 30, openbaar), optioneel per formaat of
+  papiersoort; de webshop wisselt ze mee bij de keuze.
+- **Vaste kopie bij bestelling**: elke bestelregel bewaart SKU, papier, prijs, drukbestandversie, Prodigi-product,
+  opties en kostprijs. Latere wijzigingen veranderen een bestaande bestelling niet.
+- Zonder database (of met lege tabellen) geldt de catalogus in de code: elke poster in elk formaat op mat papier.
+  **Let op**: na het koppelen van Supabase toont de winkel alleen wat bestelbaar is; regel per variant eerst het
+  drukbestand en de leverbaarheid.
 
-## Prodigi: drukken en verzenden
+## Drukbestanden en controle
 
-Elke betaalde bestelling (webshop, Etsy, bol, Amazon) gaat **hooguit één keer** naar Prodigi:
+- Per variant een eigen drukbestand (jpg, png of pdf) in de **privé** bucket `drukbestanden`, met versienummer. Downloaden
+  kan alleen ingelogd (kortlevende link) of via een ondertekende link in de mail aan de drukker; Prodigi krijgt een
+  tijdelijke link.
+- Bij elke upload controleert de **server zelf** (eerste bytes van het bestand) type, leesbaarheid en pixelmaten; de
+  browser meet alleen aanvullend. Controles: bestandstype, leesbaarheid, oriëntatie, beeldverhouding, resolutie op het
+  formaat, en de pixeleis van het gekoppelde Prodigi-product. Pdf's moeten precies passen (Prodigi schaalt ze niet).
+- Er wordt nooit stilzwijgend bijgesneden of vervormd: per variant kies je "passend" (witte rand) of "vullend" (bijsnijden,
+  alleen met uitzondering). "Toon uitsnede op het papier" laat precies zien wat er op het papier komt.
+- Meerdere bestanden tegelijk: sleep ze naar het vak in /admin → producten; de naam koppelt (`golf-50x70.png`,
+  `golf-50x70-mat.pdf`, `golf-1.jpg` voor beelden).
+- `python3 scripts/maak-drukbestanden.py <bron> <poster-id>` maakt jpg's op ware grootte voor alle formaten (bijgesneden vanuit
+  het midden, of `--passend` met wit; `--pdf` voor pdf met afloop). Formaten 30×40 (3:4), 50×70 (5:7) en 70×100 (7:10)
+  hebben elk een andere verhouding dan de 2:3-posters: een eigen ontwerp per formaat is beter.
 
-1. Na betaling (of import van een kanaalorder) komt er één regel in `fulfilments` (uniek per bestelling) met
-   status `wacht` en een instelbare **wachttijd** (standaard 30 min, zodat annuleren nog kan).
-2. Versturen gebeurt alleen na een **atomaire claim** (`skiffa_claim_fulfilment`): van `wacht`/`opnieuw` naar
-   `bezig`, en alleen als de bestelling betaald is, niet geannuleerd en zonder terugbetaling. Dubbele
-   webhooks, gelijktijdige runs of een dubbele klik krijgen de claim niet.
-3. Elke poging stuurt dezelfde **idempotentiesleutel** (`skiffa-<omgeving>-<bestelling-id>`) en het bestelnummer
-   als referentie mee. Een herhaling na een storing of time-out maakt bij Prodigi dus geen tweede order.
-   Vastgelopen claims worden na 10 minuten vrijgegeven en met dezelfde sleutel opnieuw geprobeerd.
-4. Vooraf gecontroleerd: Prodigi-SKU per formaat, drukbestand aanwezig en maat niet afwijkend, adres compleet.
-   Klopt iets niet, dan wordt de bestelling `geblokkeerd` (met reden in de administratie) en gaat er niets weg.
-5. Statusmeldingen van Prodigi komen binnen op `/api/prodigi?actie=callback&t=<token>`. De inhoud telt niet: de
-   order wordt altijd opnieuw bij Prodigi opgevraagd. Verzonden → bestelling op verzonden met track-and-trace,
-   klant krijgt de verzendmail (kanaalorders: track-and-trace gaat met de volgende sync naar het kanaal).
-   Als vangnet vraagt de cron elk uur open orders zelf op.
-6. Annuleren of terugbetalen vóór verzenden: er gaat niets naar Prodigi. Al verstuurd: "annuleer bij Prodigi".
+## Prodigi: printen, verpakken en verzenden
 
-Instellingen in **/admin → kanalen → Prodigi**: aan/uit, **proefomgeving** (sandbox, er wordt niets gedrukt),
-wachttijd, verzendmethode, beeld vullend of passend. Een proeforder kan na het live zetten één keer worden
-losgekoppeld en live verstuurd; een live-order nooit opnieuw. Zolang Prodigi uit staat, geldt de drukopdracht per
-mail (`DRUKKER_EMAIL`). Code: `api/_prodigi.js`, `api/prodigi.js`, migratie `20261029040000_prodigi.sql`.
+Eén route naar productie: elke betaalde bestelling (webshop of kanaal) gaat vanuit SKIFFA **hooguit één keer** naar
+Prodigi (`api/_prodigi.js`, `api/prodigi.js`, migratie `20261029040000_prodigi.sql`). Instellingen in **/admin → kanalen →
+Prodigi**; per variant in **/admin → producten**.
 
-**Nog te controleren in de Prodigi-sandbox**: de juiste SKU's voor 30×40, 50×70 en 70×100 (papier naar keuze),
-of pdf als drukbestand wordt geaccepteerd en hoe de afloop wordt verwerkt (vullend/passend), en hoe Prodigi met de
-idempotentiesleutel omgaat.
-
-## Drukbestanden en visuals
-
-Per poster hoort bij **elk formaat een eigen drukbestand** (hoge-resolutie pdf) en heeft de poster **zes visuals**
-voor de presentatie in de webshop. Beheer alles in **/admin → posters**.
-
-- **Uploaden**: sleep een hele map tegelijk naar het vak bovenaan. De bestandsnaam bepaalt de koppeling:
-  `golf-50x70.pdf`, `pier-en-strand-30x40.pdf`, `regatta-18x24in.pdf` (drukbestanden) en `golf-1.jpg` t/m
-  `golf-6.jpg` (visuals). Niet herkend? Kies poster en formaat in de lijst. Losse bestanden kun je ook op een rij of
-  vakje slepen. Bestanden gaan rechtstreeks naar Supabase Storage (privé bucket `drukbestanden`, publieke bucket
-  `visuals`); de Vercel-functie geeft alleen een ondertekende upload-URL.
-- **Maatcontrole**: de browser leest de MediaBox/TrimBox uit de pdf. Goed = precies het formaat, eventueel met
-  0–5 mm afloop rondom. Wijkt de maat af, dan wordt het bestand wel gekoppeld maar rood gemarkeerd.
-- **Automatisch gekoppeld aan bestellingen**: elke orderregel (webshop, bol, Etsy, Amazon) wijst via poster +
-  formaat naar het drukbestand: in de administratie (download per regel), in de mail aan de winkel, en met
-  `DRUKKER_EMAIL` gaat na elke betaling vanzelf een **drukopdracht** (verzendadres + downloadlinks, 30 dagen geldig,
-  ondertekend) naar de drukker. Ontbreekt een drukbestand, dan gaat er niets naar de drukker en zie je een
-  waarschuwing; na uploaden stuur je de opdracht met één knop vanuit de bestelling.
-- **Visuals**: verkleind in de browser (2000 px + 900 px, jpg) en in volgorde 1–6 getoond in het productvenster.
-  Zolang een poster geen visuals heeft, toont het venster de poster en de twee lijst-dia's. Etsy en Amazon krijgen
-  de poster als hoofdfoto en de visuals als extra foto's.
-- **Drukbestanden maken uit een hr-beeld**: `python3 scripts/maak-drukbestanden.py <bron> <poster-id>` schrijft
-  `drukbestanden/<id>-<formaat>.pdf` voor alle formaten (ware grootte + 3 mm afloop, max. 300 dpi, bijgesneden vanuit
-  het midden; `--passend` vult aan met wit, `--afloop 5` voor meer afloop). Sleep die map daarna in /admin.
-  Let op: 30 × 40 (3:4), 50 × 70 (5:7) en 70 × 100 (7:10) hebben elk een andere verhouding dan de 2:3-posters;
-  heb je per formaat een eigen ontwerp, exporteer dat dan als pdf met dezelfde namen.
-- **Code**: `api/media.js` (route), `api/_media.js` (koppelen, maat, links, drukopdracht), `api/_opslag.js`
-  (Storage), migratie `supabase/migrations/20261029020000_media.sql`.
+- **Productcontrole**: "controleer bij Prodigi" vraagt het product op (`GET /products/{sku}`): bestaat het, kloppen de
+  opties, de productiemaat (moet overeenkomen met het formaat), de pixeleis en levering naar NL/BE. Pas dan heet een
+  variant leverbaar; het drukbestand wordt daarna aan de pixeleis getoetst.
+- **Kosten**: "kosten ophalen" haalt een actuele offerte (`POST /quotes`): artikel, verzending, merktoevoegingen, btw,
+  vervoerder en of je merktoevoegingen leverbaar zijn. De kostprijs (excl. btw) wordt opgeslagen met datum.
+- **Proefbestelling**: toont eerst kosten en afleveradres; pas na expliciete bevestiging wordt hij geplaatst (in live is
+  dat een betaalde bestelling). Een offerte is 30 minuten geldig en wordt maar één keer geplaatst.
+- **Automatische productie**: na betaling (of import van een kanaalorder) een regel in `fulfilments` met wachttijd
+  ("wijzigen kan tot …"). Vóór versturen: betaling bevestigd, adres compleet, varianten gekoppeld, juiste
+  drukbestandversie aanwezig, niet geannuleerd/geblokkeerd. Atomaire claim, vaste idempotentiesleutel per bestelling.
+  Bij een onduidelijk antwoord (time-out, 5xx) wordt de opdracht **onzeker** en zoekt de volgende run eerst bij Prodigi
+  (`GET /orders?merchantReferences=`) of hij al bestaat, voordat er opnieuw wordt besteld.
+- **Merktoevoegingen** (sticker, kaartje, pakbon): ontwerp-URL per toevoeging, verplicht ja/nee, en beleid als een
+  verplichte toevoeging niet leverbaar is: blokkeren voor beoordeling, goedgekeurd alternatief, of zonder (expliciet
+  toegestaan). Per zending gecontroleerd via een offerte; een voorkeur is geen garantie.
+- **Terugkoppeling**: statusmeldingen op `/api/prodigi?actie=callback&t=<token>`; de opdracht wordt altijd opnieuw bij
+  Prodigi opgevraagd. Verzonden → tracking in de administratie, klantmail (webshop) of door naar het kanaal. Werkelijke
+  kosten (charges) worden bewaard. Vangnet: de cron vraagt open opdrachten elk uur op.
+- **Terugbetalen ≠ annuleren**: een terugbetaling houdt een nog niet verstuurde productie tegen tot je beslist ("toch
+  produceren" met reden, of productie annuleren). Annuleren bij Prodigi kan zolang Prodigi dat toestaat.
+- **Herdruk**: een nieuwe, expliciet bevestigde opdracht bij dezelfde bestelling, met eigen sleutel.
+- **Omgevingen**: sandbox (`PRODIGI_SANDBOX_API_KEY`, er wordt niets gedrukt) en live (`PRODIGI_API_KEY`); een proefopdracht
+  kan na live zetten één keer live worden verstuurd, een live-opdracht nooit opnieuw.
 
 ## Webshop en administratie
 
@@ -125,7 +123,7 @@ Juridisch: `voorwaarden.html` (incl. herroepingsrecht en modelformulier) en `pri
 
 ```bash
 supabase link --project-ref <project-ref>
-supabase db push            # past de migraties in supabase/migrations toe (webshop, kanalen, media, catalogus, prodigi)
+supabase db push            # past de migraties in supabase/migrations toe (webshop, kanalen, media, catalogus, prodigi; nog op geen enkele database toegepast)
 ```
 
 Zet daarna in Vercel: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_WACHTWOORD`, `MOLLIE_API_KEY`,

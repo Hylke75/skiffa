@@ -15,7 +15,7 @@ import { laadCatalogus } from './_catalogus.js';
 import crypto from 'node:crypto';
 import { dbAan, db } from './_db.js';
 import { isAdmin } from './_auth.js';
-import { POSTERS, FORMATEN } from './_catalogus.js';
+import { POSTERS, FORMATEN, prijsVan } from './_catalogus.js';
 import { bedrijf } from './_bedrijf.js';
 import { KANALEN, STANDAARD, isGeldigeEan, kanaalPrijs } from './_kanalen/gemeen.js';
 import { instellingen, zetInstellingen, listings, zetListing, eans, logRun } from './_kanalen/opslag.js';
@@ -136,7 +136,8 @@ export default async function handler(req, res) {
         listings: rijen.map((r) => ({
           ...r, poster_naam: POSTERS[r.poster_id], formaat_label: FORMATEN[r.formaat]?.label || 'alle formaten',
           ean: r.formaat === 'alle' ? null : e.get(`${r.poster_id}|${r.formaat}`) || '',
-          prijs: r.formaat === 'alle' ? Object.values(FORMATEN).map((f) => kanaalPrijs(f.prijs, s.opslag_pct)) : kanaalPrijs(FORMATEN[r.formaat].prijs, s.opslag_pct),
+          prijs: r.formaat === 'alle' ? Object.keys(FORMATEN).map((f) => prijsVan(r.poster_id, f)).filter(Boolean).map((x) => kanaalPrijs(x, s.opslag_pct))
+            : prijsVan(r.poster_id, r.formaat) ? kanaalPrijs(prijsVan(r.poster_id, r.formaat), s.opslag_pct) : null,
         })),
       });
     }

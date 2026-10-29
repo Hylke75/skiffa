@@ -18,8 +18,8 @@ import { mollie, euro } from './_bestelling.js';
 import { btwDeel } from './_bedrijf.js';
 import { mails, vanRij, mailAan } from './_mails.js';
 import { betaald, verwerkMollie } from './_verwerk.js';
-import { drukbestanden } from './_media.js';
-import { fulfilmentVan, annuleer as prodigiAnnuleer } from './_prodigi.js';
+import { metDrukbestanden } from './_media.js';
+import { fulfilmentVan, fulfilmentsVan, annuleer as prodigiAnnuleer } from './_prodigi.js';
 
 const STATUSSEN = ['open', 'betaald', 'in_productie', 'verzonden', 'geleverd', 'geannuleerd', 'mislukt', 'terugbetaald'];
 const param = (req, k) => String(req.query?.[k] ?? new URL(req.url || '/', 'http://x').searchParams.get(k) ?? '');
@@ -72,16 +72,13 @@ async function bestelling(id) {
   const r = await haalBestelling('id', id);
   if (!r) return null;
   r.log = await db(`bestelling_log?bestelling_id=eq.${id}&order=op.asc`);
-  // Drukbestand per regel (vast gekoppeld via poster + formaat).
+  // Drukbestand per regel: de versie uit de vaste kopie van de bestelregel.
   try {
-    const m = await drukbestanden((r.bestelregels || []).map((x) => x.poster_id));
-    r.bestelregels = (r.bestelregels || []).map((x) => {
-      const d = m.get(`${x.poster_id}|${x.formaat}`);
-      return { ...x, druk: d ? { status: d.maat_status, link: `/api/media?actie=druk&p=${encodeURIComponent(x.poster_id)}&f=${encodeURIComponent(x.formaat)}` } : null };
-    });
-  } catch { /* zonder media-migratie: geen drukbestanden */ }
+    const m = await metDrukbestanden(r.bestelregels || []);
+    r.bestelregels = m.map((x) => ({ ...x, druk: x.druk ? { status: x.druk.status, versie: x.druk.versie, link: `/api/media?actie=druk&v=${x.druk.versie_id}` } : null }));
+  } catch { /* zonder catalogus-tabellen: geen drukbestanden */ }
   r.drukker = !!process.env.DRUKKER_EMAIL;
-  try { r.fulfilment = await fulfilmentVan(id); } catch { r.fulfilment = null; }
+  try { r.fulfilments = await fulfilmentsVan(id); r.fulfilment = r.fulfilments.find((f) => !f.herdruk_nr) || null; } catch { r.fulfilments = []; r.fulfilment = null; }
   return r;
 }
 
@@ -164,10 +161,12 @@ async function terugbetalen(id, body) {
   const volledig = totaalTerug >= Number(r.totaal) - 0.001;
   await werkBij(id, { terugbetaald: totaalTerug, ...(volledig ? { status: 'terugbetaald' } : {}) });
   await log(id, 'terugbetaling', `${euro(b)} teruggestort${r.mollie_id ? ' via Mollie' : ' (handmatig)'}`, 'admin');
+  // Terugbetalen is niet hetzelfde als de productie annuleren: een opdracht die nog niet bij Prodigi is,
+  // wordt tegengehouden tot je beslist ("toch produceren" of "productie annuleren").
   try {
     const f = await fulfilmentVan(id);
-    if (f && !f.extern_id && f.status !== 'geannuleerd') await prodigiAnnuleer(id, 'admin');
-    else if (f?.extern_id && !['geannuleerd', 'verzonden'].includes(f.status)) await log(id, 'waarschuwing', `Al bij Prodigi (${f.extern_id}): annuleer daar als er niet meer gedrukt moet worden.`, 'admin');
+    if (f && !f.extern_id && !['geannuleerd', 'verzonden'].includes(f.status)) await log(id, 'waarschuwing', 'Terugbetaling geregistreerd: de productie wacht op jouw beslissing (toch produceren of productie annuleren).', 'admin');
+    else if (f?.extern_id && !['geannuleerd', 'verzonden'].includes(f.status)) await log(id, 'waarschuwing', `De productie loopt bij Prodigi (${f.extern_id}). Annuleer de productie apart als er niet meer gedrukt moet worden.`, 'admin');
   } catch { /* zonder Prodigi-tabel */ }
   const gemaild = await mailEnLog(id, 'terugbetaald', () => mails.terugbetaald(vanRij(r), b));
   return { ok: true, gemaild };
