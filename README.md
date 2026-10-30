@@ -12,7 +12,7 @@ een scène die met de tijd in Scheveningen meebeweegt (uitsneden uit de posters)
 ## Posters en bestellen
 
 - **Beelden**: `posters/<id>.webp` (productbeeld, 1333 × 2000) en `posters/<id>-klein.webp` (600 × 900).
-  `sfeer/`: de drie achtergrondscènes (ochtend/middag/avond) zijn mock-ups van SKIFFA Windsurf Scheveningen; plus het beeld bij contact.
+  `sfeer/`: de drie achtergrondscènes (ochtend/middag/avond) zijn mock-ups van SKIFFA Windsurf Scheveningen; het beeld bij contact is een detail van die poster.
   Het productvenster toont de poster, de poster in een houten lijst en in een zwarte lijst met passe-partout.
 - **Catalogus**: `posters` en `formaten` in `index.html` (teksten, beelden), en `api/_catalogus.js`
   (ids en prijzen; de server rekent altijd zelf). Check: `node scripts/check-catalogus.mjs`.
