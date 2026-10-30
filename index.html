@@ -52,7 +52,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 .periode img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scale(1.04);animation:adem 24s ease-in-out infinite alternate}
 /* Staande sfeerbeelden: op brede schermen volledig (contain) met een vage kopie als vulling, op staande schermen vullend. */
 .periode img.vulling{filter:blur(28px) saturate(.9) brightness(.9);transform:scale(1.2);animation:none}
-@media (min-aspect-ratio:4/5){.periode img.hoofd{object-fit:contain}}
+@media (min-aspect-ratio:4/5){.periode img.hoofd:not(.liggend){object-fit:contain}}
+/* Liggende uitsneden uit de posters: altijd vullend; object-position (data-px) houdt het onderwerp in beeld op een smal scherm. */
 @media (max-aspect-ratio:4/5){.periode img.vulling{display:none}}
 @keyframes adem{from{transform:scale(1.04) translate(0,0)}to{transform:scale(1.09) translate(-1%,-.6%)}}
 .periode::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.35) 0%,rgba(0,0,0,0) 30%,rgba(0,0,0,0) 70%,rgba(0,0,0,.45) 100%)}
@@ -295,7 +296,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
   #header .c2{display:none}
   #header .c3{flex-wrap:wrap;max-width:250px;row-gap:8px}
   #header .c3 .knop.ico{display:none}
-  .hotspot .naam{opacity:1;left:auto;right:0;transform:none}
+  .hotspot .naam{opacity:1;left:0;transform:none}
+  .hotspot.rechts .naam{left:auto;right:0}
   #footer{height:auto}
   .tijd{position:static;transform:none;justify-content:center;margin-bottom:8px}
   .nu{display:none}
@@ -321,7 +323,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 <!-- Scène: drie uitsneden uit de posters, gekozen op de tijd in Scheveningen -->
 <div id="scene">
   <div class="periode" data-p="ochtend"><img class="vulling" data-src="/sfeer/mockup-ochtend.webp" alt="" aria-hidden="true"><img class="hoofd" data-src="/sfeer/mockup-ochtend.webp" alt="De poster SKIFFA Windsurf Scheveningen boven een lichte bank in de woonkamer" data-w="1122" data-h="1402"></div>
-  <div class="periode" data-p="middag"><img class="vulling" data-src="/sfeer/mockup-middag.webp" alt="" aria-hidden="true"><img class="hoofd" data-src="/sfeer/mockup-middag.webp" alt="De poster SKIFFA Windsurf Scheveningen aan de muur naast een leren fauteuil" data-w="1122" data-h="1402"></div>
+  <div class="periode" data-p="middag"><img class="hoofd liggend" data-src="/sfeer/achtergrond-havenpier.webp" alt="Golven slaan over de havenpier van Scheveningen, met de gestreepte vuurtoren (uit de poster Scheveningen Havenpier Surf Vintage)" data-w="2560" data-h="1440" data-px=".1" style="object-position:10% 50%"></div>
   <div class="periode" data-p="avond"><img class="vulling" data-src="/sfeer/mockup-avond.webp" alt="" aria-hidden="true"><img class="hoofd" data-src="/sfeer/mockup-avond.webp" alt="De poster SKIFFA Windsurf Scheveningen op een houten dressoir naast een platenspeler" data-w="1122" data-h="1402"></div>
   <div class="korrel"></div>
 </div>
@@ -528,18 +530,19 @@ const WINKEL_MAIL='hallo@skiffa.nl';
 /* Hotspots: verankerd aan een plek in de uitsnede (fractie van beeldbreedte/-hoogte, zoals maikasui doet met videoX/videoY) */
 const ankers={
   ochtend:[{poster:'skiffa-windsurf-scheveningen',x:.72,y:.30}],
-  middag:[{poster:'skiffa-windsurf-scheveningen',x:.85,y:.32}],
+  middag:[{poster:'scheveningen-havenpier-surf-vintage',x:.25,y:.32}],
   avond:[{poster:'skiffa-windsurf-scheveningen',x:.77,y:.40}]
 };
-const credits={ochtend:'sfeerbeeld: skiffa windsurf scheveningen',middag:'sfeerbeeld: skiffa windsurf scheveningen',avond:'sfeerbeeld: skiffa windsurf scheveningen'};
+const credits={ochtend:'sfeerbeeld: skiffa windsurf scheveningen',middag:'uit de poster: scheveningen havenpier surf vintage',avond:'sfeerbeeld: skiffa windsurf scheveningen'};
 const hs=document.getElementById('hotspots');
 function beeldRect(p){const img=document.querySelector(`.periode[data-p="${p}"] img.hoofd`)||document.querySelector(`.periode[data-p="${p}"] img`);const W=innerWidth,H=innerHeight,iw=+img.dataset.w,ih=+img.dataset.h;
-  const contain=getComputedStyle(img).objectFit==='contain';const s=(contain?Math.min(W/iw,H/ih):Math.max(W/iw,H/ih))*1.04;const w=iw*s,h=ih*s;return{x:(W-w)/2,y:(H-h)/2,w,h};}
+  const contain=getComputedStyle(img).objectFit==='contain';const s=(contain?Math.min(W/iw,H/ih):Math.max(W/iw,H/ih))*1.04;const w=iw*s,h=ih*s;
+  const px=img.dataset.px?+img.dataset.px:.5,py=img.dataset.py?+img.dataset.py:.5;return{x:(W-w)*px,y:(H-h)*py,w,h};}
 function plaatsHotspots(p){
   hs.innerHTML='';const r=beeldRect(p);
   (ankers[p]||[]).forEach((a,i)=>{const s=vind(a.poster);if(!s||s.actief===false)return;
     const h=document.createElement('div');h.className='hotspot';h.style.setProperty('--s','64px');
-    h.style.left=Math.min(innerWidth-56,Math.max(44,r.x+a.x*r.w))+'px';h.style.top=(r.y+a.y*r.h)+'px';
+    const hx=Math.min(innerWidth-56,Math.max(44,r.x+a.x*r.w));h.style.left=hx+'px';h.classList.toggle('rechts',hx>innerWidth/2);h.style.top=(r.y+a.y*r.h)+'px';
     h.innerHTML=`<div class="rand"></div><button class="plus" aria-label="${s.naam} bekijken">+</button><div class="naam">${s.naam.toLowerCase()}</div>`;
     h.querySelector('.plus').addEventListener('click',()=>openModal(s));hs.appendChild(h);
     if(!rm)gsap.fromTo(h,{scale:.6,opacity:0},{scale:1,opacity:1,duration:.9,delay:.4+i*.15,ease:'elastic.out(1,.75)'});});
