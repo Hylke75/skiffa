@@ -534,6 +534,15 @@ const ankers={
   avond:[{poster:'skiffa-vintage-surfcultuur',x:.73,y:.52}]
 };
 const credits={ochtend:'uit de poster: scheveningen surfcultuur 1970s',middag:'uit de poster: scheveningen havenpier surf vintage',avond:'uit de poster: skiffa vintage surfcultuur'};
+/* Extra scènes per dagdeel: elke bezoeker krijgt willekeurig één scène van dat dagdeel (de scène in de HTML telt mee). */
+const extraScenes={
+  middag:[{src:'/sfeer/achtergrond-pier.webp',alt:'Een surfer peddelt de branding in, met de pier van Scheveningen op de achtergrond (uit de poster Scheveningen Surfcultuur Pier)',w:2560,h:1440,px:.45,
+    anker:{poster:'scheveningen-surfcultuur-pier',x:.62,y:.24},credit:'uit de poster: scheveningen surfcultuur pier'}]
+};
+for(const [p,lijst] of Object.entries(extraScenes)){const k=Math.floor(Math.random()*(lijst.length+1));if(!k)continue;const sc=lijst[k-1];
+  const img=document.querySelector(`.periode[data-p="${p}"] img.hoofd`);if(!img)continue;
+  Object.assign(img.dataset,{src:sc.src,w:sc.w,h:sc.h,px:sc.px});img.alt=sc.alt;img.style.objectPosition=`${sc.px*100}% 50%`;
+  ankers[p]=[sc.anker];credits[p]=sc.credit;}
 const hs=document.getElementById('hotspots');
 function beeldRect(p){const img=document.querySelector(`.periode[data-p="${p}"] img.hoofd`)||document.querySelector(`.periode[data-p="${p}"] img`);const W=innerWidth,H=innerHeight,iw=+img.dataset.w,ih=+img.dataset.h;
   const contain=getComputedStyle(img).objectFit==='contain';const s=(contain?Math.min(W/iw,H/ih):Math.max(W/iw,H/ih))*1.04;const w=iw*s,h=ih*s;
