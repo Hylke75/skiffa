@@ -322,7 +322,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 
 <!-- Scène: drie uitsneden uit de posters, gekozen op de tijd in Scheveningen -->
 <div id="scene">
-  <div class="periode" data-p="ochtend"><img class="vulling" data-src="/sfeer/mockup-ochtend.webp" alt="" aria-hidden="true"><img class="hoofd" data-src="/sfeer/mockup-ochtend.webp" alt="De poster SKIFFA Windsurf Scheveningen boven een lichte bank in de woonkamer" data-w="1122" data-h="1402"></div>
+  <div class="periode" data-p="ochtend"><img class="hoofd liggend" data-src="/sfeer/achtergrond-strand.webp" alt="Surfers bij een oude auto op het strand van Scheveningen, de pier in de verte" data-w="2000" data-h="1125" data-px=".45" style="object-position:45% 50%"></div>
   <div class="periode" data-p="middag"><img class="hoofd liggend" data-src="/sfeer/achtergrond-havenpier.webp" alt="Golven slaan over de havenpier van Scheveningen, met de gestreepte vuurtoren (uit de poster Scheveningen Havenpier Surf Vintage)" data-w="2560" data-h="1440" data-px=".1" style="object-position:10% 50%"></div>
   <div class="periode" data-p="avond"><img class="hoofd liggend" data-src="/sfeer/achtergrond-surfcultuur.webp" alt="Een surfer in het avondlicht voor de pier en twee gestreepte vuurtorens van Scheveningen (uit de poster SKIFFA Vintage Surfcultuur)" data-w="2560" data-h="1440" data-px=".66" style="object-position:66% 50%"></div>
   <div class="korrel"></div>
@@ -529,11 +529,11 @@ const WINKEL_MAIL='hallo@skiffa.nl';
 
 /* Hotspots: verankerd aan een plek in de uitsnede (fractie van beeldbreedte/-hoogte, zoals maikasui doet met videoX/videoY) */
 const ankers={
-  ochtend:[{poster:'skiffa-windsurf-scheveningen',x:.72,y:.30}],
+  ochtend:[],
   middag:[{poster:'scheveningen-havenpier-surf-vintage',x:.25,y:.32}],
   avond:[{poster:'skiffa-vintage-surfcultuur',x:.73,y:.52}]
 };
-const credits={ochtend:'sfeerbeeld: skiffa windsurf scheveningen',middag:'uit de poster: scheveningen havenpier surf vintage',avond:'uit de poster: skiffa vintage surfcultuur'};
+const credits={ochtend:'sfeerbeeld: surfcultuur scheveningen',middag:'uit de poster: scheveningen havenpier surf vintage',avond:'uit de poster: skiffa vintage surfcultuur'};
 const hs=document.getElementById('hotspots');
 function beeldRect(p){const img=document.querySelector(`.periode[data-p="${p}"] img.hoofd`)||document.querySelector(`.periode[data-p="${p}"] img`);const W=innerWidth,H=innerHeight,iw=+img.dataset.w,ih=+img.dataset.h;
   const contain=getComputedStyle(img).objectFit==='contain';const s=(contain?Math.min(W/iw,H/ih):Math.max(W/iw,H/ih))*1.04;const w=iw*s,h=ih*s;
