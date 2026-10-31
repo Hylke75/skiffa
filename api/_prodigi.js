@@ -119,7 +119,8 @@ export function beoordeelProduct(product, variantRij, formaatMm, landen = ['NL',
   const d = product.productDimensions;
   const mm = d ? [Math.round(naarMm(d.width, d.units) * 10) / 10, Math.round(naarMm(d.height, d.units) * 10) / 10] : null;
   if (mm && formaatMm) {
-    const zelfde = (a, b) => Math.abs(a - b) <= Math.max(2, b * 0.01);
+    // Prodigi geeft soms de nominale maat (lijst: 30 × 40 cm bij een print van 12 × 16 inch); de pixeleis is leidend.
+    const zelfde = (a, b) => Math.abs(a - b) <= Math.max(5, b * 0.02);
     if (!(zelfde(mm[0], formaatMm[0]) && zelfde(mm[1], formaatMm[1])) && !(zelfde(mm[1], formaatMm[0]) && zelfde(mm[0], formaatMm[1])))
       p.push(`productiemaat is ${mm[0]} × ${mm[1]} mm, het formaat ${formaatMm[0]} × ${formaatMm[1]} mm`);
   }

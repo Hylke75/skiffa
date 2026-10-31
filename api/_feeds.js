@@ -3,7 +3,7 @@
 //
 // - RSS 2.0-XML met namespace g: (http://base.google.com/ns/1.0); één item per bestelbare variant.
 // - Verplicht: id, title, description, availability, condition, price, link, image_link + brand.
-// - Varianten: item_group_id (zelfde per poster), size (formaat), material (papier).
+// - Varianten: item_group_id (zelfde per poster), size (formaat), material (papier), color (kleur lijst).
 // - Afbeeldingen: JPEG/PNG van minstens 500×500 px (WebP wordt niet geaccepteerd).
 // - Afrekenen gebeurt op skiffa.store: Meta heeft afrekenen op Facebook/Instagram afgebouwd; link = productpagina.
 // Meta haalt de feed volgens een schema op (hoogstens elk uur). De beheeromgeving toont wanneer Meta de feed
@@ -11,7 +11,7 @@
 // met een Meta-token (META_TOKEN + META_CATALOG_ID), anders in Commerce Manager zelf.
 import { db } from './_db.js';
 import { bedrijf } from './_bedrijf.js';
-import { PRODUCTEN, VARIANTEN, ALLE_FORMATEN, PAPIER, BEELDEN, VASTE_BEELDEN } from './_catalogus.js';
+import { PRODUCTEN, VARIANTEN, ALLE_FORMATEN, PAPIER, BEELDEN, VASTE_BEELDEN, OPHANGING, ophangLabel } from './_catalogus.js';
 import { visuals, visualUrl } from './_media.js';
 
 export const META_GRAPH = 'https://graph.facebook.com/v26.0';
@@ -32,14 +32,17 @@ export async function metaItems() {
     const f = ALLE_FORMATEN[v.formaat], papier = PAPIER[v.papier];
     const hoofd = BEELDEN[p.id] ? visualUrl(BEELDEN[p.id].groot) : VASTE_BEELDEN.has(p.id) ? `${site}/posters/${p.id}.jpg` : null;
     const extra = (vis[p.id] || []).filter((x) => x.soort !== 'video' && (!x.formaat || x.formaat === v.formaat) && (!x.papier || x.papier === v.papier)).map((x) => x.url).filter(isJpgPng).slice(0, 10);
-    const titel = `${p.titel} – poster ${f?.label || v.formaat}${v.lijst ? `, lijst ${v.lijst}` : ''}${papier && Object.keys(PAPIER).length > 1 ? `, ${papier.naam}` : ''}`;
+    const titel = `${p.titel} – poster ${f?.label || v.formaat}${ophangLabel(v.lijst, v.lijst_kleur) ? ` in ${ophangLabel(v.lijst, v.lijst_kleur)}` : ''}${papier && Object.keys(PAPIER).length > 1 ? `, ${papier.naam}` : ''}`;
     let beschrijving = platteTekst(p.beschrijving);
     if (!beschrijving) beschrijving = '';
     else if (papier?.uitleg) beschrijving += `\n\n${platteTekst(papier.uitleg)}`;
+    if (beschrijving && v.lijst === 'classic') beschrijving += `
+
+Ingelijst in een ${OPHANGING.classic.kleuren[v.lijst_kleur] || v.lijst_kleur} Classic-lijst met acrylaat ervoor, gedrukt op Enhanced Matte Art Paper (200 g/m²).`;
     const item = {
       id: v.sku, item_group_id: p.code || p.id, title: titel.slice(0, 200), description: beschrijving.slice(0, 9999),
       availability: 'in stock', condition: 'new', price: `${Number(v.prijs).toFixed(2)} EUR`, link: `${site}/#${encodeURIComponent(p.id)}`,
-      image_link: hoofd, additional_image_link: extra, brand: 'SKIFFA', size: f?.label || v.formaat, material: papier?.naam || null,
+      image_link: hoofd, additional_image_link: extra, brand: 'SKIFFA', size: f?.label || v.formaat, material: papier?.naam || null, color: v.lijst === 'classic' ? OPHANGING.classic.kleuren[v.lijst_kleur] || null : null,
       google_product_category: META_CATEGORIE, product_type: ['Posters', p.collectie].filter(Boolean).join(' > '), custom_label_0: p.collectie || null, custom_label_1: p.code || null,
     };
     const ontbreekt = [];
@@ -60,7 +63,7 @@ export async function metaItems() {
 export async function metaFeed() {
   const items = (await metaItems()).filter((i) => i.opnemen && !i.ontbreekt.length);
   const veld = (k, v) => (v == null || v === '' ? '' : `<g:${k}>${xml(v)}</g:${k}>`);
-  const body = items.map((i) => `<item>${veld('id', i.id)}${veld('item_group_id', i.item_group_id)}${veld('title', i.title)}${veld('description', i.description)}${veld('availability', i.availability)}${veld('condition', i.condition)}${veld('price', i.price)}${veld('link', i.link)}${veld('image_link', i.image_link)}${i.additional_image_link.length ? veld('additional_image_link', i.additional_image_link.join(',')) : ''}${veld('brand', i.brand)}${veld('size', i.size)}${veld('material', i.material)}${veld('google_product_category', i.google_product_category)}${veld('product_type', i.product_type)}${veld('custom_label_0', i.custom_label_0)}${veld('custom_label_1', i.custom_label_1)}</item>`).join('\n');
+  const body = items.map((i) => `<item>${veld('id', i.id)}${veld('item_group_id', i.item_group_id)}${veld('title', i.title)}${veld('description', i.description)}${veld('availability', i.availability)}${veld('condition', i.condition)}${veld('price', i.price)}${veld('link', i.link)}${veld('image_link', i.image_link)}${i.additional_image_link.length ? veld('additional_image_link', i.additional_image_link.join(',')) : ''}${veld('brand', i.brand)}${veld('size', i.size)}${veld('material', i.material)}${veld('color', i.color)}${veld('google_product_category', i.google_product_category)}${veld('product_type', i.product_type)}${veld('custom_label_0', i.custom_label_0)}${veld('custom_label_1', i.custom_label_1)}</item>`).join('\n');
   const site = bedrijf().site;
   return { aantal: items.length, xml: `<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0"><channel><title>SKIFFA posters</title><link>${xml(site)}</link><description>Posters van SKIFFA</description>\n${body}\n</channel></rss>\n` };
 }

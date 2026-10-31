@@ -75,6 +75,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 .knop::before{content:"";position:absolute;inset:0;background:currentColor;transform:translateY(102%);transition:transform .35s cubic-bezier(.2,.8,.2,1);z-index:-1}
 .knop:hover{color:var(--zwart)}
 .knop:hover::before{transform:none}
+/* Op de lichte panelen (overzicht, over, contact): bij hover zwart vlak met lichte tekst, niet zwart op zwart */
+#posters .knop:hover,#over .knop:hover,#contact .knop:hover{color:var(--papier)}#posters .knop:hover::before,#over .knop:hover::before,#contact .knop:hover::before{background:var(--zwart)}
 .knop.vol{background:var(--wit);color:var(--zwart);border-color:var(--wit)}
 .knop.vol:hover{background:transparent;color:var(--wit)}
 .knop.ico{width:24px;padding:0}
@@ -188,6 +190,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 .modaltekst .varinfo{font-size:10px;line-height:1.7;opacity:.8;margin-top:-6px}
 .modaltekst .varinfo b{font-weight:500}
 .modaltekst .binnenkort{font-size:11px;line-height:1.8;border-top:1px solid currentColor;padding-top:14px}.modaltekst .binnenkort .naarcontact{border-bottom:1px solid currentColor;font:inherit}
+.papierkeuze,.lijstkeuze{display:flex;flex-direction:column;gap:18px}.papierkeuze:empty,.lijstkeuze:empty{display:none}
 .modaltekst .label{font-size:8px;letter-spacing:.24em;opacity:.55;margin-bottom:-10px}
 .modaltekst .naarmandje{font-size:9px;letter-spacing:.14em;border-bottom:1px solid currentColor;align-self:flex-start;opacity:0;pointer-events:none;transition:opacity .3s}
 .modaltekst .naarmandje.aan{opacity:1;pointer-events:auto}
@@ -196,6 +199,26 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 .bestel.klaar{background:#5c6d77}
 
 /* ---------- Over (overlay) ---------- */
+/* Posteroverzicht */
+#posters{position:fixed;inset:0;z-index:21;background:var(--papier);color:var(--zwart);overflow:auto;transform:translateY(100%);transition:transform .9s cubic-bezier(.76,0,.24,1)}
+#posters.open{transform:none}
+#posters .textuur{position:fixed}
+#posters .sluit{position:fixed;top:36px;right:22px;z-index:2}
+#posters .kop{position:relative;padding:110px 22px 10px;max-width:1240px;margin:0 auto}
+#posters .label{font-size:8px;letter-spacing:.24em;opacity:.55;text-transform:uppercase}
+#posters h2{font-size:clamp(28px,5vw,56px);font-weight:400;letter-spacing:.04em;margin:6px 0 4px}
+#posters .sub{font-size:10px;letter-spacing:.14em;opacity:.6}
+#posters .raster{position:relative;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:44px 32px;padding:34px 22px 80px;max-width:1240px;margin:0 auto}
+#posters .kaart{width:100%;background:none;border:0;padding:0;text-align:left;font:inherit;color:inherit;display:block;cursor:pointer;border-radius:2px;outline-offset:6px}
+#posters .kaart .beeld{display:block;width:100%;position:relative;aspect-ratio:3/4;background:var(--zeeblok);overflow:hidden;box-shadow:0 16px 30px rgba(0,0,0,.14);transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s}
+#posters .kaart img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:opacity .45s}
+#posters .kaart img.sfeer{opacity:0}
+#posters .kaart:hover .beeld,#posters .kaart:focus-visible .beeld{transform:translateY(-5px);box-shadow:0 22px 40px rgba(0,0,0,.18)}
+#posters .kaart:hover img.sfeer,#posters .kaart:focus-visible img.sfeer{opacity:1}
+#posters .kaart b{display:block;font-weight:500;font-size:10px;letter-spacing:.18em;margin-top:16px;text-transform:lowercase}
+#posters .kaart small{display:block;font-size:9px;letter-spacing:.14em;opacity:.6;margin-top:4px}
+#posters .kaart.uitgelicht .beeld{outline:1px dashed currentColor;outline-offset:8px}
+@media (max-width:700px){#posters .raster{grid-template-columns:1fr 1fr;gap:30px 14px;padding:24px 16px 60px}#posters .kop{padding:90px 16px 0}}
 #over{position:fixed;inset:0;z-index:20;background:var(--papier);color:var(--zwart);overflow:auto;transform:translateY(100%);transition:transform .9s cubic-bezier(.76,0,.24,1)}
 #over.open{transform:none}
 #over .textuur{position:absolute;inset:0;pointer-events:none;opacity:.07;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='120' viewBox='0 0 240 120'%3E%3Cpath d='M0 30c30-20 60-20 90 0s60 20 90 0 60-20 90 0M0 60c30-20 60-20 90 0s60 20 90 0 60-20 90 0M0 90c30-20 60-20 90 0s60 20 90 0 60-20 90 0' fill='none' stroke='%23000' stroke-width='1'/%3E%3C/svg%3E")}
@@ -378,6 +401,14 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
 </div>
 
 <!-- Over -->
+<!-- Posteroverzicht: alle posters in één raster, schuift over de scène (zelfde stijl als "over") -->
+<div id="posters" role="dialog" aria-modal="true" aria-labelledby="postersTitel" aria-hidden="true" inert>
+  <div class="textuur"></div>
+  <button class="knop sluit" id="postersSluit">sluiten</button>
+  <div class="kop"><p class="label">collectie</p><h2 id="postersTitel">alle posters</h2><p class="sub" id="postersSub"></p></div>
+  <div class="raster" id="postersRaster"></div>
+</div>
+
 <div id="over" aria-hidden="true" inert>
   <div class="textuur"></div>
   <button class="knop sluit" id="overSluit">sluiten</button>
@@ -516,9 +547,12 @@ let visuals={};const eigenBeeld={};
 let papiersoorten=[{id:'german-etching',naam:'Hahnemühle German Etching',uitleg:'Fine-art papier van Hahnemühle, 310 g/m², met een fluweelachtige structuur. Mat, dus geen spiegeling van lampen of ramen; kleuren blijven diep en rustig.',gsm:310}];
 let varianten={};
 const variantenVan=id=>varianten[id]||formaten.map(f=>({sku:`SKF-${id}-${f.id}`.toUpperCase(),formaat:f.id,papier:'german-etching',prijs:f.prijs,levertijd:null}));
-const variantVan=r=>variantenVan(r.id).find(v=>r.sku?v.sku===r.sku:(v.formaat===r.formaat&&v.papier===(r.papier||'german-etching')));
+const variantVan=r=>variantenVan(r.id).find(v=>r.sku?v.sku===r.sku:(v.formaat===r.formaat&&v.papier===(r.papier||'german-etching')&&!v.lijst));
+/* Lijsten (Prodigi Classic): kleur per variant; los = lijst null. */
+const LIJSTKLEUR={black:'zwart',white:'wit',natural:'naturel',brown:'bruin'};
+const lijstVan=v=>v?.lijst?`${LIJSTKLEUR[v.lijst_kleur]||v.lijst_kleur} lijst`:'';
 const papierVan=id=>papiersoorten.find(p=>p.id===id);
-const vanafVan=id=>Math.min(...variantenVan(id).map(v=>v.prijs));
+const vanafVan=id=>Math.min(...variantenVan(id).filter(v=>!v.lijst).map(v=>v.prijs));
 const beeld=id=>eigenBeeld[id]?.beeld||`/posters/${id}.webp`,klein=id=>eigenBeeld[id]?.klein||`/posters/${id}-klein.webp`;
 const zichtbaar=()=>posters.filter(p=>p.actief!==false);
 const vind=id=>posters.find(p=>p.id===id);
@@ -555,7 +589,7 @@ function plaatsHotspots(p){
     const h=document.createElement('div');h.className='hotspot';h.style.setProperty('--s','64px');
     const hx=Math.min(innerWidth-56,Math.max(44,r.x+a.x*r.w));h.style.left=hx+'px';h.classList.toggle('rechts',hx>innerWidth/2);h.style.top=(r.y+a.y*r.h)+'px';
     h.innerHTML=`<div class="rand"></div><button class="plus" aria-label="${s.naam} bekijken">+</button><div class="naam">${s.naam.toLowerCase()}</div>`;
-    h.querySelector('.plus').addEventListener('click',()=>openModal(s));hs.appendChild(h);
+    h.querySelector('.plus').addEventListener('click',()=>openPosters(s.id));hs.appendChild(h);
     if(!rm)gsap.fromTo(h,{scale:.6,opacity:0},{scale:1,opacity:1,duration:.9,delay:.4+i*.15,ease:'elastic.out(1,.75)'});});
   document.getElementById('credit').textContent=credits[p]||'';
 }
@@ -660,20 +694,24 @@ function bladerPoster(stap){const lijst=zichtbaar();if(!huidigePoster||!lijst.le
 function openModal(s){
   huidigePoster=s;const lijst=zichtbaar(),nr=lijst.findIndex(p=>p.id===s.id)+1;
   const vs=variantenVan(s.id),fmts=formaten.filter(f=>vs.some(v=>v.formaat===f.id));
-  let formaat=((fmts.find(f=>f.standaard)||fmts[0])||{}).id,papier=(vs.find(v=>v.formaat===formaat)||{}).papier;
-  const huidig=()=>vs.find(v=>v.formaat===formaat&&v.papier===papier)||vs.find(v=>v.formaat===formaat);
+  let formaat=((fmts.find(f=>f.standaard)||fmts[0])||{}).id,papier=(vs.find(v=>v.formaat===formaat&&!v.lijst)||{}).papier,lijstk=null;
+  const past=v=>lijstk?v.lijst==='classic'&&v.lijst_kleur===lijstk:!v.lijst;
+  const huidig=()=>vs.find(v=>v.formaat===formaat&&v.papier===papier&&past(v))||vs.find(v=>v.formaat===formaat&&past(v));
+  const losse=()=>vs.find(v=>v.formaat===formaat&&!v.lijst);
+  const lijsten=()=>['black','natural','white','brown'].map(k=>vs.find(v=>v.formaat===formaat&&v.lijst==='classic'&&v.lijst_kleur===k)).filter(Boolean);
   const tekenDias=()=>{const v=huidig(),alle=visuals[s.id]||[],vis=alle.filter(x=>(!x.formaat||x.formaat===v?.formaat)&&(!x.papier||x.papier===v?.papier));
     const dias=vis.length?vis.map((x,k)=>`<div class="dia foto"><img src="${x.url}" alt="${(x.alt||`Poster ${s.naam}, beeld ${k+1}`).replace(/"/g,'&quot;')}"${k?' loading="lazy"':''}>${x.soort==='mockup'?'<small>sfeerbeeld · lijst niet meegeleverd</small>':''}</div>`):[`<div class="dia poster"><img src="${beeld(s.id)}" alt="Poster ${s.naam}"><small>poster ${s.naam.toLowerCase()}</small></div>`,
     `<div class="dia lijst hout"><div class="lijstje"><img src="${klein(s.id)}" alt="Poster ${s.naam} in een houten lijst"></div><small>voorbeeld in een houten lijst — lijst niet meegeleverd</small></div>`,
     `<div class="dia lijst zwart"><div class="lijstje"><div class="pp"><img src="${klein(s.id)}" alt="Poster ${s.naam} in een zwarte lijst met passe-partout"></div></div><small>voorbeeld in een zwarte lijst — lijst niet meegeleverd</small></div>`];
     lbBeelden=vis.length?vis.map(x=>({url:x.url,alt:x.alt||`Poster ${s.naam}`})):[{url:beeld(s.id),alt:`Poster ${s.naam}`}];
     baan.innerHTML=dias.join('');vg.forEach((i,k)=>i.style.display=k<Math.min(dias.length,vg.length)?'':'none');aantalDias=Math.min(dias.length,vg.length);dia=0;toonDia();};
-  const papieren=()=>papiersoorten.filter(p=>vs.some(v=>v.formaat===formaat&&v.papier===p.id));
+  const papieren=()=>papiersoorten.filter(p=>vs.some(v=>v.formaat===formaat&&v.papier===p.id&&past(v)));
   mt.innerHTML=`<nav class="posternav" aria-label="Andere posters"><button data-blader="-1">← vorige</button><span>${nr} / ${lijst.length} · <button class="alle">alle posters</button></span><button data-blader="1">volgende →</button></nav>
     <h3 id="modalTitel">${s.naam.toLowerCase()} — poster</h3><p class="sub">${s.sub}</p><p>${s.zin}</p><ul>${s.punten.map(p=>`<li>${p}</li>`).join('')}</ul>
     <div class="label">formaat</div>
     <div class="formaten" role="group" aria-label="Formaat" data-keuze="formaat">${fmts.map(f=>`<button data-f="${f.id}" aria-pressed="${f.id===formaat}">${f.label}</button>`).join('')}</div>
     <div class="papierkeuze"></div>
+    <div class="lijstkeuze"></div>
     <p class="varinfo" aria-live="polite"></p>
     <button class="bestel">in het mandje <span></span></button>
     <small style="font-size:9px;opacity:.55;margin-top:-10px">incl. btw · verzending € 6,95 (België € 9,95), gratis vanaf € 75 · 14 dagen bedenktijd, zie <a href="/voorwaarden.html" style="color:inherit">voorwaarden</a></small>
@@ -682,25 +720,30 @@ function openModal(s){
     mt.querySelector('ul').insertAdjacentHTML('afterend',`<p class="binnenkort"><b>Binnenkort te koop.</b> Deze poster komt in 30 × 40, 50 × 70 en 70 × 100 cm, op bestelling gedrukt op Hahnemühle German Etching. Vragen? <button class="naarcontact">stuur een bericht →</button></p>`);
     mt.querySelector('.naarcontact').addEventListener('click',()=>{sluitModal();openContact();});
     tekenDias();mt.querySelectorAll('[data-blader]').forEach(b=>b.addEventListener('click',()=>bladerPoster(+b.dataset.blader)));
-    mt.querySelector('.alle').addEventListener('click',()=>{sluitModal();openOver();});
+    mt.querySelector('.alle').addEventListener('click',()=>{sluitModal();openPosters(s.id);});
     zetOpen(modal,true,document.getElementById('modalSluit'));scene.classList.add('grijs');history.replaceState(null,'','#'+s.id);return;}
   const be=mt.querySelector('.bestel'),prijs=be.querySelector('span');
-  const zetVariant=()=>{const ps=papieren();if(!ps.some(p=>p.id===papier))papier=(ps[0]||{}).id;
+  const zetVariant=()=>{const ls=lijsten();if(lijstk&&!ls.some(l=>l.lijst_kleur===lijstk))lijstk=null;
+    const ps=papieren();if(!ps.some(p=>p.id===papier))papier=(ps[0]||{}).id;
+    const los=losse();
+    mt.querySelector('.lijstkeuze').innerHTML=ls.length?`<div class="label">lijst</div><div class="formaten" role="group" aria-label="Lijst" data-keuze="lijst"><button data-l="" aria-pressed="${!lijstk}">zonder lijst</button>${ls.map(l=>`<button data-l="${l.lijst_kleur}" aria-pressed="${l.lijst_kleur===lijstk}">${LIJSTKLEUR[l.lijst_kleur]}${los?` +${euro(l.prijs-los.prijs)}`:''}</button>`).join('')}</div>`:'';
+    mt.querySelector('[data-keuze="lijst"]')?.addEventListener('click',kies);
     mt.querySelector('.papierkeuze').innerHTML=ps.length>1?`<div class="label">papier</div><div class="formaten" role="group" aria-label="Papier" data-keuze="papier">${ps.map(p=>`<button data-p="${p.id}" aria-pressed="${p.id===papier}">${p.naam.toLowerCase()}</button>`).join('')}</div>`:'';
     mt.querySelector('[data-keuze="papier"]')?.addEventListener('click',kies);
     const v=huidig(),f=formaatVan(formaat),pa=papierVan(v?.papier);prijs.textContent=v?euro(v.prijs):'';
     const lt=v?.levertijd?`Gemaakt op bestelling: verwacht ${v.levertijd.productie+v.levertijd.verzending}–${v.levertijd.productie+v.levertijd.verzending+2} werkdagen tot bezorging.`:'Gemaakt op bestelling.';
-    mt.querySelector('.varinfo').innerHTML=`${f?.mm?`Exact ${cm(f.mm[0])} × ${cm(f.mm[1])} cm, zonder lijst.`:''} ${pa?`<b>${pa.naam}</b>${pa.gsm?` (${pa.gsm} g/m²)`:''}: ${pa.uitleg}`:''}<br>${lt}`;
+    const lijstInfo=v?.lijst?`<b>Ingelijst in een ${LIJSTKLEUR[v.lijst_kleur]} Classic-lijst</b> met acrylaat ervoor, klaar om op te hangen. Ingelijst drukken we op mat Enhanced Matte Art Paper (200 g/m²); de losse poster op Hahnemühle German Etching.<br>`:'';
+    mt.querySelector('.varinfo').innerHTML=v?.lijst?`${f?.mm?`Poster ${cm(f.mm[0])} × ${cm(f.mm[1])} cm.`:''} ${lijstInfo}${lt}`:`${f?.mm?`Exact ${cm(f.mm[0])} × ${cm(f.mm[1])} cm, zonder lijst.`:''} ${pa?`<b>${pa.naam}</b>${pa.gsm?` (${pa.gsm} g/m²)`:''}: ${pa.uitleg}`:''}<br>${lt}`;
     tekenDias();};
   function kies(e){const b=e.target.closest('button');if(!b)return;
-    if(b.dataset.f)formaat=b.dataset.f;if(b.dataset.p)papier=b.dataset.p;
+    if(b.dataset.f)formaat=b.dataset.f;if(b.dataset.p)papier=b.dataset.p;if(b.dataset.l!==undefined)lijstk=b.dataset.l||null;
     b.parentElement.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));zetVariant();}
   mt.querySelector('[data-keuze="formaat"]').addEventListener('click',kies);
   zetVariant();
   be.addEventListener('click',()=>{const v=huidig();if(!v)return;voegToe(s.id,v);be.classList.add('klaar');be.firstChild.textContent='toegevoegd ';mt.querySelector('.naarmandje').classList.add('aan');setTimeout(()=>{be.classList.remove('klaar');be.firstChild.textContent='in het mandje ';},1600);});
   mt.querySelector('.naarmandje').addEventListener('click',()=>{sluitModal();openMandje();});
   mt.querySelectorAll('[data-blader]').forEach(b=>b.addEventListener('click',()=>bladerPoster(+b.dataset.blader)));
-  mt.querySelector('.alle').addEventListener('click',()=>{sluitModal();openOver();setTimeout(()=>document.getElementById('overBlok').scrollIntoView({behavior:rm?'auto':'smooth'}),rm?0:700);});
+  mt.querySelector('.alle').addEventListener('click',()=>{sluitModal();openPosters(s.id);});
   zetOpen(modal,true,document.getElementById('modalSluit'));scene.classList.add('grijs');
   history.replaceState(null,'','#'+s.id);
 }
@@ -731,12 +774,23 @@ lbVak.addEventListener('click',e=>{
   requestAnimationFrame(()=>{lbVak.scrollLeft=fx*lbImg.offsetWidth-lbVak.clientWidth/2;lbVak.scrollTop=fy*lbImg.offsetHeight-lbVak.clientHeight/2;});});
 
 const shopLijst=document.getElementById('shopLijst');
+/* Posteroverzicht */
+const postersEl=document.getElementById('posters'),postersRaster=document.getElementById('postersRaster');
+function tekenPosters(uitgelicht){const lijst=zichtbaar();
+  document.getElementById('postersSub').textContent=`${lijst.length} poster${lijst.length===1?'':'s'} · scheveningen · ${binnenkort?'binnenkort te koop':`vanaf ${euro(Math.min(...lijst.map(p=>vanafVan(p.id))))}`}`;
+  postersRaster.innerHTML=lijst.map(p=>{const sfeer=(visuals[p.id]||[]).find(x=>x.soort==='mockup');
+    return `<button class="kaart${p.id===uitgelicht?' uitgelicht':''}" data-id="${p.id}"><span class="beeld"><img src="${klein(p.id)}" alt="Poster ${p.naam}" loading="lazy">${sfeer?`<img class="sfeer" src="${sfeer.klein||sfeer.url}" alt="" aria-hidden="true" loading="lazy">`:''}</span><b>${p.naam.toLowerCase()}</b><small>${p.sub}${p.sub?' · ':''}${binnenkort?'binnenkort':`vanaf ${euro(vanafVan(p.id))}`}</small></button>`;}).join('');}
+function openPosters(uitgelicht){zetShop(false);tekenPosters(uitgelicht);zetOpen(postersEl,true,document.getElementById('postersSluit'));scene.classList.add('grijs');
+  if(uitgelicht)setTimeout(()=>postersRaster.querySelector(`[data-id="${CSS.escape(uitgelicht)}"]`)?.scrollIntoView({block:'center',behavior:rm?'auto':'smooth'}),rm?0:700);}
+function sluitPosters(){if(!postersEl.classList.contains('open'))return;zetOpen(postersEl,false);if(!over.classList.contains('open')&&!contact.classList.contains('open'))scene.classList.remove('grijs');}
+document.getElementById('postersSluit').addEventListener('click',sluitPosters);
+postersRaster.addEventListener('click',e=>{const b=e.target.closest('[data-id]');if(b)openModal(vind(b.dataset.id));});
 function tekenShop(){shopLijst.innerHTML=zichtbaar().map(s=>`<button class="knop vol" data-id="${s.id}"><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${s.kleur};margin-right:8px;border:1px solid rgba(0,0,0,.15)"></i>${s.naam.toLowerCase()} — ${binnenkort?'binnenkort':`vanaf ${euro(vanafVan(s.id))}`}</button>`).join('');}
 tekenShop();
 /* Shopmenu: hover/focus op desktop, tikken op touchscreens */
 const shop=document.querySelector('.shop'),shopKnop=document.getElementById('shopKnop');
 function zetShop(open){shop.classList.toggle('open',open);shopKnop.setAttribute('aria-expanded',String(open));}
-shopKnop.addEventListener('click',()=>zetShop(!shop.classList.contains('open')));
+shopKnop.addEventListener('click',()=>openPosters());
 document.addEventListener('click',e=>{if(!shop.contains(e.target))zetShop(false);});
 shopLijst.addEventListener('click',e=>{const b=e.target.closest('[data-id]');if(b){zetShop(false);openModal(vind(b.dataset.id));}});
 
@@ -768,7 +822,7 @@ cf.addEventListener('submit',async e=>{
   cf.classList.add('klaar');cf.querySelector('.dank').textContent=`Je mailprogramma opent met je bericht erin. Verstuur die mail naar ${WINKEL_MAIL}, dan reageren we binnen één werkdag.`;
 });
 addEventListener('keydown',e=>{if(lb.classList.contains('open')){if(e.key==='Escape')sluitLightbox();else if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();lbI=(lbI+(e.key==='ArrowLeft'?-1:1)+lbBeelden.length)%lbBeelden.length;toonLb();}return;}
-  if(e.key==='Escape'){sluitModal();sluitOver();sluitContact();sluitMandje();}
+  if(e.key==='Escape'){if(modal.classList.contains('open'))sluitModal();else sluitPosters();sluitOver();sluitContact();sluitMandje();}
   if(modal.classList.contains('open')&&(e.key==='ArrowLeft'||e.key==='ArrowRight')&&!e.target.closest('input,textarea,select')){e.preventDefault();bladerPoster(e.key==='ArrowLeft'?-1:1);}});
 document.getElementById('vorigePoster').addEventListener('click',()=>bladerPoster(-1));
 document.getElementById('volgendePoster').addEventListener('click',()=>bladerPoster(1));
@@ -788,7 +842,7 @@ function totaalHtml(land){const b=bedragen(land);const nog=GRATIS_VANAF-b.sub;
 function tekenMandje(){
   const n=regels.reduce((t,r)=>t+r.aantal,0);document.getElementById('mandjeTel').textContent=n;
   ml.innerHTML=regels.length?regels.map((r,i)=>{const p=vind(r.id),v=variantVan(r),f=formaatVan(v.formaat),pa=papiersoorten.length>1?papierVan(v.papier):null;
-    return `<div class="regel"><img src="${klein(p.id)}" alt=""><div><b>${p.naam.toLowerCase()}</b><small>${f.label}${pa?` · ${pa.naam.toLowerCase()}`:''}</small>
+    return `<div class="regel"><img src="${klein(p.id)}" alt=""><div><b>${p.naam.toLowerCase()}</b><small>${f.label}${v.lijst?` · in ${lijstVan(v)}`:pa?` · ${pa.naam.toLowerCase()}`:''}</small>
       <div class="aantal"><button data-i="${i}" data-d="-1" aria-label="Eén minder">−</button>${r.aantal}<button data-i="${i}" data-d="1" aria-label="Eén meer">+</button><button class="weg" data-i="${i}" data-weg>verwijder</button></div></div>
       <span>${euro(v.prijs*r.aantal)}</span></div>`;}).join(''):'<p class="leeg">Je mandje is nog leeg. Kies een poster via “shop posters”.</p>';
   mtot.innerHTML=regels.length?totaalHtml('NL'):'';naarAf.disabled=!regels.length;
@@ -810,7 +864,7 @@ bf.land.addEventListener('change',tekenMandje);
 function toonKlaar(t){document.getElementById('klaarTekst').textContent=t;zetStap('klaar');}
 /* Terugval zonder betaal- of mailkoppeling op de server: de bestelling als e-mail klaarzetten. */
 function bestelMail(k){const b=bedragen(k.land);
-  const tekst=['Hallo Skiffa,','','Ik wil graag bestellen:',...regels.map(r=>{const v=variantVan(r);return `- ${r.aantal}× ${vind(r.id).naam}, ${formaatVan(v.formaat).label}, ${papierVan(v.papier)?.naam||v.papier} (${euro(v.prijs*r.aantal)})`;}),
+  const tekst=['Hallo Skiffa,','','Ik wil graag bestellen:',...regels.map(r=>{const v=variantVan(r);return `- ${r.aantal}× ${vind(r.id).naam}, ${formaatVan(v.formaat).label}, ${v.lijst?`in ${lijstVan(v)}`:papierVan(v.papier)?.naam||v.papier} (${euro(v.prijs*r.aantal)})`;}),
     `Verzending: ${b.verz?euro(b.verz):'gratis'}`,`Totaal: ${euro(b.tot)}`,'',k.naam,k.straat,`${k.postcode} ${k.plaats}`,k.land==='BE'?'België':'Nederland',k.email].concat(k.opmerking?['','Opmerking: '+k.opmerking]:[]).join('\n');
   return `mailto:${WINKEL_MAIL}?subject=${encodeURIComponent('Bestelling posters')}&body=${encodeURIComponent(tekst)}`;}
 bf.addEventListener('submit',async e=>{
@@ -868,19 +922,19 @@ openUitHash();
         if(p.beeld&&!String(p.beeld).startsWith('/posters/'))eigenBeeld[p.id]={beeld:p.beeld,klein:p.klein||p.beeld};
         return {id:String(p.id),naam:String(p.titel),sub:String(p.stijl||''),zin:String(p.beschrijving||''),kleur:/^#[0-9a-f]{6}$/i.test(p.accentkleur)?p.accentkleur:'#1F4E79',actief:true,punten:oud?.punten||PUNTEN};});
       plaatsHotspots(document.body.dataset.periode||'ochtend');
-      tekenShop();if(overGetekend)tekenOverBlok();tekenMandje();if(huidigePoster)openModal(huidigePoster);else openUitHash();return;}
+      tekenShop();if(overGetekend)tekenOverBlok();if(postersEl.classList.contains("open"))tekenPosters();tekenMandje();if(huidigePoster)openModal(huidigePoster);else openUitHash();return;}
     if(d.bron!=='database'||!Array.isArray(d.producten)||!d.producten.length||!Array.isArray(d.formaten)||!d.formaten.length)return;
     // Alleen wat echt besteld kan worden: producten met bestelbare varianten.
     const met=d.producten.filter(p=>Array.isArray(p.varianten)&&p.varianten.length);if(!met.length)return;
     formaten.splice(0,formaten.length,...d.formaten.map(f=>({id:String(f.id),label:String(f.label),mm:f.mm,prijs:Math.min(...met.flatMap(p=>p.varianten).filter(v=>v.formaat===f.id).map(v=>Number(v.prijs)))})).filter(f=>isFinite(f.prijs)));
     if(Array.isArray(d.papiersoorten)&&d.papiersoorten.length)papiersoorten=d.papiersoorten;
-    varianten=Object.fromEntries(met.map(p=>[String(p.id),p.varianten.map(v=>({sku:String(v.sku),formaat:String(v.formaat),papier:String(v.papier),prijs:Number(v.prijs),levertijd:v.levertijd||null}))]));
+    varianten=Object.fromEntries(met.map(p=>[String(p.id),p.varianten.map(v=>({sku:String(v.sku),formaat:String(v.formaat),papier:String(v.papier),lijst:v.lijst==='classic'?'classic':null,lijst_kleur:LIJSTKLEUR[v.lijst_kleur]?v.lijst_kleur:null,prijs:Number(v.prijs),levertijd:v.levertijd||null}))]));
     vanaf=Math.min(...formaten.map(f=>f.prijs));
     posters=met.map(p=>{const oud=vind(p.id);
       if(p.beeld&&!String(p.beeld).startsWith('/posters/'))eigenBeeld[p.id]={beeld:p.beeld,klein:p.klein||p.beeld};
       return {id:String(p.id),naam:String(p.titel),sub:String(p.stijl||''),zin:String(p.beschrijving||''),kleur:/^#[0-9a-f]{6}$/i.test(p.accentkleur)?p.accentkleur:'#1F4E79',actief:true,punten:oud?.punten||PUNTEN};});
     regels=regels.filter(x=>vind(x.id)&&variantVan(x));bewaar();
-    tekenShop();if(overGetekend)tekenOverBlok();tekenMandje();plaatsHotspots(document.body.dataset.periode||'ochtend');openUitHash();
+    tekenShop();if(overGetekend)tekenOverBlok();if(postersEl.classList.contains("open"))tekenPosters();tekenMandje();plaatsHotspots(document.body.dataset.periode||'ochtend');openUitHash();
   }catch(_){/* stil terugvallen op de catalogus in de code */}
 })();
 
