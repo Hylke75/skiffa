@@ -18,7 +18,7 @@ import { metAudit } from './_audit.js';
 import * as feeds from './_feeds.js';
 import { dbAan, db } from './_db.js';
 import { isAdmin } from './_auth.js';
-import { laadCatalogus, catalogusBron, ontbreektVoor, POSTERS, ALLE_FORMATEN, FORMATEN, PAPIER, VARIANTEN, TEKSTEN, BEELDEN, VASTE_BEELDEN, PRODUCTEN, STANDAARD_PAPIER } from './_catalogus.js';
+import { laadCatalogus, catalogusBron, ontbreektVoor, POSTERS, ALLE_FORMATEN, FORMATEN, PAPIER, VARIANTEN, TEKSTEN, BEELDEN, VASTE_BEELDEN, PRODUCTEN, STANDAARD_PAPIER, OPHANGING, ophangLabel, lijstSku } from './_catalogus.js';
 import { uploadUrl, info, verwijder } from './_opslag.js';
 import { visuals, visualUrl } from './_media.js';
 import { instellingen as prodigiInstellingen, VERZENDMETHODEN } from './_prodigi.js';
@@ -49,7 +49,7 @@ async function openbaar() {
       return {
         id, titel: POSTERS[id], stijl: TEKSTEN[id]?.sub || '', beschrijving: TEKSTEN[id]?.zin || '', accentkleur: TEKSTEN[id]?.kleur || '#1F4E79',
         seo_titel: p.seo_titel || '', seo_beschrijving: p.seo_beschrijving || '', ...beeldVan(id),
-        varianten: bestelbaar.filter((v) => v.product_id === id).map((v) => ({ sku: v.sku, formaat: v.formaat, papier: v.papier, lijst: v.lijst || null, prijs: v.prijs, levertijd: v.levertijd })),
+        varianten: bestelbaar.filter((v) => v.product_id === id).map((v) => ({ sku: v.sku, formaat: v.formaat, papier: v.papier, lijst: v.lijst || null, lijst_kleur: v.lijst_kleur || null, ophanging: ophangLabel(v.lijst, v.lijst_kleur), prijs: v.prijs, levertijd: v.levertijd })),
       };
     }),
     formaten: Object.entries(FORMATEN).map(([id, f]) => ({ id, label: f.label, mm: f.mm })),
@@ -69,7 +69,12 @@ async function context() {
 
 async function beheer() {
   const c = await context();
-  const v = await db('varianten?select=sku,product_id,formaat_id,papier_id,prijs,actief,prodigi_status,handmatig_leverbaar,drukbestand_id,qc_uitzondering,prodigi_sku,prodigi_melding');
+  const rijen = await db('varianten?select=sku,product_id,formaat_id,papier_id,lijst,lijst_kleur,prijs,actief,prodigi_status,handmatig_leverbaar,drukbestand_id,qc_uitzondering,prodigi_sku,prodigi_melding');
+  // Ingelijst: drukbestand en uitzondering van dezelfde losse poster in hetzelfde formaat.
+  const v = rijen.map((x) => {
+    const b = x.lijst ? rijen.find((y) => !y.lijst && y.product_id === x.product_id && y.formaat_id === x.formaat_id) : null;
+    return b ? { ...x, drukbestand_id: b.drukbestand_id, qc_uitzondering: b.qc_uitzondering } : x;
+  });
   const druk = await drukOp(v);
   return {
     ok: true, bron: catalogusBron(), productieRoute: c.route, formaten: c.f, papiersoorten: c.pa,
@@ -99,10 +104,14 @@ async function product(id) {
   return {
     product: { ...p, ...beeldVan(id), ...(p.beeld ? { beeld: visualUrl(p.beeld), klein: visualUrl(p.beeld_klein || p.beeld) } : {}) },
     productieRoute: c.route, formaten: c.f, papiersoorten: c.pa, verzendmethoden: VERZENDMETHODEN, beelden,
-    varianten: v.map((x) => {
+    varianten: v.map((rij) => {
+      // Ingelijst: drukbestand (en uitzondering) van dezelfde losse poster in hetzelfde formaat.
+      const b = rij.lijst ? v.find((y) => !y.lijst && y.formaat_id === rij.formaat_id) : null;
+      const x = b ? { ...rij, drukbestand_id: b.drukbestand_id, qc_uitzondering: b.qc_uitzondering, qc_uitzondering_op: b.qc_uitzondering_op } : rij;
       const ontbreekt = ontbreektVoor(x, { product: { ...p, status: 'actief' }, formaat: c.fOp[x.formaat_id], papier: c.paOp[x.papier_id], druk: druk.get(x.drukbestand_id), productieRoute: c.route });
-      return { ...x, prijs: Number(x.prijs), kostprijs: x.kostprijs == null ? null : Number(x.kostprijs), klaar: !ontbreekt.length, ontbreekt,
-        drukbestand: druk.get(x.drukbestand_id) || null, versies: versies.filter((d) => d.variant_sku === x.sku) };
+      if (rij.lijst && !b) ontbreekt.push('geen losse poster in dit formaat (daar hoort het drukbestand bij)');
+      return { ...x, prijs: Number(x.prijs), kostprijs: x.kostprijs == null ? null : Number(x.kostprijs), klaar: !ontbreekt.length, ontbreekt, basis_sku: b?.sku || null,
+        ophanging: ophangLabel(rij.lijst, rij.lijst_kleur), drukbestand: druk.get(x.drukbestand_id) || null, versies: versies.filter((d) => d.variant_sku === (b?.sku || x.sku)) };
     }),
   };
 }
@@ -195,9 +204,39 @@ async function bewaarVariant(b) {
   return { ok: true, melding: `${v.sku} opgeslagen${patch.prodigi_status === 'niet_gekoppeld' ? '; controleer het Prodigi-product opnieuw' : ''}` };
 }
 
+// Lijsten bij bestaande losse posters: Prodigi-product, papier en kleur staan al klaar,
+// controleren bij Prodigi gaat daarna met één klik per variant.
+async function genereerLijsten(p, b) {
+  const L = OPHANGING.classic;
+  const kleuren = (Array.isArray(b.lijsten?.kleuren) ? b.lijsten.kleuren : []).filter((k) => L.kleuren[k]);
+  if (!kleuren.length) return { fout: 'Kies minstens één lijstkleur.' };
+  const basis = await db(`varianten?product_id=eq.${enc(p.id)}&lijst=is.null&papier_id=eq.${enc(STANDAARD_PAPIER)}&select=sku,formaat_id`);
+  let nieuw = 0, geprijsd = 0;
+  for (const v of basis) {
+    const prodigi = L.prodigi[v.formaat_id];
+    if (!prodigi) continue;
+    const prijs = prijsVan(b.lijsten?.prijzen?.[v.formaat_id]);
+    if (!(prijs > 0)) continue; // geen prijs = dit formaat (nog) niet ingelijst
+    geprijsd++;
+    for (const k of kleuren) {
+      const sku = lijstSku(v.sku, k);
+      if ((await db(`varianten?sku=eq.${enc(sku)}&select=sku`))?.[0]) continue;
+      await db('varianten', { method: 'POST', body: { sku, product_id: p.id, formaat_id: v.formaat_id, papier_id: L.papier, lijst: 'classic', lijst_kleur: k, prijs,
+        prodigi_sku: prodigi, prodigi_attributen: { ...L.attributen, color: k } } });
+      nieuw++;
+    }
+  }
+  if (!geprijsd) return { fout: 'Geef een prijs voor minstens één formaat in lijst.' };
+  return { nieuw };
+}
+
 async function genereer(b) {
   const p = (await db(`producten?id=eq.${enc(String(b.product_id || ''))}&select=id`))?.[0];
   if (!p) return { fout: 'Poster niet gevonden.' };
+  if (b.alleen_lijsten) {
+    const h = await genereerLijsten(p, b);
+    return h.fout ? h : { ok: true, melding: `${h.nieuw} ingelijste variant(en) aangemaakt; controleer ze bij Prodigi` };
+  }
   const formaten = (Array.isArray(b.formaten) ? b.formaten : []).filter((f) => ALLE_FORMATEN[f]);
   const papieren = (Array.isArray(b.papieren) ? b.papieren : []).filter((x) => PAPIER[x]);
   if (!formaten.length || !papieren.length) return { fout: 'Kies minstens één formaat en één papiersoort.' };
@@ -238,7 +277,8 @@ async function bewaarPapier(b) {
 }
 
 async function uitzondering(b, aan) {
-  const v = (await db(`varianten?sku=eq.${enc(String(b.sku || ''))}&select=sku,drukbestand_id`))?.[0];
+  const v = (await db(`varianten?sku=eq.${enc(String(b.sku || ''))}&select=sku,lijst,drukbestand_id`))?.[0];
+  if (v?.lijst) return { fout: 'Een ingelijste variant gebruikt het drukbestand van de losse poster: bevestig de uitzondering daar.' };
   if (!v?.drukbestand_id) return { fout: 'Deze variant heeft geen drukbestand.' };
   if (aan && tekst(b.reden, 500).length < 10) return { fout: 'Motiveer de uitzondering (minstens 10 tekens): wat wijkt af en waarom is dat aanvaardbaar?' };
   await db(`varianten?sku=eq.${enc(v.sku)}`, { method: 'PATCH', body: aan ? { qc_uitzondering: tekst(b.reden, 500), qc_uitzondering_op: new Date().toISOString() } : { qc_uitzondering: null, qc_uitzondering_op: null } });

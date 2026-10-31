@@ -206,31 +206,37 @@ const Producten = (() => {
 
       <div class="blok"><h3>beelden: productfoto's, interieur-mock-ups, details en papier</h3>
         <div class="beelden">${beelden.map((b) => `<div class="bl" data-pos="${b.positie}"><img src="${esc(b.klein)}" alt="${esc(b.alt)}" loading="lazy">
-          <div class="blv"><span class="mini">#${b.positie}</span>
-            <select data-b="soort">${Object.entries(SOORT).map(([k, l]) => `<option value="${k}" ${k === b.soort ? 'selected' : ''}>${l}</option>`).join('')}</select>
-            <select data-b="formaat_id"><option value="">alle formaten</option>${formaten.map((f) => `<option value="${esc(f.id)}" ${f.id === b.formaat ? 'selected' : ''}>${esc(f.label)}</option>`).join('')}</select>
-            <select data-b="papier_id"><option value="">alle papiersoorten</option>${papiersoorten.map((x) => `<option value="${esc(x.id)}" ${x.id === b.papier ? 'selected' : ''}>${esc(x.naam)}</option>`).join('')}</select>
-            <input data-b="alt" value="${esc(b.alt)}" placeholder="omschrijving (alt-tekst)">
-            <div class="acties"><button data-p="beeld-opslaan">opslaan</button><button data-p="beeld-weg" aria-label="verwijder">×</button></div></div></div>`).join('')}
+          <span class="nr">#${b.positie}</span><button class="weg" data-p="beeld-weg" aria-label="beeld ${b.positie} verwijderen" title="verwijderen">×</button>
+          <div class="blv">
+            <label>soort<select data-b="soort">${Object.entries(SOORT).map(([k, l]) => `<option value="${k}" ${k === b.soort ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+            <div class="twee"><label>formaat<select data-b="formaat_id"><option value="">alle</option>${formaten.map((f) => `<option value="${esc(f.id)}" ${f.id === b.formaat ? 'selected' : ''}>${esc(f.label)}</option>`).join('')}</select></label>
+            <label>papier<select data-b="papier_id"><option value="">alle</option>${papiersoorten.map((x) => `<option value="${esc(x.id)}" ${x.id === b.papier ? 'selected' : ''}>${esc(x.naam)}</option>`).join('')}</select></label></div>
+            <label>omschrijving<input data-b="alt" value="${esc(b.alt)}" placeholder="wat is er te zien (alt-tekst)" title="${esc(b.alt)}"></label>
+            <button class="opslaan" data-p="beeld-opslaan">opslaan</button></div></div>`).join('')}
           <div class="bl nieuw" data-p="beelden-toevoegen"><span>+ beelden toevoegen</span></div></div>
         <p class="mini">Beelden met een formaat of papiersoort verschijnen in de winkel alleen bij die keuze.</p>
       </div>
 
       <div class="blok"><h3>varianten</h3>
         ${productieRoute === 'prodigi' ? '' : '<p class="waarschuw" style="margin:0 0 10px">Prodigi staat uit: een variant is alleen bestelbaar als je hem handmatig leverbaar verklaart.</p>'}
-        <div class="schuif"><table class="kaal vtabel"><thead><tr><th>SKU</th><th>formaat</th><th>papier</th><th class="r">prijs</th><th class="r">kostprijs</th><th>Prodigi</th><th>drukbestand</th><th>stand</th></tr></thead><tbody>
+        <div class="schuif"><table class="kaal vtabel"><thead><tr><th>SKU</th><th>formaat</th><th>papier</th><th>ophanging</th><th class="r">prijs</th><th class="r">kostprijs</th><th>Prodigi</th><th>drukbestand</th><th>stand</th></tr></thead><tbody>
         ${varianten.map((v) => `<tr class="vrij ${open_.has(v.sku) ? 'open' : ''}" data-sku="${esc(v.sku)}"><td><b>${esc(v.sku)}</b>${v.actief ? '' : ' <span class="kb">uit</span>'}</td><td>${esc(formaten.find((f) => f.id === v.formaat_id)?.label || v.formaat_id)}</td>
-          <td>${esc(papiersoorten.find((x) => x.id === v.papier_id)?.naam || v.papier_id)}</td><td class="r">${euro(v.prijs)}</td><td class="r">${bedrag(v.kostprijs)}</td>
+          <td>${esc(papiersoorten.find((x) => x.id === v.papier_id)?.naam || v.papier_id)}</td><td>${esc(v.ophanging || '—')}</td><td class="r">${euro(v.prijs)}</td><td class="r">${bedrag(v.kostprijs)}</td>
           <td class="${v.prodigi_status === 'bevestigd' ? 'ok' : v.prodigi_status === 'ongeldig' ? 'nok' : ''}">${v.prodigi_status === 'bevestigd' ? '✓ bevestigd' : v.prodigi_status === 'ongeldig' ? '✗ ongeldig' : v.prodigi_sku ? 'niet gecontroleerd' : '—'}${v.handmatig_leverbaar ? '<div class="mini">handmatig leverbaar</div>' : ''}</td>
           <td class="${v.drukbestand?.status === 'afgekeurd' && !v.qc_uitzondering ? 'nok' : v.drukbestand?.status === 'ok' ? 'ok' : ''}">${v.drukbestand ? `${ERNST[v.drukbestand.status]} v${v.drukbestand.versie}${v.qc_uitzondering ? ' (uitzondering)' : ''}` : '<span class="nok">ontbreekt</span>'}</td>
           <td class="${v.klaar ? 'ok' : 'nok'}">${v.klaar ? '✓ klaar' : `${v.ontbreekt.length} punt${v.ontbreekt.length > 1 ? 'en' : ''}`}</td></tr>
 `).join('')}
         </tbody></table></div>
-        ${varianten.filter((v) => open_.has(v.sku)).map((v) => `<div class="vdetail" data-sku="${esc(v.sku)}"><div class="balk" style="margin:0"><b>${esc(v.sku)}</b><span class="mini">${esc(formaten.find((f) => f.id === v.formaat_id)?.label || '')} · ${esc(papiersoorten.find((x) => x.id === v.papier_id)?.naam || '')}</span><span style="flex:1"></span><button data-p="sluit-variant">sluiten</button></div>${variantDetail(v)}</div>`).join('')}
+        ${varianten.filter((v) => open_.has(v.sku)).map((v) => `<div class="vdetail" data-sku="${esc(v.sku)}"><div class="balk" style="margin:0"><b>${esc(v.sku)}</b><span class="mini">${esc(formaten.find((f) => f.id === v.formaat_id)?.label || '')} · ${esc(papiersoorten.find((x) => x.id === v.papier_id)?.naam || '')}${v.ophanging ? ` · ${esc(v.ophanging)}` : ''}</span><span style="flex:1"></span><button data-p="sluit-variant">sluiten</button></div>${variantDetail(v)}</div>`).join('')}
         <details style="margin-top:10px"><summary class="mini">varianten toevoegen</summary>
           <div class="genereer"><div><b class="mini">formaten</b>${formaten.map((f) => `<label class="mini"><input type="checkbox" data-gf="${esc(f.id)}" ${f.actief ? 'checked' : ''}> ${esc(f.label)} · € <input data-gp="${esc(f.id)}" class="kort" placeholder="prijs"></label>`).join('')}</div>
             <div><b class="mini">papiersoorten</b>${papiersoorten.map((x) => `<label class="mini"><input type="checkbox" data-gpa="${esc(x.id)}" ${x.actief ? 'checked' : ''}> ${esc(x.naam)}</label>`).join('')}</div>
             <div><button data-p="genereer">maak ontbrekende varianten</button><p class="mini">Bestaande combinaties blijven ongewijzigd.</p></div></div></details>
+        <details style="margin-top:6px"><summary class="mini">lijsten toevoegen</summary>
+          <p class="mini">Prodigi Classic-lijst met acrylaat ervoor, zonder passe-partout. Let op: ingelijst wordt op Enhanced Matte Art (200 g/m²) gedrukt, niet op German Etching. Voor elk formaat van de losse poster komt er per kleur een variant bij; die gebruikt het drukbestand van de losse poster.</p>
+          <div class="genereer"><div><b class="mini">lijstkleuren</b>${[['black', 'zwart'], ['white', 'wit'], ['natural', 'naturel'], ['brown', 'bruin']].map(([k, n]) => `<label class="mini"><input type="checkbox" data-hk="${k}" ${k === 'black' || k === 'natural' ? 'checked' : ''}> ${n}</label>`).join('')}</div>
+            <div><b class="mini">prijs incl. btw per formaat</b>${[...new Set(varianten.filter((v) => !v.lijst).map((v) => v.formaat_id))].map((f) => `<label class="mini">${esc(formaten.find((x) => x.id === f)?.label || f)} · € <input data-hp="${esc(f)}" class="kort" placeholder="prijs" value="${{ '30x40': 89, '50x70': 119, '70x100': 169 }[f] || ''}"></label>`).join('') || '<span class="mini">eerst een losse poster aanmaken</span>'}</div>
+            <div><button data-p="genereer-lijsten">maak ingelijste varianten</button><p class="mini">Daarna per variant "controleer bij Prodigi" en "kosten ophalen".</p></div></div></details>
       </div>`;
   }
 
@@ -264,7 +270,9 @@ const Producten = (() => {
         <div class="acties" style="margin-top:8px"><button data-p="proef" ${v.prodigi_status === 'bevestigd' && d && (d.status !== 'afgekeurd' || v.qc_uitzondering) ? '' : 'disabled'} title="vraagt een bevestigd Prodigi-product en een goedgekeurd drukbestand">proefbestelling maken</button></div>
         <div class="proef" data-proef="${esc(v.sku)}"></div>
       </div>
-      <div><h4>drukbestand <span class="mini">(privé)</span></h4>
+      ${v.lijst ? `<div><h4>drukbestand <span class="mini">(privé)</span></h4>
+        <p>Gebruikt het drukbestand van <b>${esc(v.basis_sku || 'de losse poster')}</b>${d ? `: <span class="${d.status === 'ok' ? 'ok' : d.status === 'afgekeurd' ? 'nok' : ''}">${ERNST[d.status]} versie ${d.versie}</span>` : ' — <span class="nok">nog geen drukbestand</span>'}.</p>
+        <p class="mini">Uploaden, controleren en uitzonderingen gaan bij die variant. De drukmaat van de lijst is gelijk aan die van de losse poster; de lijstrand valt over de buitenste paar millimeter.</p></div></div>` : `<div><h4>drukbestand <span class="mini">(privé)</span></h4>
         ${d ? `<p><span class="${d.status === 'ok' ? 'ok' : d.status === 'afgekeurd' ? 'nok' : ''}">${ERNST[d.status]} versie ${d.versie} — ${d.status === 'ok' ? 'goedgekeurd' : d.status === 'afgekeurd' ? 'afgekeurd' : 'met waarschuwingen'}</span> <span class="mini">${esc(d.bestandsnaam || '')} · ${d.bytes ? mb(d.bytes) : ''} · ${datum(d.geupload_op)}</span></p>
           <ul class="controles">${(d.controles || []).map((c) => `<li class="${c.ernst}">${ERNST[c.ernst] || ''} ${esc(c.tekst)}</li>`).join('')}</ul>
           ${d.mime && d.mime.startsWith('image/') ? `<div class="uitsnede" data-uits="${esc(v.sku)}"><button data-p="toon-uitsnede">toon uitsnede op het papier</button></div>` : ''}
@@ -274,7 +282,7 @@ const Producten = (() => {
         <div class="acties" style="margin-top:8px"><button class="vol" data-p="druk-upload">${d ? 'nieuwe versie uploaden' : 'drukbestand uploaden'}</button>${d ? `<a href="/api/media?actie=druk&v=${d.id}" target="_blank" rel="noopener"><button>download</button></a><button data-p="herbeoordeel">opnieuw controleren</button>` : ''}</div>
         <div class="voortgang-upload" data-voortgang="${esc(v.sku)}"></div>
         ${v.versies.length > 1 ? `<details><summary class="mini">eerdere versies (${v.versies.length - 1})</summary>${v.versies.filter((x) => x.id !== d?.id).map((x) => `<div class="mini">v${x.versie} · ${ERNST[x.status]} · ${esc(x.bestandsnaam || '')} · ${datum(x.geupload_op)} <a href="/api/media?actie=druk&v=${x.id}" target="_blank" rel="noopener">download</a> <button data-p="versie-weg" data-versie="${x.id}">verwijder</button></div>`).join('')}</details>` : ''}
-      </div></div>`;
+      </div></div>`}`;
   }
 
   const variantVan = (sku) => huidig.varianten.find((v) => v.sku === sku);
@@ -337,6 +345,11 @@ const Producten = (() => {
         const formaten = [...doos().querySelectorAll('[data-gf]:checked')].map((i) => i.dataset.gf), papieren = [...doos().querySelectorAll('[data-gpa]:checked')].map((i) => i.dataset.gpa);
         const prijzen = Object.fromEntries([...doos().querySelectorAll('[data-gp]')].map((i) => [i.dataset.gp, i.value]));
         const r = await capi('varianten-genereren', { product_id: p.id, formaten, papieren, prijzen }); meld(r.melding); return herlaad();
+      }
+      if (a === 'genereer-lijsten') {
+        const kleuren = [...doos().querySelectorAll('[data-hk]:checked')].map((i) => i.dataset.hk);
+        const prijzen = Object.fromEntries([...doos().querySelectorAll('[data-hp]')].map((i) => [i.dataset.hp, i.value]));
+        const r = await capi('varianten-genereren', { product_id: p.id, alleen_lijsten: true, lijsten: { kleuren, prijzen } }); meld(r.melding); return herlaad();
       }
       if (a === 'sluit-variant' && sku) { open_.delete(sku); return tekenProduct(); }
       if (!sku) return;

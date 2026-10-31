@@ -146,6 +146,24 @@ ok(r.ok && T.poster_visuals[0].soort === 'mockup' && T.poster_visuals[0].formaat
 r = await call(catalogus, { url: '/api/catalogus' }); ok(r.j.visuals.golf[0].soort === 'mockup' && r.j.visuals.golf[0].formaat === '50x70', 'webshop krijgt het beeld met formaat (wisselt mee bij de keuze)');
 r = (await M('beeld-upload', { poster_id: 'golf', positie: 31, bytes: 5 })).j; ok(!r.ok, 'maximaal 30 beelden');
 
+// ---- lijsten (Prodigi Classic, EMA): zelfde drukbestand als de losse poster ----
+r = (await C('varianten-genereren', { product_id: 'golf', alleen_lijsten: true, lijsten: { kleuren: ['black'], prijzen: {} } })).j; ok(!r.ok, 'lijsten: zonder prijs niets aangemaakt');
+r = (await C('varianten-genereren', { product_id: 'golf', alleen_lijsten: true, lijsten: { kleuren: ['black', 'natural'], prijzen: { '50x70': '119' } } })).j;
+ok(r.ok && T.varianten.filter((v) => v.product_id === 'golf' && v.lijst === 'classic').length === 2, 'lijsten: alleen formaten met prijs, één per gekozen kleur');
+const lz = T.varianten.find((v) => v.sku === 'SKF-GOLF-50X70-LIJST-ZWART');
+ok(lz && lz.prodigi_sku === 'GLOBAL-CFP-20X28' && lz.prodigi_attributen.color === 'black' && lz.prodigi_attributen.paperType === 'EMA' && lz.prodigi_attributen.mount === 'No mount / Mat' && lz.papier_id === 'mat' && !lz.drukbestand_id, 'lijst: Prodigi Classic-lijst op EMA, kleur ingevuld, geen eigen drukbestand');
+r = (await M('druk-upload', { sku: lz.sku, bytes: 1000, bestandsnaam: 'x.png' })).j; ok(!r.ok && /losse poster/.test(r.melding), 'drukbestand uploaden bij een lijst geweigerd (hoort bij de losse poster)');
+T.papiersoorten.push({ id: 'mat', naam: 'Mat art-papier (EMA)', uitleg: 'Mat papier.', gewicht_gsm: 200, actief: true, volgorde: 20 });
+await C('variant', { sku: lz.sku, handmatig_leverbaar: true, handmatig_reden: 'proef in lijst goedgekeurd' }); await cat.laadCatalogus({ vers: true });
+const vl = cat.VARIANTEN[lz.sku];
+ok(vl.bestelbaar && vl.drukbestand_id && vl.drukbestand_id === cat.VARIANTEN['SKF-GOLF-50X70'].drukbestand_id && vl.basis_sku === 'SKF-GOLF-50X70', 'lijst erft het drukbestand van de losse poster en is bestelbaar');
+r = await call(catalogus, { url: '/api/catalogus' }); const lv = r.j.producten.find((p) => p.id === 'golf').varianten.find((v) => v.sku === lz.sku);
+ok(lv && lv.ophanging === 'zwarte lijst'.replace('zwarte', 'zwart') && lv.lijst === 'classic' && lv.lijst_kleur === 'black', 'webshop: lijst en kleur');
+r = await call(bestel, { method: 'POST', body: { klant, regels: [{ id: 'golf', sku: lz.sku, aantal: 1 }], akkoord: true, t: 5000 } });
+const rl = T.bestelregels.at(-1);
+ok(r.j.ok && rl.variant_sku === lz.sku && rl.lijst_kleur === 'black' && /in zwart lijst/.test(rl.formaat_label) && Number(rl.prijs) === 119 && rl.drukbestand_versie_id === vl.drukbestand_id && rl.prodigi_sku === 'GLOBAL-CFP-20X28', 'bestelling in lijst: label, kleur, prijs, Prodigi-product en drukbestand vastgelegd');
+r = (await C('uitzondering', { sku: lz.sku, reden: 'lange genoeg reden hier' })).j; ok(!r.ok && /losse poster/.test(r.melding), 'uitzondering hoort bij de losse poster');
+
 // ---- archiveren ----
 await C('product', { id: 'golf', titel: 'Golf', status: 'gearchiveerd' }); await cat.laadCatalogus({ vers: true });
 ok(!cat.POSTERS.golf && cat.ALLE_POSTERS.golf, 'gearchiveerd: niet meer te koop, wel bekend voor oude bestellingen');

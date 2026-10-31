@@ -98,11 +98,18 @@ tbody tr:hover{background:var(--zee)}
 input.kort{max-width:110px}
 .pbeeld{width:100%;aspect-ratio:2/3;border:1px dashed #aaa;border-radius:10px;overflow:hidden;cursor:pointer;display:grid;place-items:center;font-size:11px;color:#777;background:var(--papier);position:relative}
 .pbeeld img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.beelden{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:6px}
-.bl{border:1px solid var(--lijn);border-radius:10px;overflow:hidden;background:var(--papier)}
-.bl img{width:100%;aspect-ratio:4/5;object-fit:cover;display:block}
-.blv{display:grid;gap:4px;padding:6px}.blv select,.blv input{font-size:11px;padding:3px 6px}.blv .acties button{padding:1px 9px;font-size:10px}
-.bl.nieuw{display:grid;place-items:center;min-height:180px;cursor:pointer;border-style:dashed;color:#777;font-size:11px}
+.beelden{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;margin-bottom:8px}
+.bl{position:relative;display:flex;flex-direction:column;border:1px solid var(--lijn);border-radius:12px;overflow:hidden;background:#fff;min-width:0}
+.bl img{width:100%;aspect-ratio:4/5;object-fit:cover;display:block;background:var(--zee)}
+.bl .nr{position:absolute;top:8px;left:8px;background:rgba(255,255,255,.92);border-radius:999px;padding:2px 8px;font-size:10px;letter-spacing:.06em}
+.bl .weg{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(255,255,255,.92);font-size:14px;line-height:1;cursor:pointer;display:grid;place-items:center}
+.bl .weg:hover{background:var(--rood);color:#fff}
+.blv{display:flex;flex-direction:column;gap:6px;padding:10px;flex:1;min-width:0}
+.blv label{display:flex;flex-direction:column;gap:2px;font-size:9px;letter-spacing:.12em;text-transform:uppercase;opacity:.85;min-width:0}
+.blv select,.blv input{width:100%;min-width:0;box-sizing:border-box;font-size:11px;padding:5px 8px;border-radius:8px;border:1px solid var(--lijn);text-transform:none;letter-spacing:0}
+.blv .twee{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.blv .opslaan{margin-top:auto;align-self:stretch;padding:5px 10px;font-size:11px}
+.bl.nieuw{display:grid;place-items:center;min-height:220px;cursor:pointer;border-style:dashed;background:transparent;color:#777;font-size:11px}
 .schuif{overflow-x:auto;-webkit-overflow-scrolling:touch}
 table.kaal{border:0}table.kaal td,table.kaal th{padding:6px 8px}table.kaal input,table.kaal textarea{font-size:11px;padding:4px 6px;width:100%}
 .vtabel{min-width:760px}.vtabel tbody tr.vrij{cursor:pointer}.vtabel tbody tr.vrij.open{background:var(--zee)}

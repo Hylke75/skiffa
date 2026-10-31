@@ -44,7 +44,10 @@ zaaiCatalogus(cat.TEKSTEN);
 for (const id of ['golf', 'zon']) T.producten.find((p) => p.id === id).status = 'actief';
 T.producten.find((p) => p.id === 'zon').beschrijving = '';
 let did = 9000;
+const gb = T.varianten.find((v) => v.sku === 'SKF-GOLF-50X70');
+T.varianten.push({ ...gb, sku: 'SKF-GOLF-50X70-LIJST-NATUREL', lijst: 'classic', lijst_kleur: 'natural', prijs: 119, prodigi_sku: 'GLOBAL-CFP-20X28' });
 for (const v of T.varianten.filter((x) => ['golf', 'zon'].includes(x.product_id))) { T.drukbestand_versies.push({ id: ++did, variant_sku: v.sku, versie: 1, pad: `p/${v.sku}.png`, status: 'ok', controles: [] }); Object.assign(v, { handmatig_leverbaar: true, handmatig_reden: 'eigen drukker', drukbestand_id: did }); }
+T.varianten.find((v) => v.sku === 'SKF-GOLF-50X70-LIJST-NATUREL').drukbestand_id = null;
 await cat.laadCatalogus({ vers: true });
 
 // ---- Meta-feed ----
@@ -53,6 +56,7 @@ const x = r.s;
 ok(r.c === 200 && r.h['content-type'].startsWith('application/xml') && x.includes('xmlns:g="http://base.google.com/ns/1.0"'), 'meta: RSS-XML met g:-namespace');
 ok(x.includes('<g:id>SKF-GOLF-50X70</g:id>') && x.includes('<g:availability>in stock</g:availability>') && x.includes('<g:condition>new</g:condition>') && x.includes('<g:brand>SKIFFA</g:brand>'), 'meta: verplichte velden');
 ok(/<g:price>\d+\.\d{2} EUR<\/g:price>/.test(x) && x.includes('<g:item_group_id>') && x.includes('<g:size>'), 'meta: prijs "12.95 EUR", varianten gegroepeerd met maat');
+ok(/<item><g:id>SKF-GOLF-50X70-LIJST-NATUREL<\/g:id>[^]*?<g:title>[^<]*in naturel lijst<\/g:title>[^]*?<g:description>[^<]*Classic-lijst[^<]*Enhanced Matte Art[^<]*<\/g:description>[^]*?<g:color>naturel<\/g:color>/.test(x), 'meta: lijst als variant met kleur en eerlijk papier in de beschrijving');
 ok(!x.includes('SKF-ZON-') && !x.includes('SKF-BOULEVARD-'), 'meta: zonder beschrijving of niet actief = niet in de feed');
 ok(/<g:image_link>[^<]+\.jpg<\/g:image_link>/.test(x) && !/<g:image_link>[^<]+\.webp/.test(x), 'meta: hoofdbeeld als jpg, nooit webp');
 r = await call(catalogus, { method: 'GET', url: '/api/catalogus?actie=feed&kanaal=etsy' });
@@ -73,7 +77,7 @@ const g50 = r.j.items.find((i) => i.id === 'SKF-GOLF-50X70');
 ok(g50.review === 'afgekeurd' && g50.meldingen[0] === 'Afbeelding bevat tekst' && r.j.tellingen.goedgekeurd === 1, 'meta: goedkeuring per item uit de catalogus');
 await K('meta-opnemen', { skus: ['SKF-GOLF-50X70'], opnemen: false });
 r = await call(catalogus, { method: 'GET', url: '/api/catalogus?actie=feed&kanaal=meta' });
-ok(!r.s.includes('SKF-GOLF-50X70') && r.s.includes('SKF-GOLF-30X40'), 'meta: variant uit de feed halen');
+ok(!r.s.includes('<g:id>SKF-GOLF-50X70<') && r.s.includes('SKF-GOLF-30X40'), 'meta: variant uit de feed halen');
 r = await K('meta-bereikbaar', {});
 ok(r.c === 200, 'meta: bereikbaarheidscontrole');
 

@@ -1,6 +1,6 @@
 // Database-kant van de kanalen: instellingen, listings, EAN's, import van orders en logboek.
 import { db, rpc, log as orderLog } from '../_db.js';
-import { POSTERS, ALLE_POSTERS, FORMATEN, ALLE_FORMATEN, VARIANTEN, PAPIER, variantVoor } from '../_catalogus.js';
+import { POSTERS, ALLE_POSTERS, FORMATEN, ALLE_FORMATEN, VARIANTEN, PAPIER, variantVoor, ophangLabel } from '../_catalogus.js';
 import { mails, vanRij } from '../_mails.js';
 import { drukOverzicht, naBetaling } from '../_verwerk.js';
 import { haalBestelling } from '../_db.js';
@@ -67,7 +67,7 @@ export function regel({ sku: s, listing, titel, prijs, aantal, extern_item_id })
     poster_id: v?.poster_id || 'onbekend',
     poster_naam: (v && ALLE_POSTERS[v.poster_id]) || String(titel || 'Onbekend product').slice(0, 120),
     formaat: v?.formaat || '?',
-    formaat_label: f?.label || '?',
+    formaat_label: `${f?.label || '?'}${ophangLabel(vk?.lijst, vk?.lijst_kleur) ? `, in ${ophangLabel(vk.lijst, vk.lijst_kleur)}` : ''}`,
     // vaste kopie van de variant op het moment van bestellen
     variant_sku: vk?.sku || null, papier_id: vk?.papier || null, papier_label: vk ? PAPIER[vk.papier]?.naam || vk.papier : null, lijst: vk?.lijst || null,
     drukbestand_versie_id: vk?.drukbestand_id || null, prodigi_sku: vk?.prodigi_sku || null, prodigi_attributen: vk?.prodigi_attributen || {}, sizing: vk?.sizing || null, kostprijs: vk?.kostprijs ?? null,

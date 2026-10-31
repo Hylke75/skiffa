@@ -76,6 +76,21 @@ export const BEELDEN = {};
 /** Producten waarvan het beeld als bestand in /posters/ staat (meegeleverd met de site). */
 export const VASTE_BEELDEN = new Set(Object.keys(POSTERS));
 export const CODE_FORMATEN = JSON.parse(JSON.stringify(ALLE_FORMATEN));
+// Ingelijst: Prodigi Classic-lijst (zonder passe-partout, met acrylaat ervoor). Prodigi drukt ingelijste posters op
+// Enhanced Matte Art (EMA, 200 g/m²), niet op German Etching. De drukmaat is gelijk aan die van de losse poster, dus
+// een variant met `lijst = 'classic'` en `lijst_kleur` (Prodigi-kleur) gebruikt het drukbestand van de losse poster.
+export const OPHANGING = {
+  classic: {
+    naam: 'lijst',
+    kleuren: { black: 'zwart', white: 'wit', natural: 'naturel', brown: 'bruin' },
+    prodigi: { '30x40': 'GLOBAL-CFP-12X16', '50x70': 'GLOBAL-CFP-20X28', '70x100': 'GLOBAL-CFP-28X40' },
+    papier: 'mat',      // EMA 200 g/m²
+    attributen: { frame: 'Classic', glaze: 'Acrylic / Perspex', mount: 'No mount / Mat', paperType: 'EMA', substrateWeight: '200gsm' },
+  },
+};
+export const ophangLabel = (lijst, kleur) => (lijst === 'classic' ? `${OPHANGING.classic.kleuren[kleur] || kleur || ''} lijst`.trim() : null);
+export const lijstSku = (basisSku, kleur) => `${basisSku}-LIJST-${(OPHANGING.classic.kleuren[kleur] || kleur).toUpperCase()}`;
+
 /** Alle varianten, op SKU. */
 export const VARIANTEN = {};
 
@@ -144,11 +159,17 @@ export async function laadCatalogus({ vers = false } = {}) {
     const productieRoute = ins?.[0]?.waarden?.aan ? 'prodigi' : 'eigen';
     const fOp = Object.fromEntries(f.map((x) => [x.id, x])), paOp = Object.fromEntries(pa.map((x) => [x.id, x])), pOp = Object.fromEntries(p.map((x) => [x.id, x]));
 
+    // Drukbestand: een ingelijste variant gebruikt het bestand (en een eventuele uitzondering) van dezelfde losse poster
+    // in hetzelfde formaat (de lijst wordt op ander papier gedrukt, de drukmaat is gelijk).
+    const basisVan = (x) => (x.lijst ? v.find((y) => !y.lijst && y.product_id === x.product_id && y.formaat_id === x.formaat_id && y.papier_id === STANDAARD_PAPIER) || v.find((y) => !y.lijst && y.product_id === x.product_id && y.formaat_id === x.formaat_id) || null : null);
     const varianten = {};
-    for (const x of v) {
+    for (const rij of v) {
+      const b = basisVan(rij);
+      const x = b ? { ...rij, drukbestand_id: b.drukbestand_id, qc_uitzondering: b.qc_uitzondering } : rij;
       const ontbreekt = ontbreektVoor(x, { product: pOp[x.product_id], formaat: fOp[x.formaat_id], papier: paOp[x.papier_id], druk: drukOp.get(x.drukbestand_id), productieRoute });
+      if (rij.lijst && !b) ontbreekt.push('geen losse poster in dit formaat (daar hoort het drukbestand bij)');
       varianten[x.sku] = {
-        sku: x.sku, product_id: x.product_id, formaat: x.formaat_id, papier: x.papier_id, lijst: x.lijst, lijst_kleur: x.lijst_kleur,
+        sku: x.sku, product_id: x.product_id, formaat: x.formaat_id, papier: x.papier_id, lijst: x.lijst, lijst_kleur: x.lijst_kleur, basis_sku: b?.sku || null,
         prijs: Number(x.prijs), kostprijs: x.kostprijs == null ? null : Number(x.kostprijs), bestelbaar: !ontbreekt.length, ontbreekt,
         prodigi_sku: x.prodigi_sku, prodigi_attributen: x.prodigi_attributen || {}, sizing: x.sizing, prodigi_status: x.prodigi_status,
         drukbestand_id: x.drukbestand_id, drukbestand_status: drukOp.get(x.drukbestand_id)?.status || null, qc_uitzondering: x.qc_uitzondering || null, ean: x.ean,
