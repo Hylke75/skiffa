@@ -1,6 +1,6 @@
 // Nagebootste Supabase (PostgREST-subset + de RPC's uit supabase/migrations) voor de tests.
 import crypto from 'node:crypto';
-export const T = { bestellingen: [], bestelregels: [], bestelling_log: [], factuurteller: {}, poster_ean: [], kanaal_instellingen: [], kanaal_listings: [], kanaal_sync_log: [], etsy_koppeling: [], etsy_oauth_states: [], poster_visuals: [], producten: [], formaten: [], papiersoorten: [], varianten: [], drukbestand_versies: [], fulfilments: [], proefbestellingen: [], zendingen: [], kanaal_sjablonen: [], product_kanalen: [], serviceverzoeken: [], actie_afgehandeld: [], social_connections: [], social_posts: [], social_assets: [], social_post_targets: [], publishing_jobs: [], catalog_channels: [], campaign_links: [], tiktok_koppeling: [], audit_log: [] };
+export const T = { bestellingen: [], bestelregels: [], bestelling_log: [], factuurteller: {}, kanaal_instellingen: [], kanaal_listings: [], kanaal_sync_log: [], etsy_koppeling: [], etsy_oauth_states: [], poster_visuals: [], producten: [], formaten: [], papiersoorten: [], varianten: [], drukbestand_versies: [], fulfilments: [], proefbestellingen: [], zendingen: [], kanaal_sjablonen: [], product_kanalen: [], serviceverzoeken: [], actie_afgehandeld: [], social_connections: [], social_posts: [], social_assets: [], social_post_targets: [], publishing_jobs: [], catalog_channels: [], campaign_links: [], tiktok_koppeling: [], audit_log: [] };
 // Nagebootste Supabase Storage: S[bucket][pad] = { size, type }
 export const S = { drukbestanden: {}, visuals: {} };
 let seq = 1;
@@ -26,7 +26,7 @@ const STANDAARD = {
   catalog_channels: () => ({ opnemen: true, status: 'onbekend', meldingen: [], extern_id: null, laatste_check_op: null, bijgewerkt_op: nu() }),
   fulfilments: () => ({ id: seq++, herdruk_nr: 0, herdruk_reden: null, vrijgegeven_reden: null, branding: null, kosten: null, aanbieder: 'prodigi', status: 'wacht', pogingen: 0, geclaimd_op: null, extern_id: null, extern_status: null, laatste_fout: null, verstuurd_op: null, vanaf: new Date().toISOString(), aangemaakt_op: nu(), bijgewerkt_op: new Date().toISOString() }),
 };
-const UNIEK = { kanaal_listings: ['kanaal', 'poster_id', 'formaat'], poster_ean: ['poster_id', 'formaat'], kanaal_instellingen: ['kanaal'], etsy_koppeling: ['id'], poster_visuals: ['poster_id', 'positie'], producten: ['id'], formaten: ['id'], papiersoorten: ['id'], varianten: ['sku'], fulfilments: ['bestelling_id', 'herdruk_nr'], proefbestellingen: ['id'], zendingen: ['bestelling_id', 'extern_ref'], product_kanalen: ['product_id', 'kanaal'], actie_afgehandeld: ['sleutel'], social_connections: ['aanbieder', 'extern_id'], social_post_targets: ['post_id', 'connection_id'], publishing_jobs: ['sleutel'], catalog_channels: ['kanaal', 'sku'], tiktok_koppeling: ['id'] };
+const UNIEK = { kanaal_listings: ['kanaal', 'poster_id', 'formaat'], kanaal_instellingen: ['kanaal'], etsy_koppeling: ['id'], poster_visuals: ['poster_id', 'positie'], producten: ['id'], formaten: ['id'], papiersoorten: ['id'], varianten: ['sku'], fulfilments: ['bestelling_id', 'herdruk_nr'], proefbestellingen: ['id'], zendingen: ['bestelling_id', 'extern_ref'], product_kanalen: ['product_id', 'kanaal'], actie_afgehandeld: ['sleutel'], social_connections: ['aanbieder', 'extern_id'], social_post_targets: ['post_id', 'connection_id'], publishing_jobs: ['sleutel'], catalog_channels: ['kanaal', 'sku'], tiktok_koppeling: ['id'] };
 function voldoet(x, k, v) {
   if (k === 'or') {
     const conds = v.slice(1, -1).split(',').map((c) => { const [f, op, ...r] = c.split('.'); return [f, op, r.join('.')]; });
@@ -119,11 +119,15 @@ export function supabase(url, o) {
     for (const x of Array.isArray(body) ? body : [body]) {
       const bestaand = uniek && rows.find((r) => uniek.every((k) => String(r[k]) === String(x[k])));
       if (bestaand) { if (/merge-duplicates/.test(prefer)) { Object.assign(bestaand, x); uit.push(bestaand); } else if (/ignore-duplicates/.test(prefer)) continue; else throw new Error('db-409: duplicate key 23505'); }
-      else { if (pad === 'poster_ean' && rows.some((r) => r.ean === x.ean)) throw new Error('db-409: duplicate key 23505'); const n = { ...(STANDAARD[pad]?.() || { id: seq++, op: nu() }), ...x }; rows.push(n); uit.push(n); }
+      else { const n = { ...(STANDAARD[pad]?.() || { id: seq++, op: nu() }), ...x }; rows.push(n); uit.push(n); }
     }
     return uit;
   }
-  if (o.method === 'PATCH') { const hit = filter(rows, u.searchParams); hit.forEach((x) => Object.assign(x, body)); return hit; }
+  if (o.method === 'PATCH') {
+    const hit = filter(rows, u.searchParams);
+    if (pad === 'varianten' && body?.ean && rows.some((r) => r.ean === body.ean && !hit.includes(r))) throw new Error('db-409: duplicate key 23505');
+    hit.forEach((x) => Object.assign(x, body)); return hit;
+  }
   if (o.method === 'DELETE') { const hit = new Set(filter(rows, u.searchParams)); T[pad] = rows.filter((x) => !hit.has(x)); return null; }
   return filter(rows, u.searchParams);
 }

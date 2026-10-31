@@ -20,6 +20,7 @@ import { dbAan, db } from './_db.js';
 import { isAdmin } from './_auth.js';
 import { laadCatalogus, catalogusBron, ontbreektVoor, POSTERS, ALLE_FORMATEN, FORMATEN, PAPIER, VARIANTEN, TEKSTEN, BEELDEN, VASTE_BEELDEN, PRODUCTEN, STANDAARD_PAPIER, OPHANGING, ophangLabel, lijstSku } from './_catalogus.js';
 import { uploadUrl, info, verwijder } from './_opslag.js';
+import { isGeldigeEan } from './_kanalen/gemeen.js';
 import { visuals, visualUrl } from './_media.js';
 import { instellingen as prodigiInstellingen, VERZENDMETHODEN } from './_prodigi.js';
 
@@ -184,7 +185,7 @@ async function bewaarVariant(b) {
   if (b.prijs !== undefined) { const p = prijsVan(b.prijs); if (!(p > 0 && p < 10000)) return { fout: 'Ongeldige verkoopprijs.' }; patch.prijs = p; }
   if (b.kostprijs !== undefined) { const k = b.kostprijs === '' || b.kostprijs === null ? null : prijsVan(b.kostprijs); if (k !== null && !(k >= 0 && k < 10000)) return { fout: 'Ongeldige kostprijs.' }; patch.kostprijs = k; }
   if (b.actief !== undefined) patch.actief = !!b.actief;
-  if (b.ean !== undefined) { const e = tekst(b.ean, 14); if (e && !/^\d{8}$|^\d{12,14}$/.test(e)) return { fout: 'Ongeldige EAN.' }; patch.ean = e || null; }
+  if (b.ean !== undefined) { const e = tekst(b.ean, 14); if (e && !isGeldigeEan(e)) return { fout: `${e} is geen geldige EAN (controlecijfer klopt niet).` }; patch.ean = e || null; }
   if (b.sizing !== undefined) { if (!['fitPrintArea', 'fillPrintArea'].includes(b.sizing)) return { fout: 'Ongeldige plaatsing.' }; patch.sizing = b.sizing; }
   if (b.verzendmethode !== undefined) { if (!VERZENDMETHODEN.includes(b.verzendmethode)) return { fout: 'Ongeldige verzendmethode.' }; patch.verzendmethode = b.verzendmethode; }
   if (b.levertijd_productie_dagen !== undefined) patch.levertijd_productie_dagen = Math.max(0, Math.min(60, geheel(b.levertijd_productie_dagen, 3)));
@@ -200,7 +201,8 @@ async function bewaarVariant(b) {
     if (b.handmatig_leverbaar && tekst(b.handmatig_reden, 300).length < 5) return { fout: 'Geef een reden waarom deze variant zonder Prodigi leverbaar is (minstens 5 tekens).' };
     Object.assign(patch, { handmatig_leverbaar: !!b.handmatig_leverbaar, handmatig_reden: b.handmatig_leverbaar ? tekst(b.handmatig_reden, 300) : null });
   }
-  await db(`varianten?sku=eq.${enc(v.sku)}`, { method: 'PATCH', body: patch });
+  try { await db(`varianten?sku=eq.${enc(v.sku)}`, { method: 'PATCH', body: patch }); }
+  catch (e) { if (patch.ean && /duplicate|23505/.test(e.message)) return { fout: 'Deze EAN is al aan een andere variant gekoppeld.' }; throw e; }
   return { ok: true, melding: `${v.sku} opgeslagen${patch.prodigi_status === 'niet_gekoppeld' ? '; controleer het Prodigi-product opnieuw' : ''}` };
 }
 

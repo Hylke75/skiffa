@@ -71,9 +71,12 @@ r = await call(kanalen, { method: 'POST', url: '/api/kanalen?actie=cron', header
 r = await K('overzicht'); ok(r.j.kanalen.bol.sleutels && r.j.kanalen.bol.instellingen.proef === true && r.j.cron, 'overzicht: sleutels aanwezig, standaard proefmodus');
 
 // ---- bol ----
+// EAN's staan bij de variant (varianten.ean); de catalogus zelf draait hier op de code-catalogus.
+for (const [p, f] of [['golf', '50x70'], ['zon', '50x70'], ['zon', '70x100']]) T.varianten.push({ sku: `SKF-${p}-${f}`.toUpperCase(), product_id: p, formaat_id: f, papier_id: 'german-etching', lijst: null, ean: null });
+r = await K('ean', { poster_id: 'golf', formaat: '30x40', ean: '8712345678906' }); ok(r.c === 400 && /nog niet in de database/.test(r.j.melding), 'EAN voor variant die niet in de database staat geweigerd');
 r = await K('ean', { poster_id: 'golf', formaat: '50x70', ean: '8712345678907' }); ok(r.c === 400 && /controlecijfer/.test(r.j.melding), 'EAN met fout controlecijfer geweigerd');
-r = await K('ean', { poster_id: 'golf', formaat: '50x70', ean: '8712345678906' }); ok(r.j.ok, 'geldige EAN opgeslagen');
-r = await K('ean', { poster_id: 'zon', formaat: '50x70', ean: '8712345678906' }); ok(r.c === 400 && /andere poster/.test(r.j.melding), 'dubbele EAN geweigerd');
+r = await K('ean', { poster_id: 'golf', formaat: '50x70', ean: '8712345678906' }); ok(r.j.ok && T.varianten.find((v) => v.sku === 'SKF-GOLF-50X70').ean === '8712345678906', 'geldige EAN opgeslagen bij de variant');
+r = await K('ean', { poster_id: 'zon', formaat: '50x70', ean: '8712345678906' }); ok(r.c === 400 && /andere variant/.test(r.j.melding), 'dubbele EAN geweigerd');
 r = await K('listings', null, { q: '&kanaal=bol' }); ok(r.j.listings.length === 48, 'bol-assortiment: 16 posters × 3 formaten');
 const golf = r.j.listings.find((l) => l.poster_id === 'golf' && l.formaat === '50x70'), zon = r.j.listings.find((l) => l.poster_id === 'zon' && l.formaat === '30x40');
 ok(golf.prijs === 79.95 && golf.ean === '8712345678906', 'kanaalprijs € 69 + 15% → € 79,95');
