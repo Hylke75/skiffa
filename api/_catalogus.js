@@ -129,7 +129,8 @@ export function ontbreektVoor(v, { product, formaat, papier, druk, productieRout
   if (!product || product.status !== 'actief') o.push(`poster staat op ${product?.status || 'onbekend'}`);
   if (!v.actief) o.push(`variant ${naam} staat uit`);
   if (!formaat?.actief) o.push(`formaat ${formaat?.label || v.formaat_id} staat uit`);
-  if (!papier?.actief) o.push(`papiersoort ${papier?.naam || v.papier_id} staat uit`);
+  // Ingelijst wordt op het lijstpapier (EMA) gedrukt; dat papier is los niet te koop en mag dus 'uit' staan.
+  if (!papier?.actief && !v.lijst) o.push(`papiersoort ${papier?.naam || v.papier_id} staat uit`);
   if (!(Number(v.prijs) > 0)) o.push(`geen verkoopprijs voor ${naam}`);
   if (productieRoute === 'prodigi') {
     if (v.prodigi_status !== 'bevestigd') o.push(v.prodigi_sku ? `Prodigi-product voor ${naam} is niet bevestigd${v.prodigi_melding ? `: ${v.prodigi_melding}` : ''}` : `geen Prodigi-product gekoppeld aan ${naam}`);
