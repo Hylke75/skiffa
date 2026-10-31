@@ -38,7 +38,7 @@ function opmaak(kop, inhoud) {
   return `<!doctype html><html><body style="margin:0;background:#F6F3ED"><div style="max-width:560px;margin:0 auto;padding:32px 24px;font-family:Helvetica,Arial,sans-serif;color:#111;line-height:1.6">
 <p style="font-size:20px;letter-spacing:.3em;font-weight:700;margin:0 0 28px">SKIFFA</p>
 <h1 style="font-size:17px;font-weight:600;margin:0 0 14px">${kop}</h1>${inhoud}
-<p style="margin-top:34px;font-size:11px;opacity:.6">${esc(b.naam)} · ${esc(b.adres)} · ${esc(b.email)}<br>KvK ${esc(b.kvk)} · btw ${esc(b.btw)}</p>
+<p style="margin-top:34px;font-size:11px;opacity:.6">${esc(b.naam)} · ${esc(b.adres)} · ${esc(b.email)}${/\[/.test(b.kvk + b.btw) ? '' : `<br>KvK ${esc(b.kvk)} · btw ${esc(b.btw)}`}</p>
 </div></body></html>`;
 }
 
@@ -51,7 +51,7 @@ async function stuur(aan, onderwerp, html, replyTo) {
 export const mails = {
   // Na een geslaagde betaling (of handmatig betaald gezet): bevestiging + factuur.
   bevestiging: (o) => stuur(o.email, `Bedankt voor je bestelling ${o.nummer}`, opmaak(`Bedankt, ${esc(o.naam.split(' ')[0])}. Je betaling is binnen.`,
-    `<p>We gaan je poster${o.regels.reduce((t, r) => t + r.aantal, 0) > 1 ? 's' : ''} drukken. Binnen twee werkdagen gaat je bestelling stevig verpakt op de post; je krijgt dan een mail met de track-and-trace.</p>
+    `<p>We gaan je poster${o.regels.reduce((t, r) => t + r.aantal, 0) > 1 ? 's' : ''} drukken: alles wordt op bestelling voor je gemaakt. Zodra je bestelling onderweg is, krijg je een mail met de track-and-trace. Meestal is hij binnen 6 tot 8 werkdagen bij je.</p>
 <p style="font-size:12px;opacity:.7">Bestelnummer <b>${esc(o.nummer)}</b>${o.factuurnummer ? ` · factuur ${esc(o.factuurnummer)}` : ''}</p>${overzicht(o)}
 <p style="margin-top:20px">Verzendadres:<br>${adres(o)}</p>${knop(factuurLink(o), 'bekijk je factuur')}${o.token ? `<p style="font-size:12px">Je bestelling volgen: <a href="${statusLink(o)}">${statusLink(o)}</a></p>` : ''}
 <p style="font-size:12px;opacity:.7">Je hebt 14 dagen bedenktijd vanaf ontvangst. Retourneren of een vraag? Beantwoord deze mail.</p>`), winkelMail()),

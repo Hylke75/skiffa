@@ -37,7 +37,7 @@ td{padding:8px 0;border-bottom:1px solid #e5e5e5}
 </style></head><body>
 <div class="knop"><button onclick="print()">afdrukken / opslaan als pdf</button></div>
 <div class="vel">
-<div class="kop"><div><div class="merk">SKIFFA</div><div class="klein" style="margin-top:8px">${esc(b.naam)}<br>${esc(b.adres)}<br>${esc(b.email)}<br>KvK ${esc(b.kvk)} · btw ${esc(b.btw)}<br>IBAN ${esc(b.iban)}</div></div>
+<div class="kop"><div><div class="merk">SKIFFA</div><div class="klein" style="margin-top:8px">${esc(b.naam)} · ${esc(b.rechtspersoon)}<br>${esc(b.adres)}<br>${esc(b.email)}<br>KvK ${esc(b.kvk)} · btw ${esc(b.btw)}<br>IBAN ${esc(b.iban)}</div></div>
 <div style="text-align:right"><h1>Factuur</h1>
 <div>nummer <b>${esc(r.factuurnummer)}</b><br>datum ${datum(r.factuurdatum || r.betaald_op || r.aangemaakt_op)}<br>bestelling ${esc(r.nummer)}</div></div></div>
 <div><div class="klein">factuur aan</div>${esc(r.naam)}<br>${esc(r.straat)}<br>${esc(r.postcode)} ${esc(r.plaats)}<br>${LANDEN[r.land] || esc(r.land)}<br>${esc(r.email)}</div>
@@ -60,7 +60,7 @@ export function factuurPdf(r) {
   const R = [], L = [];
   const t = (x, y, tekst, extra = {}) => R.push({ x, y, tekst: String(tekst ?? ''), ...extra });
   t(50, 70, 'SKIFFA', { grootte: 20, vet: true });
-  [b.naam, b.adres, b.email, `KvK ${b.kvk} · btw ${b.btw}`, `IBAN ${b.iban}`].forEach((x, i) => t(50, 92 + i * 12, x, { grootte: 8 }));
+  [`${b.naam} · ${b.rechtspersoon}`, b.adres, b.email, `KvK ${b.kvk} · btw ${b.btw}`, `IBAN ${b.iban}`].forEach((x, i) => t(50, 92 + i * 12, x, { grootte: 8 }));
   t(545, 70, 'FACTUUR', { grootte: 13, vet: true, rechts: true });
   t(545, 92, `nummer ${r.factuurnummer}`, { rechts: true, grootte: 9 });
   t(545, 104, `datum ${d}`, { rechts: true, grootte: 9 });
