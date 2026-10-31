@@ -7,7 +7,7 @@
 // GET  listings&kanaal=                  assortiment met EAN, kanaalprijs, status en fout
 // GET  log&kanaal=                       laatste synchronisaties
 // POST instellingen {kanaal, waarden}    · listing {id, ingeschakeld} · alles {kanaal, aan}
-// POST ean {poster_id, formaat, ean}     ('' = verwijderen)
+// POST ean {poster_id, formaat, ean}     EAN van de losse variant ('' = verwijderen); staat in varianten.ean
 // POST sync {kanaal, stap?}              · ping {kanaal}
 // GET  etsy-koppel → {url} · etsy-terug (OAuth-callback, via /etsy/terug) · etsy-profielen
 // GET/POST cron                          alle ingeschakelde kanalen, alle stappen
@@ -18,10 +18,10 @@ import { dbAan, db } from './_db.js';
 import { isAdmin } from './_auth.js';
 import * as social from './_social.js';
 import * as feeds from './_feeds.js';
-import { POSTERS, FORMATEN, prijsVan } from './_catalogus.js';
+import { POSTERS, FORMATEN, prijsVan, variantVoor } from './_catalogus.js';
 import { bedrijf } from './_bedrijf.js';
-import { KANALEN, STANDAARD, isGeldigeEan, kanaalPrijs } from './_kanalen/gemeen.js';
-import { instellingen, zetInstellingen, listings, zetListing, eans, logRun } from './_kanalen/opslag.js';
+import { KANALEN, STANDAARD, kanaalPrijs } from './_kanalen/gemeen.js';
+import { instellingen, zetInstellingen, listings, zetListing, eans, zetEan, logRun } from './_kanalen/opslag.js';
 import * as bol from './_kanalen/bol.js';
 import * as etsy from './_kanalen/etsy.js';
 import * as amazon from './_kanalen/amazon.js';
@@ -247,12 +247,12 @@ async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
     if (actie === 'ean') {
-      const { poster_id, formaat } = body, ean = String(body.ean || '').trim();
-      if (!POSTERS[poster_id] || !FORMATEN[formaat]) return fout(res, 400, 'Onbekende poster of formaat.');
-      if (!ean) { await db(`poster_ean?poster_id=eq.${poster_id}&formaat=eq.${formaat}`, { method: 'DELETE' }); return res.status(200).json({ ok: true }); }
-      if (!isGeldigeEan(ean)) return fout(res, 400, `${ean} is geen geldige EAN (controlecijfer klopt niet).`);
-      try { await db('poster_ean?on_conflict=poster_id,formaat', { method: 'POST', prefer: 'resolution=merge-duplicates', body: { poster_id, formaat, ean } }); }
-      catch (e) { return fout(res, 400, /duplicate|23505/.test(e.message) ? 'Deze EAN is al aan een andere poster gekoppeld.' : 'Opslaan mislukt.'); }
+      // De EAN hoort bij de variant (losse poster, standaardpapier) achter deze listing.
+      const { poster_id, formaat } = body, v = POSTERS[poster_id] && FORMATEN[formaat] ? variantVoor(poster_id, formaat) : null;
+      if (!v) return fout(res, 400, 'Onbekende poster of formaat.');
+      const uit = await zetEan(v.sku, body.ean);
+      if (uit.fout) return fout(res, 400, uit.fout);
+      await laadCatalogus({ vers: true });
       return res.status(200).json({ ok: true });
     }
     if (actie === 'sync') {

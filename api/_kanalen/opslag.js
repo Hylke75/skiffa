@@ -1,10 +1,10 @@
-// Database-kant van de kanalen: instellingen, listings, EAN's, import van orders en logboek.
+// Database-kant van de kanalen: instellingen, listings, EAN's (uit varianten), import van orders en logboek.
 import { db, rpc, log as orderLog } from '../_db.js';
-import { POSTERS, ALLE_POSTERS, FORMATEN, ALLE_FORMATEN, VARIANTEN, PAPIER, variantVoor, ophangLabel } from '../_catalogus.js';
+import { POSTERS, ALLE_POSTERS, FORMATEN, ALLE_FORMATEN, VARIANTEN, PAPIER, STANDAARD_PAPIER, variantVoor, ophangLabel } from '../_catalogus.js';
 import { mails, vanRij } from '../_mails.js';
 import { drukOverzicht, naBetaling } from '../_verwerk.js';
 import { haalBestelling } from '../_db.js';
-import { STANDAARD, varianten, vanSku } from './gemeen.js';
+import { STANDAARD, varianten, vanSku, isGeldigeEan } from './gemeen.js';
 
 export async function instellingen(kanaal) {
   const rij = (await db(`kanaal_instellingen?kanaal=eq.${kanaal}&select=waarden`))?.[0];
@@ -39,9 +39,25 @@ export async function zetListing(id, velden) {
   await db(`kanaal_listings?id=eq.${id}`, { method: 'PATCH', body: { ...velden, bijgewerkt_op: new Date().toISOString() } });
 }
 
+// EAN's staan op één plek: bij de variant (varianten.ean). bol en Amazon bieden per poster + formaat
+// de losse poster op standaardpapier aan, dus die EAN hoort bij de listing.
 export async function eans() {
-  const rijen = await db('poster_ean?select=*');
-  return new Map(rijen.map((r) => [`${r.poster_id}|${r.formaat}`, r.ean]));
+  const rijen = await db(`varianten?ean=not.is.null&lijst=is.null&papier_id=eq.${STANDAARD_PAPIER}&select=product_id,formaat_id,ean`);
+  return new Map(rijen.map((r) => [`${r.product_id}|${r.formaat_id}`, r.ean]));
+}
+
+/** EAN bij een variant zetten ('' = verwijderen). Geeft { fout } of { ok }. */
+export async function zetEan(sku, ruw) {
+  const ean = String(ruw ?? '').trim();
+  if (ean && !isGeldigeEan(ean)) return { fout: `${ean} is geen geldige EAN (controlecijfer klopt niet).` };
+  try {
+    const rij = await db(`varianten?sku=eq.${encodeURIComponent(sku)}`, { method: 'PATCH', body: { ean: ean || null, bijgewerkt_op: new Date().toISOString() }, prefer: 'return=representation' });
+    if (!rij?.length) return { fout: 'Deze variant staat nog niet in de database: maak hem eerst aan bij Producten.' };
+  } catch (e) {
+    if (/duplicate|23505/.test(e.message)) return { fout: 'Deze EAN is al aan een andere variant gekoppeld.' };
+    throw e;
+  }
+  return { ok: true };
 }
 
 export async function bekendeOrders(kanaal, ids) {

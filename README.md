@@ -164,7 +164,9 @@ vertaald naar posters op bestelling (geen fysieke voorraad: we tonen een vaste v
 
 - **Code**: `api/kanalen.js` (beheer + synchronisatie, één route) en `api/_kanalen/{bol,etsy,amazon,gemeen,opslag}.js`.
   Database: `supabase/migrations/20261029010000_kanalen.sql` (`kanaal_listings`, `kanaal_instellingen`,
-  `poster_ean`, `kanaal_sync_log`, `etsy_koppeling`, functie `skiffa_importeer_kanaalorder`).
+  `kanaal_sync_log`, `etsy_koppeling`, functie `skiffa_importeer_kanaalorder`).
+- **EAN's** staan op één plek: per variant (`varianten.ean`, ook per lijstkleur), te bewerken bij Producten of in het
+  assortiment van bol/Amazon (dat schrijft naar de losse variant). Controlecijfer wordt gecontroleerd, dubbele codes geweigerd.
 - **Orders van kanalen** komen in dezelfde administratie: nummer `BOL-…`/`ETS-…`/`AMA-…`, direct betaald,
   zelfde doorlopende factuurnummers, filter per kanaal, omzet per kanaal en in de CSV-export. De koper krijgt géén
   mails van ons (dat doet het kanaal); jij krijgt een melding. Verzenden in `/admin` met vervoerder en
