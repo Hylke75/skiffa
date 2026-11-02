@@ -12,7 +12,7 @@
 // met een Meta-token (META_TOKEN + META_CATALOG_ID), anders in Commerce Manager zelf.
 import { db } from './_db.js';
 import { bedrijf } from './_bedrijf.js';
-import { PRODUCTEN, VARIANTEN, ALLE_FORMATEN, PAPIER, BEELDEN, VASTE_BEELDEN, OPHANGING, ophangLabel } from './_catalogus.js';
+import { PRODUCTEN, VARIANTEN, ALLE_FORMATEN, PAPIER, BEELDEN, VASTE_BEELDEN, OPHANGING, ophangLabel, VERZENDING, GRATIS_VANAF } from './_catalogus.js';
 import { visuals, visualUrl } from './_media.js';
 
 export const META_GRAPH = 'https://graph.facebook.com/v26.0';
@@ -22,9 +22,9 @@ const platteTekst = (v) => String(v ?? '').replace(/<[^>]*>/g, ' ').replace(/htt
 const isJpgPng = (u) => /\.(jpe?g|png)(\?|$)/i.test(String(u || ''));
 
 /** Alle feed-items met per item wat er nog ontbreekt. Alleen bestelbare varianten van actieve posters. */
-export async function metaItems() {
+export async function metaItems(kanaal = 'meta') {
   const site = bedrijf().site;
-  const [vis, opn] = await Promise.all([visuals().catch(() => ({})), db('catalog_channels?kanaal=eq.meta&select=sku,opnemen,status,meldingen').catch(() => [])]);
+  const [vis, opn] = await Promise.all([visuals().catch(() => ({})), db(`catalog_channels?kanaal=eq.${kanaal}&select=sku,opnemen,status,meldingen`).catch(() => [])]);
   const items = [];
   for (const v of Object.values(VARIANTEN)) {
     const p = PRODUCTEN[v.product_id];
@@ -70,6 +70,20 @@ export async function metaFeed() {
 }
 
 /** Elke keer dat de feed wordt opgehaald: bijhouden of Meta (of iemand anders) langskwam. */
+// Google Merchant Center (gratis vermeldingen + Shopping), specificatie support.google.com/merchants/answer/7052112:
+// zelfde items als Meta, plus identifier_exists=no (eigen ontwerp, geen EAN), verzendkosten per land (moeten
+// kloppen met het afrekenen: gratis vanaf GRATIS_VANAF) en extra beelden als losse velden (max. 10).
+export const GOOGLE_CATEGORIE = '500044';   // Home & Garden > Decor > Artwork > Posters, Prints, & Visual Artwork
+export async function googleFeed() {
+  const items = (await metaItems('google')).filter((i) => i.opnemen && !i.ontbreekt.length);
+  const veld = (k, v) => (v == null || v === '' ? '' : `<g:${k}>${xml(v)}</g:${k}>`);
+  const verzending = (prijs) => Object.entries(VERZENDING).map(([land, kosten]) =>
+    `<g:shipping><g:country>${land}</g:country><g:service>Standaard</g:service><g:price>${(Number(prijs) >= GRATIS_VANAF ? 0 : kosten).toFixed(2)} EUR</g:price><g:min_transit_time>3</g:min_transit_time><g:max_transit_time>5</g:max_transit_time></g:shipping>`).join('');
+  const body = items.map((i) => `<item>${veld('id', i.id)}${veld('item_group_id', i.item_group_id)}${veld('title', i.title)}${veld('description', i.description)}${veld('link', i.link)}${veld('image_link', i.image_link)}${i.additional_image_link.slice(0, 10).map((u) => veld('additional_image_link', u)).join('')}${veld('availability', 'in_stock')}${veld('condition', 'new')}${veld('price', i.price)}${veld('brand', i.brand)}${veld('identifier_exists', 'no')}${veld('google_product_category', GOOGLE_CATEGORIE)}${veld('product_type', i.product_type)}${veld('size', i.size)}${veld('material', i.material)}${veld('color', i.color)}${verzending(Number.parseFloat(i.price))}${veld('custom_label_0', i.custom_label_0)}${veld('custom_label_1', i.custom_label_1)}</item>`).join('\n');
+  const site = bedrijf().site;
+  return { aantal: items.length, xml: `<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0"><channel><title>SKIFFA posters</title><link>${xml(site)}</link><description>Posters van SKIFFA</description>\n${body}\n</channel></rss>\n` };
+}
+
 export async function registreerOphalen(userAgent, aantal) {
   const isMeta = /facebook|meta-external|facebookcatalog/i.test(String(userAgent || ''));
   try {
