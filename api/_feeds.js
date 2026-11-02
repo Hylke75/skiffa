@@ -5,7 +5,8 @@
 // - Verplicht: id, title, description, availability, condition, price, link, image_link + brand.
 // - Varianten: item_group_id (zelfde per poster), size (formaat), material (papier), color (kleur lijst).
 // - Afbeeldingen: JPEG/PNG van minstens 500×500 px (WebP wordt niet geaccepteerd).
-// - Afrekenen gebeurt op skiffa.store: Meta heeft afrekenen op Facebook/Instagram afgebouwd; link = productpagina.
+// - Afrekenen gebeurt op skiffa.store: Meta heeft afrekenen op Facebook/Instagram afgebouwd; link = eigen productpagina
+//   per variant (/poster/<id>?v=<SKU>, api/poster.js) met dezelfde prijs, titel en beelden als de feed.
 // Meta haalt de feed volgens een schema op (hoogstens elk uur). De beheeromgeving toont wanneer Meta de feed
 // voor het laatst ophaalde en waarschuwt als dat te lang geleden is; goedkeuring per item is alleen zichtbaar
 // met een Meta-token (META_TOKEN + META_CATALOG_ID), anders in Commerce Manager zelf.
@@ -41,7 +42,7 @@ export async function metaItems() {
 Ingelijst in een ${OPHANGING.classic.kleuren[v.lijst_kleur] || v.lijst_kleur} Classic-lijst met acrylaat ervoor, gedrukt op Enhanced Matte Art Paper (200 g/m²).`;
     const item = {
       id: v.sku, item_group_id: p.code || p.id, title: titel.slice(0, 200), description: beschrijving.slice(0, 9999),
-      availability: 'in stock', condition: 'new', price: `${Number(v.prijs).toFixed(2)} EUR`, link: `${site}/#${encodeURIComponent(p.id)}`,
+      availability: 'in stock', condition: 'new', price: `${Number(v.prijs).toFixed(2)} EUR`, link: `${site}/poster/${encodeURIComponent(p.id)}?v=${encodeURIComponent(v.sku)}`,
       image_link: hoofd, additional_image_link: extra, brand: 'SKIFFA', size: f?.label || v.formaat, material: papier?.naam || null, color: v.lijst === 'classic' ? OPHANGING.classic.kleuren[v.lijst_kleur] || null : null,
       google_product_category: META_CATEGORIE, product_type: ['Posters', p.collectie].filter(Boolean).join(' > '), custom_label_0: p.collectie || null, custom_label_1: p.code || null,
     };

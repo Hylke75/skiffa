@@ -45,7 +45,7 @@ const TEKST={
   deels_verzonden:['Een deel van je bestelling is onderweg.','De rest volgt in een aparte zending; je krijgt daar ook een mail van.'],
   verzonden:['Je poster is onderweg.','Stevig verpakt, zonder lijst.'],
   geleverd:['Je poster is bezorgd.','Veel plezier ermee aan de muur.'],
-  geannuleerd:['Deze bestelling is geannuleerd.','Vragen? Mail naar hallo@skiffa.nl.'],
+  geannuleerd:['Deze bestelling is geannuleerd.','Vragen? Mail naar hallo@skiffa.store.'],
   terugbetaald:['Deze bestelling is terugbetaald.','Het geld staat binnen een paar werkdagen op je rekening.'],
 };
 let pogingen=0;
@@ -101,7 +101,7 @@ async function laad(){
   });
   if(j.status==='open'&&pogingen++<12)setTimeout(laad,2500);
 }
-function fout(){document.getElementById('inhoud').innerHTML='<h1 class="fout">We konden deze bestelling niet vinden.</h1><p class="sub">Gebruik de link uit je bevestigingsmail, of mail naar hallo@skiffa.nl.</p><a class="knop lijn" href="/">terug naar de winkel</a>';}
+function fout(){document.getElementById('inhoud').innerHTML='<h1 class="fout">We konden deze bestelling niet vinden.</h1><p class="sub">Gebruik de link uit je bevestigingsmail, of mail naar hallo@skiffa.store.</p><a class="knop lijn" href="/">terug naar de winkel</a>';}
 laad();
 </script>
 </body>

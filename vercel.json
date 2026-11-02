@@ -6,6 +6,10 @@
       "destination": "/admin.html"
     },
     {
+      "source": "/poster/:id",
+      "destination": "/api/poster?id=:id"
+    },
+    {
       "source": "/etsy/terug",
       "destination": "/api/kanalen?actie=etsy-terug"
     },

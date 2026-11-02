@@ -59,6 +59,17 @@ ok(/<g:price>\d+\.\d{2} EUR<\/g:price>/.test(x) && x.includes('<g:item_group_id>
 ok(/<item><g:id>SKF-GOLF-50X70-LIJST-NATUREL<\/g:id>[^]*?<g:title>[^<]*in naturel lijst<\/g:title>[^]*?<g:description>[^<]*Classic-lijst[^<]*Enhanced Matte Art[^<]*<\/g:description>[^]*?<g:color>naturel<\/g:color>/.test(x), 'meta: lijst als variant met kleur en eerlijk papier in de beschrijving');
 ok(!x.includes('SKF-ZON-') && !x.includes('SKF-BOULEVARD-'), 'meta: zonder beschrijving of niet actief = niet in de feed');
 ok(/<g:image_link>[^<]+\.jpg<\/g:image_link>/.test(x) && !/<g:image_link>[^<]+\.webp/.test(x), 'meta: hoofdbeeld als jpg, nooit webp');
+ok(x.includes('<g:link>https://skiffa.store/poster/golf?v=SKF-GOLF-50X70</g:link>') && !x.includes('/#golf'), 'meta: link naar eigen productpagina per variant, geen #-anker');
+// ---- productpagina per poster ----
+const poster = (await import(R + 'poster.js')).default;
+r = await call(poster, { url: '/api/poster?id=golf&v=SKF-GOLF-50X70-LIJST-NATUREL' });
+ok(r.c === 200 && r.h['content-type'].startsWith('text/html') && /<title>[^<]*50 × 70 cm, naturel lijst/.test(r.s) && r.s.includes('product:price:amount') && r.s.includes('"@type":"ProductGroup"') && r.s.includes('rel="canonical" href="https://skiffa.store/poster/golf?v=SKF-GOLF-50X70-LIJST-NATUREL"'), 'productpagina: titel, prijs, schema.org en canonical per variant');
+ok((r.s.match(/class="optie/g) || []).length >= 4 && r.s.includes("location.href='/#mandje'"), 'productpagina: alle varianten te kiezen, in winkelmand → winkel');
+r = await call(poster, { url: '/api/poster?id=boulevard' }); ok(r.c === 200 && r.s.includes('binnenkort te koop') && !r.s.includes('id="koop"'), 'productpagina: actief maar niet bestelbaar = binnenkort, geen koopknop');
+T.producten.find((p) => p.id === 'boulevard').status = 'concept'; await cat.laadCatalogus({ vers: true });
+r = await call(poster, { url: '/api/poster?id=boulevard' }); ok(r.c === 404, 'productpagina: niet-actieve poster = 404');
+T.producten.find((p) => p.id === 'boulevard').status = 'actief'; await cat.laadCatalogus({ vers: true });
+r = await call(poster, { url: '/api/poster?id=%3Cscript%3E' }); ok(r.c === 404 && !r.s.includes('<script>'), 'productpagina: onbekende id veilig afgehandeld');
 r = await call(catalogus, { method: 'GET', url: '/api/catalogus?actie=feed&kanaal=etsy' });
 ok(r.c === 404, 'meta: onbekende feed = 404');
 r = await K('meta-overzicht');

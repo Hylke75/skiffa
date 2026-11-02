@@ -308,7 +308,7 @@ Kort: **geen token → exact het ontwerp. Wél een token → dezelfde site, maar
 
 ## Contactformulier
 
-`api/contact.js` stuurt berichten via Resend naar `BESTEL_EMAIL` (standaard hallo@skiffa.nl). Zonder
+`api/contact.js` stuurt berichten via Resend naar `BESTEL_EMAIL` (standaard hylkethiry@gmail.com; het openbare adres op site en facturen is `BEDRIJF_EMAIL`, standaard hallo@skiffa.store). Zonder
 `RESEND_API_KEY` opent de site een mail met het bericht erin. Spam: honeypot-veld en minimale invultijd.
 
 ## Link per poster

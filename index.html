@@ -450,7 +450,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
       <div class="label">bereikbaar</div>
       <p>ma – vr 09:00 – 17:00<br>za bij goed weer niet, bij slecht weer wel</p>
       <div class="label">rechtstreeks</div>
-      <p>hallo@skiffa.nl<br>+31 6 21410639</p>
+      <p>hallo@skiffa.store<br>+31 6 21410639</p>
       <div class="kaart"><img src="/sfeer/contact-kaart.webp" alt="Detail van de poster SKIFFA Windsurf Scheveningen: de titel SKIFFA en de blauwe lucht, in een houten lijst"><span>SCHEVENINGEN</span></div>
     </div>
     <div class="kol">
@@ -561,7 +561,7 @@ const cm=mm=>String(Math.round(mm)/10).replace('.',',');  // 304,8 mm -> 30,5
 let vanaf=Math.min(...formaten.map(f=>f.prijs));
 /* Catalogus in de database maar nog niets bestelbaar (bv. drukbestanden nog niet geüpload): posters tonen, niet verkopen. */
 let binnenkort=false;
-const WINKEL_MAIL='hallo@skiffa.nl';
+const WINKEL_MAIL='hallo@skiffa.store';
 
 /* Hotspots: verankerd aan een plek in de uitsnede (fractie van beeldbreedte/-hoogte, zoals maikasui doet met videoX/videoY) */
 const ankers={
@@ -818,7 +818,7 @@ cf.addEventListener('submit',async e=>{
     const j=await r.json().catch(()=>null);if(j&&j.ok){cf.classList.add('klaar');return;}}catch(_){}
   finally{knop.disabled=false;}
   const tekst=`${d.bericht}\n\n— ${d.naam}\n${d.mail}\nReageren via: ${d.hoe==='bel'?'bellen':'e-mail'}`;
-  location.href=`mailto:${WINKEL_MAIL}?subject=${encodeURIComponent('Vraag via skiffa.nl: '+d.waarover)}&body=${encodeURIComponent(tekst)}`;
+  location.href=`mailto:${WINKEL_MAIL}?subject=${encodeURIComponent('Vraag via skiffa.store: '+d.waarover)}&body=${encodeURIComponent(tekst)}`;
   cf.classList.add('klaar');cf.querySelector('.dank').textContent=`Je mailprogramma opent met je bericht erin. Verstuur die mail naar ${WINKEL_MAIL}, dan reageren we binnen één werkdag.`;
 });
 addEventListener('keydown',e=>{if(lb.classList.contains('open')){if(e.key==='Escape')sluitLightbox();else if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();lbI=(lbI+(e.key==='ArrowLeft'?-1:1)+lbBeelden.length)%lbBeelden.length;toonLb();}return;}
@@ -832,7 +832,9 @@ const mandje=document.getElementById('mandje'),ml=document.getElementById('mandj
   bf=document.getElementById('bestelForm'),bfout=document.getElementById('bestelFout'),naarAf=document.getElementById('naarAfrekenen');
 const VERZENDING={NL:6.95,BE:9.95},GRATIS_VANAF=75;
 let regels=[],bestelStart=0;
-try{regels=JSON.parse(localStorage.getItem('skiffa-mandje')||'[]').filter(r=>vind(r.id)&&variantVan(r));}catch(_){regels=[];}
+// Het opgeslagen mandje pas definitief filteren als de catalogus uit de database binnen is (posters en lijsten uit beheer).
+let opgeslagen=[];try{opgeslagen=JSON.parse(localStorage.getItem('skiffa-mandje')||'[]');if(!Array.isArray(opgeslagen))opgeslagen=[];}catch(_){opgeslagen=[];}
+regels=opgeslagen.filter(r=>vind(r.id)&&variantVan(r));
 const bewaar=()=>{try{localStorage.setItem('skiffa-mandje',JSON.stringify(regels));}catch(_){}};
 const formaatVan=id=>formaten.find(f=>f.id===id);
 function bedragen(land){const sub=regels.reduce((t,r)=>t+(variantVan(r)?.prijs||0)*r.aantal,0);const verz=!sub||sub>=GRATIS_VANAF?0:VERZENDING[land]||VERZENDING.NL;return{sub,verz,tot:sub+verz};}
@@ -897,14 +899,14 @@ tekenMandje();
 
 /* Link per poster: /#golf opent die poster direct (handig om te delen) */
 const startHash=Date.now();
-function openUitHash(){const id=decodeURIComponent(location.hash.slice(1));const p=vind(id);if(!p||p.actief===false||modal.classList.contains('open'))return false;
+function openUitHash(){const id=decodeURIComponent(location.hash.slice(1));if(id==='mandje'){setTimeout(()=>{history.replaceState(null,'',location.pathname);openMandje();},rm?0:Math.max(0,2800-(Date.now()-startHash)));return true;}const p=vind(id);if(!p||p.actief===false||modal.classList.contains('open'))return false;
   setTimeout(()=>{if(!modal.classList.contains('open')&&vind(id))openModal(vind(id));},rm?0:Math.max(0,2800-(Date.now()-startHash)));return true;}
 openUitHash();
 
 /* Productgegevens voor zoekmachines (schema.org) */
 (()=>{const s=document.createElement('script');s.type='application/ld+json';s.id='productdata';
   s.textContent=JSON.stringify({'@context':'https://schema.org','@graph':zichtbaar().map(p=>({'@type':'Product',name:`Poster ${p.naam}`,description:p.zin,
-    image:location.origin+beeld(p.id),url:location.origin+'/#'+p.id,brand:{'@type':'Brand',name:'Skiffa'},
+    image:location.origin+beeld(p.id),url:location.origin+'/poster/'+p.id,brand:{'@type':'Brand',name:'Skiffa'},
     offers:{'@type':'AggregateOffer',priceCurrency:'EUR',lowPrice:vanafVan(p.id),highPrice:Math.max(...variantenVan(p.id).map(v=>v.prijs)),offerCount:variantenVan(p.id).length,availability:'https://schema.org/InStock'}}))});
   document.head.appendChild(s);})();
 
@@ -933,7 +935,7 @@ openUitHash();
     posters=met.map(p=>{const oud=vind(p.id);
       if(p.beeld&&!String(p.beeld).startsWith('/posters/'))eigenBeeld[p.id]={beeld:p.beeld,klein:p.klein||p.beeld};
       return {id:String(p.id),naam:String(p.titel),sub:String(p.stijl||''),zin:String(p.beschrijving||''),kleur:/^#[0-9a-f]{6}$/i.test(p.accentkleur)?p.accentkleur:'#1F4E79',actief:true,punten:oud?.punten||PUNTEN};});
-    regels=regels.filter(x=>vind(x.id)&&variantVan(x));bewaar();
+    regels=[...opgeslagen.filter(o=>!regels.some(x=>x.id===o.id&&x.sku===o.sku)),...regels].filter(x=>x&&vind(x.id)&&variantVan(x));opgeslagen=[];bewaar();
     tekenShop();if(overGetekend)tekenOverBlok();if(postersEl.classList.contains("open"))tekenPosters();tekenMandje();plaatsHotspots(document.body.dataset.periode||'ochtend');openUitHash();
   }catch(_){/* stil terugvallen op de catalogus in de code */}
 })();
