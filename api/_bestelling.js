@@ -76,7 +76,8 @@ export async function mail(bericht) {
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'content-type': 'application/json' },
-    body: JSON.stringify({ from: process.env.RESEND_FROM || 'Skiffa <bestellingen@skiffa.nl>', ...bericht }),
+    // Verzenden vanaf skiffa.store (dat domein is in Resend geverifieerd); antwoorden gaan naar de winkelmailbox.
+    body: JSON.stringify({ from: process.env.RESEND_FROM || 'SKIFFA <bestellingen@skiffa.store>', reply_to: winkelMail(), ...bericht }),
   });
   if (!r.ok) throw new Error(`resend-${r.status}`);
 }
