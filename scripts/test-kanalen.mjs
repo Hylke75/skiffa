@@ -96,7 +96,7 @@ r = await K('sync', { kanaal: 'bol', stap: 'orders' });
 const bo = T.bestellingen.find((b) => b.kanaal === 'bol');
 ok(bo && bo.extern_id === 'BOL-1001' && bo.status === 'betaald' && bo.factuurnummer === '2026-0001' && bo.totaal === 103.9, 'bol-order geïmporteerd: betaald, factuur 2026-0001, € 103,90');
 ok(bo.straat === 'Dorpsstraat 12 A' && bo.postcode === '1234AB' && T.bestelregels.find((x) => x.bestelling_id === bo.id).poster_id === 'golf', 'adres en regel (via offerId → poster golf) goed overgenomen');
-ok(mails.length === 1 && mails[0].aan === 'hallo@skiffa.nl', 'winkel krijgt melding, klant niet (bol mailt zelf)');
+ok(mails.length === 1 && mails[0].aan === 'hylkethiry@gmail.com', 'winkel krijgt melding, klant niet (bol mailt zelf)');
 await K('sync', { kanaal: 'bol', stap: 'orders' }); ok(T.bestellingen.filter((b) => b.kanaal === 'bol').length === 1, 'tweede sync: order niet dubbel');
 r = await call(admin, { method: 'POST', url: '/api/admin?actie=status', cookie, body: { id: bo.id, status: 'verzonden' } }); ok(r.c === 400 && /track-and-trace/.test(r.j.melding), 'verzenden zonder track-and-trace geweigerd voor bol');
 r = await call(admin, { method: 'POST', url: '/api/admin?actie=terugbetalen', cookie, body: { id: bo.id } }); ok(r.c === 400 && /via bol/.test(r.j.melding), 'terugbetalen van bol-order verwijst naar bol');

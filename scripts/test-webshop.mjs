@@ -38,7 +38,7 @@ r=await call(bestel,{url:`/api/bestel?nr=${b.nummer}&t=${'0'.repeat(36)}`});ok(r
 M[b.mollie_id].status='paid';M[b.mollie_id].method='ideal';
 r=await call(bestel,{url:`/api/bestel?nr=${b.nummer}&t=${b.token}`});ok(r.j.status==='betaald'&&r.j.factuur?.includes('/api/factuur?nr='),'statuspagina haalt betaling zelf op: betaald + factuurlink');
 ok(b.factuurnummer==='2026-0001','factuurnummer 2026-0001 toegekend');
-ok(mails.length===2&&mails[0].aan==='ann@voorbeeld.nl'&&/Bedankt/.test(mails[0].onderwerp)&&mails[1].aan==='hallo@skiffa.nl','bevestiging aan klant + melding aan winkel');
+ok(mails.length===2&&mails[0].aan==='ann@voorbeeld.nl'&&/Bedankt/.test(mails[0].onderwerp)&&mails[1].aan==='hylkethiry@gmail.com','bevestiging aan klant + melding aan winkel');
 ok(!mails[1].html.includes('<script>')&&mails[1].html.includes('&lt;script&gt;'),'klantinvoer in mails ge-escaped');
 // 5. webhook daarna: geen dubbele mails
 await call(hook,{method:'POST',body:'id='+b.mollie_id});await call(hook,{method:'POST',body:'id='+b.mollie_id});ok(mails.length===2,'webhook twee keer: geen dubbele mails');

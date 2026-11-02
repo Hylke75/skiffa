@@ -15,7 +15,7 @@ import { metAudit } from './_audit.js';
 import { laadCatalogus } from './_catalogus.js';
 import { dbAan, db, haalBestelling, werkBij, log } from './_db.js';
 import { isAdmin, wachtwoordKlopt, emailKlopt, emailVerplicht, sessieCookie, uitlogCookie, adminIngesteld } from './_auth.js';
-import { mollie, euro } from './_bestelling.js';
+import { mollie, euro, mail } from './_bestelling.js';
 import { btwDeel } from './_bedrijf.js';
 import { mails, vanRij, mailAan } from './_mails.js';
 import { betaald, verwerkMollie } from './_verwerk.js';
@@ -232,6 +232,16 @@ async function handler(req, res) {
     if (req.method === 'POST' && SERVICE[actie]) {
       const uit = await SERVICE[actie]();
       return uit.fout ? fout(res, 400, uit.fout) : res.status(200).json(uit);
+    }
+    // Testmail naar een zelfgekozen adres: controleert Resend, afzender en aankomst.
+    if (req.method === 'POST' && actie === 'testmail') {
+      const aan = String(body.aan || '').trim().slice(0, 160);
+      if (!/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]{2,}$/.test(aan)) return fout(res, 400, 'Vul een geldig e-mailadres in.');
+      if (!mailAan()) return fout(res, 400, 'Zet eerst RESEND_API_KEY in Vercel.');
+      try {
+        await mail({ to: [aan], subject: 'Testmail van SKIFFA', html: '<div style="font-family:Helvetica,Arial,sans-serif;line-height:1.6"><p style="letter-spacing:.3em;font-weight:700">SKIFFA</p><p>Dit is een testmail uit het beheer van skiffa.store. Komt hij aan, dan werken de bestel- en verzendmails ook.</p></div>' });
+      } catch (e) { return fout(res, 502, `Resend weigert de mail (${String(e.message).replace('resend-', 'status ')}). Controleer of het afzenderdomein in Resend is geverifieerd.`); }
+      return res.status(200).json({ ok: true, melding: `Testmail verstuurd naar ${aan}` });
     }
     if (req.method === 'POST') {
       const id = String(body.id || '');

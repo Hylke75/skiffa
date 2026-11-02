@@ -242,7 +242,9 @@ async function start(){
   if(!s.ingelogd){toonLogin();if(!s.ingesteld)$('#loginFout').textContent='Zet eerst ADMIN_WACHTWOORD (min. 12 tekens) in Vercel.';return;}
   $('#login').classList.add('verberg');$('#app').classList.remove('verberg');
   const mist=[!s.database&&'SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (administratie)',!s.mollie&&'MOLLIE_API_KEY (betalen)',!s.mail&&'RESEND_API_KEY (mails)'].filter(Boolean);
-  $('#instellingen').innerHTML=mist.length?`<div class="waarschuw">Nog niet ingesteld in Vercel: ${mist.map(esc).join(', ')}.</div>`:'';
+  $('#instellingen').innerHTML=(mist.length?`<div class="waarschuw">Nog niet ingesteld in Vercel: ${mist.map(esc).join(', ')}.</div>`:'')
+    +(s.mail?`<form id="testmail" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 14px;font-size:13px"><span>testmail naar</span><input type="email" name="aan" required placeholder="naam@voorbeeld.nl" style="min-width:220px"><button>sturen</button></form>`:'');
+  $('#testmail')?.addEventListener('submit',async(e)=>{e.preventDefault();try{const r=await api('testmail',{method:'POST',body:{aan:e.target.aan.value}});meld(r.melding);}catch(err){meld(err.message,true);}});
   if(!s.database)return;
   laadOverzicht();laadLijst();
   const h=decodeURIComponent(location.hash.slice(1));if(h&&!['kanalen','producten'].includes(h)&&!h.startsWith('product/'))open(h);

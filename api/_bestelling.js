@@ -70,14 +70,17 @@ export function overzichtHtml(b, nummer) {
     (b.klant.opmerking ? `<p>Opmerking: ${esc(b.klant.opmerking)}</p>` : '');
 }
 
-export const winkelMail = () => process.env.BESTEL_EMAIL || 'hallo@skiffa.nl';
+// Waar bestelmeldingen, contactberichten en antwoorden van klanten binnenkomen. skiffa.nl is níet van SKIFFA:
+// een oud adres op dat domein wordt genegeerd, zodat er nooit klantgegevens naar een vreemd domein gaan.
+const eigenAdres = (a) => (a && !/@skiffa\.nl\b/i.test(a) ? a : null);
+export const winkelMail = () => eigenAdres(process.env.BESTEL_EMAIL) || 'hylkethiry@gmail.com';
 
 export async function mail(bericht) {
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'content-type': 'application/json' },
     // Verzenden vanaf skiffa.store (dat domein is in Resend geverifieerd); antwoorden gaan naar de winkelmailbox.
-    body: JSON.stringify({ from: process.env.RESEND_FROM || 'SKIFFA <bestellingen@skiffa.store>', reply_to: winkelMail(), ...bericht }),
+    body: JSON.stringify({ from: eigenAdres(process.env.RESEND_FROM) || 'SKIFFA <bestellingen@skiffa.store>', reply_to: winkelMail(), ...bericht }),
   });
   if (!r.ok) throw new Error(`resend-${r.status}`);
 }

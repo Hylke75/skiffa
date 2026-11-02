@@ -77,7 +77,7 @@ mails.length = 0;
 eord.shipments = [{ id: 'shp_a', carrier: { name: 'PostNL' }, tracking: { number: 'LX1' }, items: [{ itemId: 'ori_0' }] }];
 await call(prodigiRoute, { method: 'POST', url: `/api/prodigi?actie=callback&t=${token}`, body: { subject: eord.id } });
 await call(kanalen, { method: 'POST', url: '/api/kanalen?actie=sync', cookie, body: { kanaal: 'etsy', stap: 'verzendingen' } });
-ok(etsyTracking.length === 1 && etsyTracking[0].tracking_code === 'LX1' && !mails.some((m) => m.aan !== 'hallo@skiffa.nl'), 'Etsy-zending doorgegeven; wij mailen de Etsy-koper niet (Etsy doet dat)');
+ok(etsyTracking.length === 1 && etsyTracking[0].tracking_code === 'LX1' && !mails.some((m) => m.aan !== 'hylkethiry@gmail.com'), 'Etsy-zending doorgegeven; wij mailen de Etsy-koper niet (Etsy doet dat)');
 await call(kanalen, { method: 'POST', url: '/api/kanalen?actie=sync', cookie, body: { kanaal: 'etsy', stap: 'verzendingen' } });
 ok(etsyTracking.length === 1, 'opnieuw synchroniseren: niet dubbel doorgegeven');
 eord.shipments.push({ id: 'shp_b', carrier: { name: 'PostNL' }, tracking: { number: 'LX2' }, items: [{ itemId: 'ori_1' }] });

@@ -7,7 +7,7 @@ export const bedrijf = () => ({
   rechtspersoon: v('BEDRIJF_RECHTSPERSOON', 'Hylke Thiry | Promotie- & Communicatiebegeleiding'),
   adres: v('BEDRIJF_ADRES', 'Berkenbosch Blokstraat 99, 2586 HE Den Haag'),
   telefoon: v('BEDRIJF_TELEFOON', '+31 6 21410639'),
-  email: v('BESTEL_EMAIL', 'hallo@skiffa.nl'),
+  email: v('BEDRIJF_EMAIL', 'hallo@skiffa.store'),   // openbaar contactadres (meldingen gaan naar BESTEL_EMAIL)
   kvk: v('BEDRIJF_KVK', '74563270'),
   btw: v('BEDRIJF_BTW', 'NL002164368B10'),   // btw-identificatienummer (het omzetbelastingnummer blijft privé)
   iban: v('BEDRIJF_IBAN', 'NL19 KNAB 0413 3209 28'),
