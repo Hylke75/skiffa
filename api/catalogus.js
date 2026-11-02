@@ -319,11 +319,12 @@ async function handler(req, res) {
       res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=15, stale-while-revalidate=30');
       return res.status(200).json(await openbaar());
     }
-    // Openbare productfeed voor Meta Commerce Manager (alleen openbare productgegevens).
+    // Openbare productfeeds voor Meta Commerce Manager en Google Merchant Center (alleen openbare productgegevens).
     if (actie === 'feed' && req.method === 'GET') {
-      if (param(req, 'kanaal') !== 'meta') return fout(res, 404, 'Onbekende feed.');
-      const f = await feeds.metaFeed();
-      if (dbAan()) await feeds.registreerOphalen(req.headers?.['user-agent'], f.aantal);
+      const kanaal = param(req, 'kanaal');
+      if (!['meta', 'google'].includes(kanaal)) return fout(res, 404, 'Onbekende feed.');
+      const f = kanaal === 'google' ? await feeds.googleFeed() : await feeds.metaFeed();
+      if (dbAan() && kanaal === 'meta') await feeds.registreerOphalen(req.headers?.['user-agent'], f.aantal);
       res.setHeader('Cache-Control', 'no-store');
       res.setHeader('content-type', 'application/xml; charset=utf-8');
       return res.status(200).send(f.xml);

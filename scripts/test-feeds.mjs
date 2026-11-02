@@ -60,6 +60,14 @@ ok(/<item><g:id>SKF-GOLF-50X70-LIJST-NATUREL<\/g:id>[^]*?<g:title>[^<]*in nature
 ok(!x.includes('SKF-ZON-') && !x.includes('SKF-BOULEVARD-'), 'meta: zonder beschrijving of niet actief = niet in de feed');
 ok(/<g:image_link>[^<]+\.jpg<\/g:image_link>/.test(x) && !/<g:image_link>[^<]+\.webp/.test(x), 'meta: hoofdbeeld als jpg, nooit webp');
 ok(x.includes('<g:link>https://skiffa.store/poster/golf?v=SKF-GOLF-50X70</g:link>') && !x.includes('/#golf'), 'meta: link naar eigen productpagina per variant, geen #-anker');
+// ---- Google Merchant Center ----
+r = await call(catalogus, { method: 'GET', url: '/api/catalogus?actie=feed&kanaal=google' });
+const g = r.s;
+ok(r.c === 200 && r.h['content-type'].startsWith('application/xml') && g.includes('<g:id>SKF-GOLF-50X70</g:id>') && g.includes('<g:id>SKF-GOLF-50X70-LIJST-NATUREL</g:id>'), 'google: losse poster en lijst in de feed');
+ok(g.includes('<g:identifier_exists>no</g:identifier_exists>') && g.includes('<g:availability>in_stock</g:availability>') && g.includes('<g:google_product_category>500044</g:google_product_category>'), 'google: eigen ontwerp zonder EAN, beschikbaarheid en categorie');
+ok(/<g:id>SKF-GOLF-30X40<\/g:id>[^]*?<g:shipping><g:country>NL<\/g:country><g:service>Standaard<\/g:service><g:price>6\.95 EUR<\/g:price>/.test(g) && /<g:id>SKF-GOLF-50X70-LIJST-NATUREL<\/g:id>[^]*?<g:country>NL<\/g:country><g:service>Standaard<\/g:service><g:price>0\.00 EUR<\/g:price>[^]*?<g:country>BE<\/g:country><g:service>Standaard<\/g:service><g:price>0\.00 EUR/.test(g), 'google: verzendkosten per land zoals bij afrekenen (gratis vanaf € 75)');
+ok(!g.includes('SKF-ZON-') && !/<g:additional_image_link>[^<]*,/.test(g), 'google: onvolledige items eruit, extra beelden als losse velden');
+r = await call(catalogus, { method: 'GET', url: '/api/catalogus?actie=feed&kanaal=bestaatniet' }); ok(r.c === 404, 'feed: onbekend kanaal = 404');
 // ---- productpagina per poster ----
 const poster = (await import(R + 'poster.js')).default;
 r = await call(poster, { url: '/api/poster?id=golf&v=SKF-GOLF-50X70-LIJST-NATUREL' });

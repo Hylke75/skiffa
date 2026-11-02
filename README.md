@@ -261,6 +261,14 @@ Eén product, één keer ingevoerd; per kanaal vink je aan of het daar verschijn
 - **Aan/uit**: social staat los aan/uit en heeft een eigen proefmodus. De cron (elke 15 minuten) verwerkt taken en
   haalt statussen op; mislukte berichten, herinneringen en ontkoppelde accounts staan op de actielijst.
 
+## Google Merchant Center (gratis vermeldingen / Shopping)
+
+- Feed-URL: `https://skiffa.store/api/catalogus?actie=feed&kanaal=google`: dezelfde varianten als de Meta-feed, plus
+  `identifier_exists=no` (eigen ontwerp, geen EAN), categorie 500044, extra beelden als losse velden en verzendkosten
+  per land (NL € 6,95 / BE € 9,95, gratis vanaf € 75, gelijk aan het afrekenen).
+- In Merchant Center: website bevestigen (DNS-TXT bij TransIP), verzending en retourbeleid (14 dagen) instellen,
+  Producten → Productbronnen → toevoegen via URL, dagelijks ophalen.
+
 ## Meta-productfeed (Facebook / Instagram)
 
 - Feed-URL: `https://skiffa.store/api/catalogus?actie=feed&kanaal=meta`: RSS-XML met `g:`-velden volgens de
