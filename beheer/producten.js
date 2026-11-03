@@ -186,6 +186,9 @@ const Producten = (() => {
             <label>URL<input value="/#${esc(p.id)}" disabled title="De URL-naam staat vast zodra de poster bestaat (bestellingen en kanalen verwijzen ernaar)."></label>
             <label class="breed">beschrijving<textarea data-g="beschrijving" rows="4">${esc(p.beschrijving)}</textarea></label>
             <label>stijlregel (onder de titel)<input data-g="stijl" value="${esc(p.stijl)}"></label>
+            <label>titel in het Engels <span class="mini">(leeg = Nederlandse titel)</span><input data-g="titel_en" value="${esc(p.titel_en || '')}"></label>
+            <label>stijlregel in het Engels<input data-g="stijl_en" value="${esc(p.stijl_en || '')}"></label>
+            <label class="breed">beschrijving in het Engels <span class="mini">(voor de Engelse winkel)</span><textarea data-g="beschrijving_en" rows="4">${esc(p.beschrijving_en || '')}</textarea></label>
             <label>collectie<input data-g="collectie" value="${esc(p.collectie)}"></label>
             <label>onderwerp<input data-g="onderwerp" value="${esc(p.onderwerp)}"></label>
             <label>kleuren (komma's)<input data-g="kleuren" value="${esc((p.kleuren || []).join(', '))}"></label>

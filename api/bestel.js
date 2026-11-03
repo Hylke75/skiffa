@@ -17,6 +17,7 @@ import { dbAan, db, haalBestelling, log } from './_db.js';
 import { mails, mailAan, vanRij, factuurLink } from './_mails.js';
 import { verwerkMollie } from './_verwerk.js';
 import * as service from './_service.js';
+import { naarEngels, taalVan } from './_taal.js';
 
 function basisUrl(req) {
   if (process.env.SITE_URL) return process.env.SITE_URL.replace(/\/$/, '');
@@ -63,6 +64,8 @@ async function status(req, res) {
   } catch { res.status(200).json({ ok: false }); }
 }
 
+const mollieTaal = (b) => (b.taal === 'en' ? 'en_US' : b.klant.land === 'BE' ? 'nl_BE' : 'nl_NL');
+
 // Met administratie: bestelling opslaan, dan betalen of bevestigen.
 async function metAdministratie(req, res, b) {
   const nummer = 'SK-' + Date.now().toString(36).toUpperCase().slice(-6) + Math.random().toString(36).slice(2, 4).toUpperCase();
@@ -73,7 +76,7 @@ async function metAdministratie(req, res, b) {
       nummer, naam: b.klant.naam, email: b.klant.email, straat: b.klant.straat, postcode: b.klant.postcode,
       plaats: b.klant.plaats, land: b.klant.land, opmerking: b.klant.opmerking,
       subtotaal: b.subtotaal, verzending: b.verzending, totaal: b.totaal,
-      betaalwijze: viaMollie ? 'mollie' : 'betaalverzoek',
+      betaalwijze: viaMollie ? 'mollie' : 'betaalverzoek', taal: b.taal,
     },
   });
   await db('bestelregels', {
@@ -87,8 +90,8 @@ async function metAdministratie(req, res, b) {
     const betaling = {
       amount: { currency: 'EUR', value: b.totaal.toFixed(2) },
       description: `Skiffa ${nummer}`,
-      redirectUrl: `${basis}/bestelling.html?nr=${nummer}&t=${rij.token}`,
-      locale: b.klant.land === 'BE' ? 'nl_BE' : 'nl_NL',
+      redirectUrl: `${basis}/bestelling.html?nr=${nummer}&t=${rij.token}${b.taal === 'en' ? '&lang=en' : ''}`,
+      locale: mollieTaal(b),
       metadata: { order_id: rij.id, nr: nummer },
     };
     if (/^https:\/\/(?!localhost|127\.)/.test(basis)) betaling.webhookUrl = `${basis}/api/mollie-webhook`;
@@ -120,8 +123,8 @@ async function zonderAdministratie(req, res, b) {
     const betaling = {
       amount: { currency: 'EUR', value: b.totaal.toFixed(2) },
       description: `Skiffa ${nummer}`,
-      redirectUrl: `${basis}/?bestelling=terug`,
-      locale: b.klant.land === 'BE' ? 'nl_BE' : 'nl_NL',
+      redirectUrl: `${basis}/?bestelling=terug${b.taal === 'en' ? '&lang=en' : ''}`,
+      locale: mollieTaal(b),
       metadata: naarMetadata(b, nummer),
     };
     if (/^https:\/\/(?!localhost|127\.)/.test(basis)) betaling.webhookUrl = `${basis}/api/mollie-webhook`;
@@ -224,6 +227,8 @@ export default async function handler(req, res) {
     res.status(400).json({ ok: false, reden: 'ongeldig', melding: 'Er ging iets mis met je bestelling.' });
     return;
   }
+  // Engelse winkel: meldingen aan de klant in het Engels.
+  if (body.taal === 'en') { const json = res.json.bind(res); res.json = (x) => json(x && typeof x.melding === 'string' ? { ...x, melding: naarEngels(x.melding) } : x); }
   if (body.actie === 'annuleringsverzoek') return annuleringsverzoek(res, body);
   if (['melding', 'melding-foto', 'melding-foto-klaar'].includes(body.actie)) return melding(res, body);
   // Bot: geef een neutraal antwoord en doe niets.
@@ -236,6 +241,7 @@ export default async function handler(req, res) {
     return;
   }
   const b = valideer(body);
+  b.taal = taalVan(body.taal);
   if (b.fout) {
     res.status(400).json({ ok: false, reden: 'ongeldig', melding: b.fout });
     return;
