@@ -16,7 +16,7 @@ function blok(re, naam) {
   return m[1];
 }
 const formatenSrc = blok(/const formaten=(\[[\s\S]*?\]);/, 'formaten-array');
-const puntenSrc = blok(/const PUNTEN=(\[[\s\S]*?\]);/, 'PUNTEN');
+const puntenSrc = blok(/const PUNTEN_NL=(\[[\s\S]*?\]);/, 'PUNTEN_NL');
 const postersSrc = blok(/let posters=(\[[\s\S]*?\n\]);/, 'posters-array');
 // eslint-disable-next-line no-new-func
 export const formaten = new Function(`return ${formatenSrc}`)();

@@ -261,6 +261,18 @@ Eén product, één keer ingevoerd; per kanaal vink je aan of het daar verschijn
 - **Aan/uit**: social staat los aan/uit en heeft een eigen proefmodus. De cron (elke 15 minuten) verwerkt taken en
   haalt statussen op; mislukte berichten, herinneringen en ontkoppelde accounts staan op de actielijst.
 
+## Engelse winkel
+
+- Taalkeuze met de knop **NL/EN** in de kop (bewaard in de browser) of met `?lang=en` in de link; standaard Nederlands.
+  Ook de productpagina's (`/poster/<id>?lang=en`), de statuspagina (`bestelling.html?…&lang=en`), de voorwaarden
+  (`terms.html`) en de privacyverklaring (`privacy-en.html`) hebben een Engelse versie (bij verschil geldt de Nederlandse).
+- Statische teksten in `index.html` hebben `data-t`/`data-tp`/`data-ta`/`data-talt`; de Engelse tekst staat in `EN_TEKST`/`EN_ATTR`.
+  Teksten in het script gebruiken `T('nl','en')`.
+- Productteksten: in beheer per poster `titel/stijlregel/beschrijving in het Engels` (`producten.*_en`; leeg = Nederlands).
+- Bestellingen onthouden de taal (`bestellingen.taal`): Mollie-betaalpagina, mails aan de klant (bevestiging, verzonden,
+  terugbetaald, geannuleerd) en meldingen van de server (`api/_taal.js`) zijn dan Engels. Factuur en winkelmails blijven Nederlands.
+- Migratie: `supabase/migrations/20261103090000_engels.sql`.
+
 ## Google Merchant Center (gratis vermeldingen / Shopping)
 
 - Feed-URL: `https://skiffa.store/api/catalogus?actie=feed&kanaal=google`: dezelfde varianten als de Meta-feed, plus

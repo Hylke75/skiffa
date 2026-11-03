@@ -30,78 +30,96 @@ td{padding:6px 0;border-bottom:1px solid rgba(0,0,0,.12)}
 <body>
 <main>
   <a class="merk" href="/">SKIFFA</a>
-  <div id="inhoud"><h1>Je bestelling wordt geladen…</h1></div>
+  <div id="inhoud"><h1 id="laden">Je bestelling wordt geladen…</h1></div>
 </main>
 <script>
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const euro=v=>'€ '+Number(v||0).toFixed(2).replace('.',',');
 const q=new URLSearchParams(location.search),nr=q.get('nr'),t=q.get('t');
+/* Taal: ?lang=en (uit de Engelse mails) of de keuze in de winkel */
+const EN=(()=>{const l=q.get('lang');if(l==='en'||l==='nl'){try{localStorage.setItem('skiffa-taal',l);}catch(_){}return l==='en';}try{return localStorage.getItem('skiffa-taal')==='en';}catch(_){return false;}})();
+const T=(nl,en)=>EN?en:nl,THUIS=EN?'/?lang=en':'/';
+document.documentElement.lang=EN?'en':'nl';if(EN)document.title='Your order — Skiffa';
+const euro=v=>EN?'€'+Number(v||0).toFixed(2):'€ '+Number(v||0).toFixed(2).replace('.',',');
+const LIJST_EN={zwart:'black',naturel:'natural',wit:'white',bruin:'brown'};
+const label=l=>EN?String(l||'').replace(/in (zwart|naturel|wit|bruin) lijst/,(_,k)=>`in ${LIJST_EN[k]} frame`).replace(/(\d),(\d)/g,'$1.$2'):l;
 const STAP={open:0,mislukt:0,betaald:1,in_productie:2,deels_verzonden:3,verzonden:3,geleverd:4};
-const TEKST={
+const TEKST_NL={
   open:['We wachten op je betaling.','Dit duurt meestal een paar seconden. Deze pagina ververst vanzelf.'],
   mislukt:['De betaling is niet gelukt.','Er is niets afgeschreven. Je mandje staat nog klaar in de winkel.'],
   betaald:['Dank je. Je betaling is binnen.','We gaan je poster drukken en sturen je een mail zodra hij onderweg is.'],
   in_productie:['Je poster wordt gedrukt.','Binnenkort gaat hij stevig verpakt op de post.'],
   deels_verzonden:['Een deel van je bestelling is onderweg.','De rest volgt in een aparte zending; je krijgt daar ook een mail van.'],
-  verzonden:['Je poster is onderweg.','Stevig verpakt, zonder lijst.'],
+  verzonden:['Je poster is onderweg.','Stevig verpakt.'],
   geleverd:['Je poster is bezorgd.','Veel plezier ermee aan de muur.'],
   geannuleerd:['Deze bestelling is geannuleerd.','Vragen? Mail naar hallo@skiffa.store.'],
   terugbetaald:['Deze bestelling is terugbetaald.','Het geld staat binnen een paar werkdagen op je rekening.'],
 };
+const TEKST=EN?{
+  open:['We\'re waiting for your payment.','This usually takes a few seconds. This page refreshes automatically.'],
+  mislukt:['The payment didn\'t go through.','Nothing has been charged. Your basket is still waiting in the shop.'],
+  betaald:['Thank you. We\'ve received your payment.','We\'re going to print your poster and will e-mail you as soon as it\'s on its way.'],
+  in_productie:['Your poster is being printed.','It will soon be securely packed and sent.'],
+  deels_verzonden:['Part of your order is on its way.','The rest follows in a separate shipment; you\'ll get an e-mail about that too.'],
+  verzonden:['Your poster is on its way.','Securely packed.'],
+  geleverd:['Your poster has been delivered.','Enjoy it on your wall.'],
+  geannuleerd:['This order has been cancelled.','Questions? E-mail hallo@skiffa.store.'],
+  terugbetaald:['This order has been refunded.','The money will be in your account within a few working days.'],
+}:TEKST_NL;
 let pogingen=0;
 async function laad(){
   if(!nr||!t){fout();return;}
   let j=null;try{j=await fetch(`/api/bestel?nr=${encodeURIComponent(nr)}&t=${encodeURIComponent(t)}`,{cache:'no-store'}).then(r=>r.json());}catch(_){}
   if(!j||!j.ok){fout();return;}
-  const [kop,sub]=TEKST[j.status]||['Je bestelling',''];
+  const [kop,sub]=TEKST[j.status]||[T('Je bestelling','Your order'),''];
   if(STAP[j.status]>=1){try{localStorage.removeItem('skiffa-mandje');}catch(_){}}
   const stap=STAP[j.status];
   document.getElementById('inhoud').innerHTML=`
     <h1>${esc(kop)}</h1><p class="sub">${esc(sub)}</p>
-    ${stap!==undefined&&j.status!=='mislukt'?`<div class="stappen">${['besteld','betaald','in productie','verzonden','bezorgd'].map((s,i)=>`<div class="${i<=stap?'aan':''}">${s}</div>`).join('')}</div>`:''}
-    <p style="margin-top:18px">bestelling <b>${esc(j.nummer)}</b></p>
-    <table>${j.regels.map(r=>`<tr><td>${r.aantal}× poster ${esc(r.naam)} <span class="sub">${esc(r.formaatLabel)}</span></td><td class="r">${euro(r.prijs*r.aantal)}</td></tr>`).join('')}
-      <tr><td>verzending</td><td class="r">${j.verzending?euro(j.verzending):'gratis'}</td></tr>
-      <tr><td><b>totaal</b></td><td class="r"><b>${euro(j.totaal)}</b></td></tr></table>
-    ${(j.zendingen||[]).length?(j.zendingen.map((z,i)=>`<p style="margin-top:${i?6:18}px">${j.zendingen.length>1?`zending ${i+1}`:'track-and-trace'}${z.vervoerder?` (${esc(z.vervoerder)})`:''}: ${z.url?`<a href="${esc(z.url)}" target="_blank" rel="noopener">${esc(z.code||'volg je zending')}</a>`:`<b>${esc(z.code)}</b>`}</p>`).join('')):j.track_trace?`<p style="margin-top:18px">track-and-trace: ${/^https?:\/\//.test(j.track_trace)?`<a href="${esc(j.track_trace)}" target="_blank" rel="noopener">${esc(j.track_trace)}</a>`:`<b>${esc(j.track_trace)}</b>`}</p>`:''}
-    ${j.factuur?`<a class="knop" href="${esc(j.factuur)}" target="_blank" rel="noopener">factuur bekijken</a>`:''}
-    <a class="knop lijn" href="/">terug naar de winkel</a>
-    ${j.annuleren_mogelijk?`<details style="margin-top:22px"><summary class="sub" style="cursor:pointer">annulering aanvragen</summary>
-      <p class="sub" style="margin:8px 0">Je poster wordt op bestelling gedrukt en kan al in productie zijn. We laten je weten of annuleren nog kan.</p>
-      <textarea id="reden" rows="3" style="width:100%;font:inherit;padding:8px" placeholder="reden (optioneel)"></textarea>
-      <button class="knop lijn" id="annuleer" type="button">verzoek versturen</button><p class="sub" id="annUit"></p></details>`:j.annulering_aangevraagd?'<p class="sub" style="margin-top:18px">Je annuleringsverzoek is ontvangen; we nemen contact met je op.</p>':''}
-    ${j.melden_mogelijk?`<details style="margin-top:22px" id="melden"><summary class="sub" style="cursor:pointer">probleem melden (beschadigd, verkeerde poster)</summary>
-      <p class="sub" style="margin:8px 0">Vervelend als er iets mis is. Stuur een paar foto's mee (van de poster én de verpakking); dan lossen we het zo snel mogelijk op.</p>
-      <select id="mSoort" style="font:inherit;padding:6px;margin-bottom:8px"><option value="schade">beschadigd aangekomen</option><option value="verkeerd">verkeerde poster of formaat</option><option value="anders">iets anders</option></select>
-      ${j.regels.length>1?`<div class="sub" style="margin-bottom:8px">${j.regels.map((r,i)=>`<label style="display:block"><input type="checkbox" class="mRegel" value="${esc(j.regel_ids[i])}"> ${esc(r.naam)} ${esc(r.formaatLabel)}</label>`).join('')}</div>`:''}
-      <textarea id="mTekst" rows="3" style="width:100%;font:inherit;padding:8px" placeholder="wat is er aan de hand?"></textarea>
-      <label class="sub" style="display:block;margin-top:8px">foto's (max. 5) <input type="file" id="mFotos" accept="image/jpeg,image/png,image/webp,image/heic" multiple></label>
-      <button class="knop lijn" id="meld" type="button">melding versturen</button><p class="sub" id="mUit"></p></details>`:''}`;
+    ${stap!==undefined&&j.status!=='mislukt'?`<div class="stappen">${(EN?['ordered','paid','in production','shipped','delivered']:['besteld','betaald','in productie','verzonden','bezorgd']).map((s,i)=>`<div class="${i<=stap?'aan':''}">${s}</div>`).join('')}</div>`:''}
+    <p style="margin-top:18px">${T('bestelling','order')} <b>${esc(j.nummer)}</b></p>
+    <table>${j.regels.map(r=>`<tr><td>${r.aantal}× poster ${esc(r.naam)} <span class="sub">${esc(label(r.formaatLabel))}</span></td><td class="r">${euro(r.prijs*r.aantal)}</td></tr>`).join('')}
+      <tr><td>${T('verzending','shipping')}</td><td class="r">${j.verzending?euro(j.verzending):T('gratis','free')}</td></tr>
+      <tr><td><b>${T('totaal','total')}</b></td><td class="r"><b>${euro(j.totaal)}</b></td></tr></table>
+    ${(j.zendingen||[]).length?(j.zendingen.map((z,i)=>`<p style="margin-top:${i?6:18}px">${j.zendingen.length>1?`${T('zending','shipment')} ${i+1}`:T('track-and-trace','tracking')}${z.vervoerder?` (${esc(z.vervoerder)})`:''}: ${z.url?`<a href="${esc(z.url)}" target="_blank" rel="noopener">${esc(z.code||T('volg je zending','track your shipment'))}</a>`:`<b>${esc(z.code)}</b>`}</p>`).join('')):j.track_trace?`<p style="margin-top:18px">track-and-trace: ${/^https?:\/\//.test(j.track_trace)?`<a href="${esc(j.track_trace)}" target="_blank" rel="noopener">${esc(j.track_trace)}</a>`:`<b>${esc(j.track_trace)}</b>`}</p>`:''}
+    ${j.factuur?`<a class="knop" href="${esc(j.factuur)}" target="_blank" rel="noopener">${T('factuur bekijken','view invoice')}</a>`:''}
+    <a class="knop lijn" href="${THUIS}">${T('terug naar de winkel','back to the shop')}</a>
+    ${j.annuleren_mogelijk?`<details style="margin-top:22px"><summary class="sub" style="cursor:pointer">${T('annulering aanvragen','request cancellation')}</summary>
+      <p class="sub" style="margin:8px 0">${T('Je poster wordt op bestelling gedrukt en kan al in productie zijn. We laten je weten of annuleren nog kan.','Your poster is printed to order and may already be in production. We\'ll let you know whether cancelling is still possible.')}</p>
+      <textarea id="reden" rows="3" style="width:100%;font:inherit;padding:8px" placeholder="${T('reden (optioneel)','reason (optional)')}"></textarea>
+      <button class="knop lijn" id="annuleer" type="button">${T('verzoek versturen','send request')}</button><p class="sub" id="annUit"></p></details>`:j.annulering_aangevraagd?`<p class="sub" style="margin-top:18px">${T('Je annuleringsverzoek is ontvangen; we nemen contact met je op.','Your cancellation request has been received; we\'ll be in touch.')}</p>`:''}
+    ${j.melden_mogelijk?`<details style="margin-top:22px" id="melden"><summary class="sub" style="cursor:pointer">${T('probleem melden (beschadigd, verkeerde poster)','report a problem (damaged, wrong poster)')}</summary>
+      <p class="sub" style="margin:8px 0">${T('Vervelend als er iets mis is. Stuur een paar foto\'s mee (van de poster én de verpakking); dan lossen we het zo snel mogelijk op.','Sorry that something went wrong. Please add a few photos (of the poster and the packaging) and we\'ll sort it out as quickly as possible.')}</p>
+      <select id="mSoort" style="font:inherit;padding:6px;margin-bottom:8px"><option value="schade">${T('beschadigd aangekomen','arrived damaged')}</option><option value="verkeerd">${T('verkeerde poster of formaat','wrong poster or size')}</option><option value="anders">${T('iets anders','something else')}</option></select>
+      ${j.regels.length>1?`<div class="sub" style="margin-bottom:8px">${j.regels.map((r,i)=>`<label style="display:block"><input type="checkbox" class="mRegel" value="${esc(j.regel_ids[i])}"> ${esc(r.naam)} ${esc(label(r.formaatLabel))}</label>`).join('')}</div>`:''}
+      <textarea id="mTekst" rows="3" style="width:100%;font:inherit;padding:8px" placeholder="${T('wat is er aan de hand?','what\'s wrong?')}"></textarea>
+      <label class="sub" style="display:block;margin-top:8px">${T('foto\'s (max. 5)','photos (max. 5)')} <input type="file" id="mFotos" accept="image/jpeg,image/png,image/webp,image/heic" multiple></label>
+      <button class="knop lijn" id="meld" type="button">${T('melding versturen','send report')}</button><p class="sub" id="mUit"></p></details>`:''}`;
   document.getElementById('annuleer')?.addEventListener('click',async e=>{e.target.disabled=true;
-    let r=null;try{r=await fetch('/api/bestel',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({actie:'annuleringsverzoek',nr,t,reden:document.getElementById('reden').value})}).then(x=>x.json());}catch(_){}
-    document.getElementById('annUit').textContent=r?.melding||'Versturen lukte niet. Mail ons gerust.';if(!r?.ok)e.target.disabled=false;});
+    let r=null;try{r=await fetch('/api/bestel',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({actie:'annuleringsverzoek',nr,t,taal:EN?'en':'nl',reden:document.getElementById('reden').value})}).then(x=>x.json());}catch(_){}
+    document.getElementById('annUit').textContent=r?.melding||T('Versturen lukte niet. Mail ons gerust.','Sending failed. Feel free to e-mail us.');if(!r?.ok)e.target.disabled=false;});
   document.getElementById('meld')?.addEventListener('click',async e=>{
     const uit=document.getElementById('mUit'),fotos=[...document.getElementById('mFotos').files];
-    if(fotos.length>5){uit.textContent='Maximaal 5 foto\'s.';return;}
-    e.target.disabled=true;uit.textContent='Versturen…';
-    const post=b=>fetch('/api/bestel',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({nr,t,...b})}).then(x=>x.json()).catch(()=>({ok:false}));
+    if(fotos.length>5){uit.textContent=T('Maximaal 5 foto\'s.','A maximum of 5 photos.');return;}
+    e.target.disabled=true;uit.textContent=T('Versturen…','Sending…');
+    const post=b=>fetch('/api/bestel',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({nr,t,taal:EN?'en':'nl',...b})}).then(x=>x.json()).catch(()=>({ok:false}));
     const m=await post({actie:'melding',soort:document.getElementById('mSoort').value,omschrijving:document.getElementById('mTekst').value,regels:[...document.querySelectorAll('.mRegel:checked')].map(x=>x.value)});
-    if(!m.ok){uit.textContent=m.melding||'Versturen lukte niet. Mail ons gerust.';e.target.disabled=false;return;}
+    if(!m.ok){uit.textContent=m.melding||T('Versturen lukte niet. Mail ons gerust.','Sending failed. Feel free to e-mail us.');e.target.disabled=false;return;}
     let mis=0;
     for(const [i,f] of fotos.entries()){
-      uit.textContent=`Foto ${i+1} van ${fotos.length} uploaden…`;
+      uit.textContent=T(`Foto ${i+1} van ${fotos.length} uploaden…`,`Uploading photo ${i+1} of ${fotos.length}…`);
       const u=await post({actie:'melding-foto',id:m.id,bestandsnaam:f.name,bytes:f.size});
       if(!u.ok){mis++;continue;}
       const put=await fetch(u.url,{method:'PUT',headers:{'content-type':u.mime,'x-upsert':'true'},body:f}).catch(()=>null);
       if(!put||!put.ok){mis++;continue;}
       const k=await post({actie:'melding-foto-klaar',id:m.id,pad:u.pad});if(!k.ok)mis++;
     }
-    uit.textContent=mis?`Je melding is ontvangen, maar ${mis} foto${mis>1?'\'s':''} kwam${mis>1?'en':''} niet aan. Mail die gerust na.`:'Je melding is ontvangen. We nemen zo snel mogelijk contact met je op.';
+    uit.textContent=mis?T(`Je melding is ontvangen, maar ${mis} foto${mis>1?'\'s':''} kwam${mis>1?'en':''} niet aan. Mail die gerust na.`,`Your report has been received, but ${mis} photo${mis>1?'s':''} didn't come through. Feel free to e-mail ${mis>1?'them':'it'} to us.`):T('Je melding is ontvangen. We nemen zo snel mogelijk contact met je op.','Your report has been received. We\'ll contact you as soon as possible.');
     document.getElementById('mTekst').disabled=true;
   });
   if(j.status==='open'&&pogingen++<12)setTimeout(laad,2500);
 }
-function fout(){document.getElementById('inhoud').innerHTML='<h1 class="fout">We konden deze bestelling niet vinden.</h1><p class="sub">Gebruik de link uit je bevestigingsmail, of mail naar hallo@skiffa.store.</p><a class="knop lijn" href="/">terug naar de winkel</a>';}
+function fout(){document.getElementById('inhoud').innerHTML=T('<h1 class="fout">We konden deze bestelling niet vinden.</h1><p class="sub">Gebruik de link uit je bevestigingsmail, of mail naar hallo@skiffa.store.</p>','<h1 class="fout">We couldn\'t find this order.</h1><p class="sub">Use the link from your confirmation e-mail, or e-mail hallo@skiffa.store.</p>')+`<a class="knop lijn" href="${THUIS}">${T('terug naar de winkel','back to the shop')}</a>`;}
+if(EN)document.getElementById('laden').textContent='Loading your order…';
 laad();
 </script>
 </body>

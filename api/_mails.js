@@ -10,35 +10,43 @@ export function vanRij(r) {
     id: r.id, nummer: r.nummer, token: r.token, status: r.status,
     naam: r.naam, email: r.email, straat: r.straat, postcode: r.postcode, plaats: r.plaats, land: r.land, opmerking: r.opmerking || '',
     subtotaal: Number(r.subtotaal), verzending: Number(r.verzending), totaal: Number(r.totaal),
-    factuurnummer: r.factuurnummer, track_trace: r.track_trace,
+    factuurnummer: r.factuurnummer, track_trace: r.track_trace, taal: r.taal === 'en' ? 'en' : 'nl',
     regels: (r.bestelregels || []).map((x) => ({ poster_id: x.poster_id, formaat: x.formaat, variant_sku: x.variant_sku || null, drukbestand_versie_id: x.drukbestand_versie_id || null, papierLabel: x.papier_label || null, naam: x.poster_naam, formaatLabel: x.formaat_label, prijs: Number(x.prijs), aantal: x.aantal })),
   };
 }
 
-export const statusLink = (o) => o.token ? `${bedrijf().site}/bestelling.html?nr=${encodeURIComponent(o.nummer)}&t=${o.token}` : '';
+export const statusLink = (o) => o.token ? `${bedrijf().site}/bestelling.html?nr=${encodeURIComponent(o.nummer)}&t=${o.token}${o.taal === 'en' ? '&lang=en' : ''}` : '';
+
+// Engelse mails voor bestellingen uit de Engelse winkel (o.taal === 'en'). Factuur en winkelmails blijven Nederlands.
+const isEn = (o) => o?.taal === 'en';
+const LIJST_EN = { zwart: 'black', naturel: 'natural', wit: 'white', bruin: 'brown' };
+const labelEn = (l) => String(l || '').replace(/in (zwart|naturel|wit|bruin) lijst/, (_, k) => `in ${LIJST_EN[k]} frame`).replace(/(\d),(\d)/g, '$1.$2');
+const euroEn = (n) => `€${Number(n).toFixed(2)}`;
+const LANDEN_EN = { NL: 'The Netherlands', BE: 'Belgium' };
 export const factuurLink = (o) => o.token && o.factuurnummer ? `${bedrijf().site}/api/factuur?nr=${encodeURIComponent(o.nummer)}&t=${o.token}` : '';
 
 const knop = (href, tekst) => href ? `<p style="margin:22px 0"><a href="${href}" style="background:#000;color:#fff;text-decoration:none;padding:10px 18px;border-radius:999px;font-size:12px;letter-spacing:.08em">${tekst}</a></p>` : '';
 
 export function overzicht(o) {
+  const en = isEn(o), eu = en ? euroEn : euro;
   const rij = (l, r, b) => `<tr><td style="padding:5px 18px 5px 0;${b ? 'font-weight:600' : ''}">${l}</td><td style="padding:5px 0;text-align:right;${b ? 'font-weight:600' : ''}">${r}</td></tr>`;
   return `<table style="border-collapse:collapse;font-size:13px;width:100%;max-width:420px">` +
-    o.regels.map((r) => rij(`${r.aantal}× poster ${esc(r.naam)}<br><span style="opacity:.6">${esc(r.formaatLabel)}${r.papierLabel ? ` · ${esc(r.papierLabel)}` : ''}</span>`, euro(r.prijs * r.aantal))).join('') +
+    o.regels.map((r) => rij(`${r.aantal}× poster ${esc(r.naam)}<br><span style="opacity:.6">${esc(en ? labelEn(r.formaatLabel) : r.formaatLabel)}${r.papierLabel ? ` · ${esc(r.papierLabel)}` : ''}</span>`, eu(r.prijs * r.aantal))).join('') +
     `<tr><td colspan="2" style="border-top:1px solid #ddd;padding-top:4px"></td></tr>` +
-    rij('subtotaal', euro(o.subtotaal)) +
-    rij('verzending', o.verzending ? euro(o.verzending) : 'gratis') +
-    rij('totaal', euro(o.totaal), true) +
-    `<tr><td colspan="2" style="font-size:11px;opacity:.6;padding-top:2px">waarvan btw (21%) ${euro(btwDeel(o.totaal))}</td></tr></table>`;
+    rij(en ? 'subtotal' : 'subtotaal', eu(o.subtotaal)) +
+    rij(en ? 'shipping' : 'verzending', o.verzending ? eu(o.verzending) : en ? 'free' : 'gratis') +
+    rij(en ? 'total' : 'totaal', eu(o.totaal), true) +
+    `<tr><td colspan="2" style="font-size:11px;opacity:.6;padding-top:2px">${en ? 'of which VAT (21%)' : 'waarvan btw (21%)'} ${eu(btwDeel(o.totaal))}</td></tr></table>`;
 }
 
-const adres = (o) => `${esc(o.naam)}<br>${esc(o.straat)}<br>${esc(o.postcode)} ${esc(o.plaats)}<br>${LANDEN[o.land] || esc(o.land)}`;
+const adres = (o) => `${esc(o.naam)}<br>${esc(o.straat)}<br>${esc(o.postcode)} ${esc(o.plaats)}<br>${(isEn(o) ? LANDEN_EN : LANDEN)[o.land] || esc(o.land)}`;
 
-function opmaak(kop, inhoud) {
+function opmaak(kop, inhoud, en = false) {
   const b = bedrijf();
   return `<!doctype html><html><body style="margin:0;background:#F6F3ED"><div style="max-width:560px;margin:0 auto;padding:32px 24px;font-family:Helvetica,Arial,sans-serif;color:#111;line-height:1.6">
 <p style="font-size:20px;letter-spacing:.3em;font-weight:700;margin:0 0 28px">SKIFFA</p>
 <h1 style="font-size:17px;font-weight:600;margin:0 0 14px">${kop}</h1>${inhoud}
-<p style="margin-top:34px;font-size:11px;opacity:.6">${esc(b.naam)} · ${esc(b.adres)} · ${esc(b.email)}${/\[/.test(b.kvk + b.btw) ? '' : `<br>KvK ${esc(b.kvk)} · btw ${esc(b.btw)}`}</p>
+<p style="margin-top:34px;font-size:11px;opacity:.6">${esc(b.naam)} · ${esc(b.adres)} · ${esc(b.email)}${/\[/.test(b.kvk + b.btw) ? '' : `<br>${en ? 'Chamber of Commerce' : 'KvK'} ${esc(b.kvk)} · ${en ? 'VAT' : 'btw'} ${esc(b.btw)}`}</p>
 </div></body></html>`;
 }
 
@@ -50,30 +58,50 @@ async function stuur(aan, onderwerp, html, replyTo) {
 
 export const mails = {
   // Na een geslaagde betaling (of handmatig betaald gezet): bevestiging + factuur.
-  bevestiging: (o) => stuur(o.email, `Bedankt voor je bestelling ${o.nummer}`, opmaak(`Bedankt, ${esc(o.naam.split(' ')[0])}. Je betaling is binnen.`,
+  bevestiging: (o) => isEn(o)
+    ? stuur(o.email, `Thank you for your order ${o.nummer}`, opmaak(`Thank you, ${esc(o.naam.split(' ')[0])}. We've received your payment.`,
+      `<p>We're going to print your poster${o.regels.reduce((t, r) => t + r.aantal, 0) > 1 ? 's' : ''}: everything is made to order for you. As soon as your order is on its way, you'll get an e-mail with the tracking code. It usually reaches you within 6 to 8 working days.</p>
+<p style="font-size:12px;opacity:.7">Order number <b>${esc(o.nummer)}</b>${o.factuurnummer ? ` · invoice ${esc(o.factuurnummer)}` : ''}</p>${overzicht(o)}
+<p style="margin-top:20px">Shipping address:<br>${adres(o)}</p>${knop(factuurLink(o), 'view your invoice')}${o.token ? `<p style="font-size:12px">Track your order: <a href="${statusLink(o)}">${statusLink(o)}</a></p>` : ''}
+<p style="font-size:12px;opacity:.7">You have 14 days to change your mind after receiving your order. Want to return it or have a question? Just reply to this e-mail.</p>`, true), winkelMail())
+    : stuur(o.email, `Bedankt voor je bestelling ${o.nummer}`, opmaak(`Bedankt, ${esc(o.naam.split(' ')[0])}. Je betaling is binnen.`,
     `<p>We gaan je poster${o.regels.reduce((t, r) => t + r.aantal, 0) > 1 ? 's' : ''} drukken: alles wordt op bestelling voor je gemaakt. Zodra je bestelling onderweg is, krijg je een mail met de track-and-trace. Meestal is hij binnen 6 tot 8 werkdagen bij je.</p>
 <p style="font-size:12px;opacity:.7">Bestelnummer <b>${esc(o.nummer)}</b>${o.factuurnummer ? ` · factuur ${esc(o.factuurnummer)}` : ''}</p>${overzicht(o)}
 <p style="margin-top:20px">Verzendadres:<br>${adres(o)}</p>${knop(factuurLink(o), 'bekijk je factuur')}${o.token ? `<p style="font-size:12px">Je bestelling volgen: <a href="${statusLink(o)}">${statusLink(o)}</a></p>` : ''}
 <p style="font-size:12px;opacity:.7">Je hebt 14 dagen bedenktijd vanaf ontvangst. Retourneren of een vraag? Beantwoord deze mail.</p>`), winkelMail()),
 
   // Zonder Mollie: bestelling ontvangen, betaalverzoek volgt.
-  ontvangen: (o) => stuur(o.email, `We hebben je bestelling ${o.nummer} ontvangen`, opmaak(`Dank je, ${esc(o.naam.split(' ')[0])}. Je bestelling is binnen.`,
+  ontvangen: (o) => isEn(o)
+    ? stuur(o.email, `We've received your order ${o.nummer}`, opmaak(`Thank you, ${esc(o.naam.split(' ')[0])}. We've received your order.`,
+      `<p>You'll receive a payment request within one working day. After payment, your poster will be securely packed and sent.</p>${overzicht(o)}<p style="margin-top:20px">Shipping address:<br>${adres(o)}</p>`, true), winkelMail())
+    : stuur(o.email, `We hebben je bestelling ${o.nummer} ontvangen`, opmaak(`Dank je, ${esc(o.naam.split(' ')[0])}. Je bestelling is binnen.`,
     `<p>Je ontvangt binnen één werkdag een betaalverzoek. Na betaling gaat je poster stevig verpakt op de post.</p>${overzicht(o)}<p style="margin-top:20px">Verzendadres:<br>${adres(o)}</p>`), winkelMail()),
 
-  verzonden: (o, { deel = false } = {}) => stuur(o.email, `Je Skiffa-bestelling ${o.nummer} is onderweg${deel ? ' (deelzending)' : ''}`, opmaak(deel ? 'Een deel van je bestelling is onderweg.' : 'Je poster is onderweg.',
+  verzonden: (o, { deel = false } = {}) => isEn(o)
+    ? stuur(o.email, `Your Skiffa order ${o.nummer} is on its way${deel ? ' (partial shipment)' : ''}`, opmaak(deel ? 'Part of your order is on its way.' : 'Your poster is on its way.',
+      `<p>${deel ? `Part of your order ${esc(o.nummer)} has been shipped; the rest follows in a separate shipment, with its own e-mail.` : `Your order ${esc(o.nummer)} has been shipped, securely packed.`}</p>
+${o.track_trace ? `<p>Tracking: ${/^https?:\/\//.test(o.track_trace) ? `<a href="${esc(o.track_trace)}">${esc(o.track_trace)}</a>` : `<b>${esc(o.track_trace)}</b>`}</p>` : ''}
+<p>Tip: if your poster arrives rolled, leave it flat under a few books overnight after unpacking.</p>${knop(statusLink(o), 'view your order')}`, true), winkelMail())
+    : stuur(o.email, `Je Skiffa-bestelling ${o.nummer} is onderweg${deel ? ' (deelzending)' : ''}`, opmaak(deel ? 'Een deel van je bestelling is onderweg.' : 'Je poster is onderweg.',
     `<p>${deel ? `Een deel van je bestelling ${esc(o.nummer)} is verstuurd; de rest volgt in een aparte zending, met een eigen mail.` : `Je bestelling ${esc(o.nummer)} is verstuurd, stevig verpakt.`}</p>
 ${o.track_trace ? `<p>Track-and-trace: ${/^https?:\/\//.test(o.track_trace) ? `<a href="${esc(o.track_trace)}">${esc(o.track_trace)}</a>` : `<b>${esc(o.track_trace)}</b>`}</p>` : ''}
 <p>Tip: leg de poster na het uitpakken een nacht plat onder een paar boeken, dan ligt hij weer recht.</p>${knop(statusLink(o), 'bekijk je bestelling')}`), winkelMail()),
 
-  terugbetaald: (o, bedrag) => stuur(o.email, `Terugbetaling voor bestelling ${o.nummer}`, opmaak('We hebben je geld teruggestort.',
+  terugbetaald: (o, bedrag) => isEn(o)
+    ? stuur(o.email, `Refund for order ${o.nummer}`, opmaak('We have refunded your money.',
+      `<p>For order ${esc(o.nummer)}, ${euroEn(bedrag)} has been refunded. Depending on your bank, it will be in your account within a few working days.</p>`, true), winkelMail())
+    : stuur(o.email, `Terugbetaling voor bestelling ${o.nummer}`, opmaak('We hebben je geld teruggestort.',
     `<p>Voor bestelling ${esc(o.nummer)} is ${euro(bedrag)} teruggestort. Afhankelijk van je bank staat het binnen een paar werkdagen op je rekening.</p>`), winkelMail()),
 
-  geannuleerd: (o) => stuur(o.email, `Bestelling ${o.nummer} is geannuleerd`, opmaak('Je bestelling is geannuleerd.',
+  geannuleerd: (o) => isEn(o)
+    ? stuur(o.email, `Order ${o.nummer} has been cancelled`, opmaak('Your order has been cancelled.',
+      `<p>Order ${esc(o.nummer)} has been cancelled. If you had already paid, you'll receive a separate e-mail about the refund. Wasn't this your intention? Just reply to this e-mail.</p>`, true), winkelMail())
+    : stuur(o.email, `Bestelling ${o.nummer} is geannuleerd`, opmaak('Je bestelling is geannuleerd.',
     `<p>Bestelling ${esc(o.nummer)} is geannuleerd. Had je al betaald, dan krijg je daarover een aparte mail. Was dit niet de bedoeling? Beantwoord deze mail.</p>`), winkelMail()),
 
   // Aan de winkel.
   // `druk`: de drukbestanden per regel (html uit api/_media.js), zodat je direct kunt laten drukken.
-  winkelNieuw: (o, extra = '', druk = '') => stuur(winkelMail(), `${o.factuurnummer ? 'Betaald' : 'Nieuwe bestelling'}: ${o.nummer} — ${euro(o.totaal)}`, opmaak(`Bestelling ${esc(o.nummer)}`,
-    `${extra ? `<p>${extra}</p>` : ''}${overzicht(o)}${druk ? `<h2 style="font-size:13px;margin:22px 0 6px">Drukbestanden</h2>${druk}` : ''}<p style="margin-top:20px">${adres(o)}<br>${esc(o.email)}</p>${o.opmerking ? `<p>Opmerking: ${esc(o.opmerking)}</p>` : ''}
+  winkelNieuw: (o0, extra = '', druk = '', o = { ...o0, taal: 'nl' }) => stuur(winkelMail(), `${o.factuurnummer ? 'Betaald' : 'Nieuwe bestelling'}: ${o.nummer} — ${euro(o.totaal)}`, opmaak(`Bestelling ${esc(o.nummer)}`,
+    `${extra ? `<p>${extra}</p>` : ''}${overzicht(o)}${druk ? `<h2 style="font-size:13px;margin:22px 0 6px">Drukbestanden</h2>${druk}` : ''}<p style="margin-top:20px">${adres(o)}<br>${esc(o.email)}</p>${o.opmerking ? `<p>Opmerking: ${esc(o.opmerking)}</p>` : ''}${o0.taal === 'en' ? '<p>Klant bestelde in de Engelse winkel (mails aan de klant in het Engels).</p>' : ''}
 ${knop(`${bedrijf().site}/admin.html#${encodeURIComponent(o.nummer)}`, 'open in de administratie')}`), o.email),
 };

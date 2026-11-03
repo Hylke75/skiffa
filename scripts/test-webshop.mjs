@@ -7,7 +7,7 @@ import { T, supabase as supa } from './_testmock.mjs';
 // ---- nep-Mollie / Resend ----
 const M={};const mails=[];const mcalls=[];
 function mollieApi(url,o){const u=new URL(url);const p=u.pathname.replace('/v2/','');const body=o.body?JSON.parse(o.body):null;mcalls.push(o.method+' '+p);
-  if(p==='payments'&&o.method==='POST'){const id='tr_'+crypto.randomBytes(5).toString('hex');M[id]={id,status:'open',method:null,amount:body.amount,metadata:body.metadata,redirectUrl:body.redirectUrl,amountRefunded:{value:'0.00'},_links:{checkout:{href:'https://mollie.test/'+id}}};return M[id];}
+  if(p==='payments'&&o.method==='POST'){const id='tr_'+crypto.randomBytes(5).toString('hex');M[id]={id,status:'open',method:null,amount:body.amount,metadata:body.metadata,redirectUrl:body.redirectUrl,locale:body.locale,amountRefunded:{value:'0.00'},_links:{checkout:{href:'https://mollie.test/'+id}}};return M[id];}
   const m=p.match(/^payments\/(tr_\w+)(\/refunds)?$/);if(m){const pay=M[m[1]];if(m[2]){pay.amountRefunded={value:(Number(pay.amountRefunded.value)+Number(body.amount.value)).toFixed(2)};return {id:'re_1'};}if(o.method==='PATCH'){Object.assign(pay,body);}return pay;}
   throw new Error('mollie?'+p);}
 globalThis.fetch=async(url,o={})=>{o.method=o.method||'GET';let d;
@@ -73,4 +73,16 @@ r=await call(admin,{method:'POST',url:'/api/admin?actie=betaald',cookie,body:{id
 r=await call(admin,{method:'POST',url:'/api/admin?actie=terugbetalen',cookie,body:{id:b2.id}});ok(r.j.ok&&b2.status==='terugbetaald'&&b2.terugbetaald===168,'volledige handmatige terugbetaling');
 // 9. bot
 const n=T.bestellingen.length;r=await call(bestel,{method:'POST',body:{klant,regels,akkoord:true,t:200}});ok(T.bestellingen.length===n,'bot (te snel) wordt niet opgeslagen');
+// 10. Engelse winkel: meldingen, Mollie, opgeslagen taal en mails in het Engels (winkelmail blijft Nederlands)
+process.env.MOLLIE_API_KEY='test_x';
+r=await call(bestel,{method:'POST',body:{klant,regels,t:5000,taal:'en'}});ok(r.c===400&&r.j.melding==='Please agree to the terms and conditions to place your order.','EN: melding bij ontbrekend akkoord in het Engels');
+r=await call(bestel,{method:'POST',body:{klant:{...klant,naam:'Jo Smith',email:'jo@example.com'},regels:[{id:'golf',formaat:'30x40',aantal:1}],akkoord:true,t:5000,taal:'en'}});
+const be=T.bestellingen.at(-1);ok(r.j.ok&&be.taal==='en'&&M[be.mollie_id].locale==='en_US'&&M[be.mollie_id].redirectUrl.endsWith('&lang=en'),'EN: taal opgeslagen, Mollie in het Engels, terug naar Engelse statuspagina');
+ok(T.bestellingen[0].taal===undefined||T.bestellingen[0].taal==='nl','NL-bestelling blijft Nederlands');
+M[be.mollie_id].status='paid';M[be.mollie_id].method='ideal';const ne=mails.length;await call(hook,{method:'POST',body:'id='+be.mollie_id});
+const kl=mails.slice(ne).find(m=>m.aan==='jo@example.com'),wk=mails.slice(ne).find(m=>m.aan==='hylkethiry@gmail.com');
+ok(kl&&/^Thank you for your order/.test(kl.onderwerp)&&kl.html.includes('Shipping address')&&kl.html.includes('subtotal')&&kl.html.includes('&amp;lang=en')===false&&kl.html.includes('lang=en')&&!/Bedankt|verzending/.test(kl.html),'EN: bevestiging in het Engels met Engelse statuslink');
+ok(wk&&/Betaald/.test(wk.onderwerp)&&wk.html.includes('subtotaal')&&wk.html.includes('Engelse winkel'),'EN: winkelmail blijft Nederlands, met vermelding van de taal');
+r=await call(admin,{method:'POST',url:'/api/admin?actie=status',cookie,body:{id:be.id,status:'verzonden',track_trace:'3SEN123'}});ok(/is on its way/.test(mails.at(-1).onderwerp)&&mails.at(-1).html.includes('3SEN123'),'EN: verzendmail in het Engels');
+r=await call(bestel,{method:'POST',body:{actie:'annuleringsverzoek',nr:'SK-XXXX',t:'0'.repeat(36),taal:'en'}});ok(r.j.melding==='Unknown order.','EN: statuspagina-meldingen in het Engels');
 if(process.env.VERBOSE)console.log('\nmails:',mails.map(m=>m.aan+' · '+m.onderwerp).join('\n       '));

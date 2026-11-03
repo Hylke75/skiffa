@@ -72,7 +72,11 @@ r = await call(catalogus, { method: 'GET', url: '/api/catalogus?actie=feed&kanaa
 const poster = (await import(R + 'poster.js')).default;
 r = await call(poster, { url: '/api/poster?id=golf&v=SKF-GOLF-50X70-LIJST-NATUREL' });
 ok(r.c === 200 && r.h['content-type'].startsWith('text/html') && /<title>[^<]*50 × 70 cm, naturel lijst/.test(r.s) && r.s.includes('product:price:amount') && r.s.includes('"@type":"ProductGroup"') && r.s.includes('rel="canonical" href="https://skiffa.store/poster/golf?v=SKF-GOLF-50X70-LIJST-NATUREL"'), 'productpagina: titel, prijs, schema.org en canonical per variant');
-ok((r.s.match(/class="optie/g) || []).length >= 4 && r.s.includes("location.href='/#mandje'"), 'productpagina: alle varianten te kiezen, in winkelmand → winkel');
+ok((r.s.match(/class="optie/g) || []).length >= 4 && r.s.includes('location.href="/"+\'#mandje\''), 'productpagina: alle varianten te kiezen, in winkelmand → winkel');
+T.producten.find((p) => p.id === 'golf').beschrijving_en = 'One wave that stays standing.';
+await cat.laadCatalogus({ vers: true });
+r = await call(poster, { url: '/api/poster?id=golf&lang=en&v=SKF-GOLF-50X70-LIJST-NATUREL' });
+ok(r.c === 200 && r.s.includes('<html lang="en">') && r.s.includes('50 × 70 cm, natural frame') && r.s.includes('add to basket') && r.s.includes('One wave that stays standing.') && r.s.includes('hreflang="nl"') && r.s.includes('/terms.html') && r.s.includes('location.href="/?lang=en"+\'#mandje\''), 'productpagina in het Engels: tekst, lijst, knop, hreflang, voorwaarden en terug naar de Engelse winkel');
 r = await call(poster, { url: '/api/poster?id=boulevard' }); ok(r.c === 200 && r.s.includes('binnenkort te koop') && !r.s.includes('id="koop"'), 'productpagina: actief maar niet bestelbaar = binnenkort, geen koopknop');
 T.producten.find((p) => p.id === 'boulevard').status = 'concept'; await cat.laadCatalogus({ vers: true });
 r = await call(poster, { url: '/api/poster?id=boulevard' }); ok(r.c === 404, 'productpagina: niet-actieve poster = 404');

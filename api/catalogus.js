@@ -50,6 +50,7 @@ async function openbaar() {
       return {
         id, titel: POSTERS[id], stijl: TEKSTEN[id]?.sub || '', beschrijving: TEKSTEN[id]?.zin || '', accentkleur: TEKSTEN[id]?.kleur || '#1F4E79',
         seo_titel: p.seo_titel || '', seo_beschrijving: p.seo_beschrijving || '', ...beeldVan(id),
+        titel_en: p.titel_en || '', stijl_en: p.stijl_en || '', beschrijving_en: p.beschrijving_en || '',
         varianten: bestelbaar.filter((v) => v.product_id === id).map((v) => ({ sku: v.sku, formaat: v.formaat, papier: v.papier, lijst: v.lijst || null, lijst_kleur: v.lijst_kleur || null, ophanging: ophangLabel(v.lijst, v.lijst_kleur), prijs: v.prijs, levertijd: v.levertijd })),
       };
     }),
@@ -59,6 +60,7 @@ async function openbaar() {
     // Actief in de database maar nog niet bestelbaar (bv. drukbestand of Prodigi nog niet klaar): de winkel toont ze als "binnenkort".
     binnenkort: catalogusBron() === 'database' ? Object.values(PRODUCTEN).filter((p) => p.status === 'actief' && !POSTERS[p.id]).map((p) => ({
       id: p.id, titel: p.titel, stijl: p.stijl || '', beschrijving: p.beschrijving || '', accentkleur: p.accentkleur || '#1F4E79', ...beeldVan(p.id),
+      titel_en: p.titel_en || '', stijl_en: p.stijl_en || '', beschrijving_en: p.beschrijving_en || '',
     })) : [],
   };
 }
@@ -154,6 +156,8 @@ async function bewaarProduct(b) {
     collectie: tekst(b.collectie, 80), onderwerp: tekst(b.onderwerp, 80), kleuren: lijst(b.kleuren, 10), zoekwoorden: lijst(b.zoekwoorden, 30),
     accentkleur: kleur, seo_titel: tekst(b.seo_titel, 70), seo_beschrijving: tekst(b.seo_beschrijving, 170), status,
     volgorde: geheel(b.volgorde, bestaand?.volgorde || 0), bijgewerkt_op: new Date().toISOString(),
+    // Engelse teksten voor de Engelse winkel (leeg = de Nederlandse tekst wordt getoond).
+    ...Object.fromEntries([['titel_en', 120], ['stijl_en', 120], ['beschrijving_en', 2000]].filter(([k]) => b[k] !== undefined).map(([k, max]) => [k, tekst(b[k], max) || null])),
   };
   if (b.nieuw) {
     await db('producten', { method: 'POST', body: rij });
