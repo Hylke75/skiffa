@@ -994,7 +994,9 @@ openUitHash();
     if(d.bron!=='database'||!Array.isArray(d.producten)||!d.producten.length||!Array.isArray(d.formaten)||!d.formaten.length)return;
     // Alleen wat echt besteld kan worden: producten met bestelbare varianten.
     const met=d.producten.filter(p=>Array.isArray(p.varianten)&&p.varianten.length);if(!met.length)return;
-    formaten.splice(0,formaten.length,...d.formaten.map(f=>({id:String(f.id),label:String(f.label),mm:f.mm,prijs:Math.min(...met.flatMap(p=>p.varianten).filter(v=>v.formaat===f.id).map(v=>Number(v.prijs)))})).filter(f=>isFinite(f.prijs)));
+    // Het standaardformaat (50 × 70) blijft standaard geselecteerd, ook met de formaten uit de database.
+    const std=new Set(formaten.filter(f=>f.standaard).map(f=>f.id));
+    formaten.splice(0,formaten.length,...d.formaten.map(f=>({id:String(f.id),label:String(f.label),mm:f.mm,standaard:std.has(String(f.id)),prijs:Math.min(...met.flatMap(p=>p.varianten).filter(v=>v.formaat===f.id).map(v=>Number(v.prijs)))})).filter(f=>isFinite(f.prijs)));
     if(Array.isArray(d.papiersoorten)&&d.papiersoorten.length)papiersoorten=d.papiersoorten.map(vertaalPapier);
     varianten=Object.fromEntries(met.map(p=>[String(p.id),p.varianten.map(v=>({sku:String(v.sku),formaat:String(v.formaat),papier:String(v.papier),lijst:v.lijst==='classic'?'classic':null,lijst_kleur:LIJSTKLEUR[v.lijst_kleur]?v.lijst_kleur:null,prijs:Number(v.prijs),levertijd:v.levertijd||null}))]));
     vanaf=Math.min(...formaten.map(f=>f.prijs));
