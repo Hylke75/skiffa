@@ -328,8 +328,10 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter
   #modal .pijl{display:none}
   .posternav{margin:-6px 0 6px}
   /* Mobiel: één kolom die scrolt; het beeld krijgt de staande verhouding van de mock-ups (3:4) en vult zo het vak. */
-  #modal .kader{grid-template-columns:1fr;grid-template-rows:auto auto;height:auto;max-height:92vh;width:94vw;overflow-y:auto;overscroll-behavior:contain}
-  #modal .carrousel{aspect-ratio:3/4;max-height:72vh}
+  /* Geen grid en geen aspect-ratio hier: Safari op iOS maakte de rij lager dan het beeld, waardoor de foto over
+     het begin van de tekst (formaatkeuze) viel. Een vaste hoogte (3:4 van de breedte, hoogstens 72% van het scherm) werkt overal. */
+  #modal .kader{display:block;height:auto;max-height:92vh;width:94vw;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+  #modal .carrousel{aspect-ratio:auto;width:100%;height:min(calc(94vw * 4 / 3),72vh)}
   #modal .modaltekst{overflow:visible}
   .modaltekst{padding:28px 22px 24px}
   #over .binnen,#contact .binnen{grid-template-columns:1fr;padding-top:90px}
