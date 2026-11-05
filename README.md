@@ -261,6 +261,16 @@ Eén product, één keer ingevoerd; per kanaal vink je aan of het daar verschijn
 - **Aan/uit**: social staat los aan/uit en heeft een eigen proefmodus. De cron (elke 15 minuten) verwerkt taken en
   haalt statussen op; mislukte berichten, herinneringen en ontkoppelde accounts staan op de actielijst.
 
+## Vindbaarheid (zoekmachines en AI-agents)
+
+- `/sitemap.xml` (`api/sitemap.js`): homepage, productpagina's en voorwaarden in NL en EN met hreflang, live uit de catalogus.
+- `robots.txt`: verwijst naar de sitemap, Content Signals `search=yes, ai-input=yes, ai-train=no`, en laat de productfeeds
+  (`/feed/google.xml`, `/feed/meta.xml`, `/api/catalogus?actie=feed…`) toe; beheer en `/api/` blijven dicht.
+- Homepage stuurt `Link`-headers (RFC 8288): sitemap, Engelse versie, productfeed, API-catalogus, voorwaarden, privacy.
+- Markdown for Agents: met `Accept: text/markdown` geeft `/` (via `middleware.js` → `api/markdown.js`) en `/poster/<id>`
+  een Markdown-versie; browsers krijgen HTML.
+- `/.well-known/api-catalog` (RFC 9727) verwijst naar `openapi.json`: de openbare, alleen-lezen catalogus en feeds.
+
 ## Engelse winkel
 
 - Taalkeuze met de knop **NL/EN** in de kop (bewaard in de browser) of met `?lang=en` in de link; standaard Nederlands.
