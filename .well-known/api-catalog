@@ -1,0 +1,12 @@
+{
+  "linkset": [
+    {
+      "anchor": "https://skiffa.store/api/catalogus",
+      "service-desc": [{ "href": "https://skiffa.store/openapi.json", "type": "application/vnd.oai.openapi+json" }],
+      "item": [
+        { "href": "https://skiffa.store/feed/google.xml", "type": "application/rss+xml", "title": "Productfeed (Google Merchant Center)" },
+        { "href": "https://skiffa.store/feed/meta.xml", "type": "application/rss+xml", "title": "Productfeed (Meta Commerce)" }
+      ]
+    }
+  ]
+}

@@ -1,5 +1,13 @@
+# SKIFFA — posters van de Scheveningse surfcultuur
 User-agent: *
+# Content Signals (contentsignals.org): wel in zoekmachines en als bron voor AI-antwoorden (zodat assistenten
+# naar de posters kunnen verwijzen), niet voor het trainen van AI-modellen.
+Content-Signal: search=yes, ai-input=yes, ai-train=no
+Allow: /feed/
+Allow: /api/catalogus?actie=feed
 Disallow: /admin
 Disallow: /admin.html
 Disallow: /bestelling.html
 Disallow: /api/
+
+Sitemap: https://skiffa.store/sitemap.xml

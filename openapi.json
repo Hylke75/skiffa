@@ -1,0 +1,34 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "SKIFFA catalogus (openbaar, alleen lezen)",
+    "version": "1.0.0",
+    "description": "Posters van de Scheveningse surfcultuur, op bestelling gedrukt. Openbare, alleen-lezen productgegevens: posters, formaten, lijsten en prijzen (EUR, incl. btw). Bestellen gaat via https://skiffa.store."
+  },
+  "servers": [{ "url": "https://skiffa.store" }],
+  "paths": {
+    "/api/catalogus": {
+      "get": {
+        "summary": "Alle posters met bestelbare varianten (formaat, papier, lijst, prijs)",
+        "responses": { "200": { "description": "Catalogus", "content": { "application/json": { "schema": { "type": "object" } } } } }
+      }
+    },
+    "/feed/google.xml": {
+      "get": {
+        "summary": "Productfeed (RSS 2.0 met g:-velden), één item per variant",
+        "responses": { "200": { "description": "Feed", "content": { "application/xml": {} } } }
+      }
+    },
+    "/poster/{id}": {
+      "get": {
+        "summary": "Productpagina van een poster (HTML; met Accept: text/markdown als Markdown)",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "lang", "in": "query", "schema": { "type": "string", "enum": ["nl", "en"] } },
+          { "name": "v", "in": "query", "description": "SKU van de variant", "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Productpagina", "content": { "text/html": {}, "text/markdown": {} } } }
+      }
+    }
+  }
+}

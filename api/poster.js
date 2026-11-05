@@ -58,6 +58,19 @@ export default async function handler(req, res) {
   const knoppen = alle.map((v) => `<a class="optie${v === gekozen ? ' aan' : ''}" href="/poster/${esc(id)}?${L}v=${esc(v.sku)}" data-sku="${esc(v.sku)}" data-formaat="${esc(v.formaat)}" data-papier="${esc(v.papier)}"><span>${esc(variantNaam(v, en))}</span><b>${esc(euro(v.prijs, en))}</b></a>`).join('');
   const thuis = en ? '/?lang=en' : '/';
 
+  // Markdown for Agents: met Accept: text/markdown dezelfde gegevens als platte Markdown.
+  if (/text\/markdown/i.test(String(req.headers?.accept || ''))) {
+    const md = `# ${naam}\n\n${((en && p.stijl_en) || p.stijl) ? `${(en && p.stijl_en) || p.stijl}\n\n` : ''}${beschrijving}\n\n` +
+      (alle.length ? `| ${T('uitvoering', 'option')} | ${T('prijs', 'price')} |\n|---|---|\n${alle.map((v) => `| ${variantNaam(v, en)} | ${euro(v.prijs, en)} |`).join('\n')}\n\n` : `${T('Binnenkort te koop.', 'Coming soon.')}\n\n`) +
+      `${T('Prijzen incl. btw. Op bestelling gedrukt, meestal binnen 6 tot 8 werkdagen bij je.', 'Prices incl. VAT. Printed to order, usually with you within 6 to 8 working days.')}\n\n` +
+      `${T('Bestellen', 'Order')}: ${url}\n` + (hoofd ? `\n![${naam}](${hoofd})\n` : '');
+    res.setHeader('content-type', 'text/markdown; charset=utf-8');
+    res.setHeader('x-markdown-tokens', String(Math.ceil(md.length / 4)));
+    res.setHeader('Vary', 'Accept');
+    res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=60, stale-while-revalidate=300');
+    return res.status(200).send(md);
+  }
+
   const html = `<!DOCTYPE html>
 <html lang="${en ? 'en' : 'nl'}">
 <head>
@@ -147,6 +160,7 @@ koop.addEventListener('click',()=>{const a=document.querySelector('.optie.aan')|
 </script>
 </body>
 </html>`;
+  res.setHeader('Vary', 'Accept');
   res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=60, stale-while-revalidate=300');
   res.setHeader('content-type', 'text/html; charset=utf-8');
   return res.status(200).send(html);

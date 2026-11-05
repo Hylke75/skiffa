@@ -6,6 +6,18 @@
       "destination": "/admin.html"
     },
     {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap"
+    },
+    {
+      "source": "/feed/google.xml",
+      "destination": "/api/catalogus?actie=feed&kanaal=google"
+    },
+    {
+      "source": "/feed/meta.xml",
+      "destination": "/api/catalogus?actie=feed&kanaal=meta"
+    },
+    {
       "source": "/poster/:id",
       "destination": "/api/poster?id=:id"
     },
@@ -46,6 +58,32 @@
         {
           "key": "Cache-Control",
           "value": "no-store"
+        }
+      ]
+    },
+    {
+      "source": "/",
+      "headers": [
+        {
+          "key": "Link",
+          "value": "</sitemap.xml>; rel=\"sitemap\"; type=\"application/xml\", </?lang=en>; rel=\"alternate\"; hreflang=\"en\", </>; rel=\"alternate\"; hreflang=\"nl\", </feed/google.xml>; rel=\"alternate\"; type=\"application/rss+xml\"; title=\"SKIFFA product feed\", </.well-known/api-catalog>; rel=\"api-catalog\", </voorwaarden.html>; rel=\"terms-of-service\", </privacy.html>; rel=\"privacy-policy\""
+        },
+        {
+          "key": "Vary",
+          "value": "Accept"
+        }
+      ]
+    },
+    {
+      "source": "/.well-known/api-catalog",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/linkset+json"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
         }
       ]
     }
